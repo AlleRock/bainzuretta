@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta Pro</title>
     
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3163/3163634.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/TUO_UTENTE/TUO_REPO/main/icona.png">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
@@ -21,21 +22,17 @@
         .page.active { display: block; }
         .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; cursor: pointer; }
-        
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
         .full-width { grid-column: span 2; }
-        
         .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
         .stat-box b { font-size: 1.1em; color: var(--primary); }
-        
         .rank-item { padding: 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
         .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.9em; }
         .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
-        
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 12px; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
@@ -75,7 +72,7 @@
     </div>
 
     <div class="card" style="text-align:center;">
-        <input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px;">
+        <input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;">
         <button class="btn-export" onclick="esportaJSON()">📦 ESPORTA BACKUP (JSON)</button>
     </div>
 
