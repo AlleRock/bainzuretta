@@ -75,4 +75,179 @@
         <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (ORE)</option>
-            <option value="media">Velocità Media (KM/H
+            <option value="media">Velocità Media (KM/H)</option>
+        </select>
+    </div>
+    <div id="lista-ranking"></div>
+</div>
+
+<nav>
+    <div id="nav-home" class="active" onclick="vaiA('home')">🏠 HOME</div>
+    <div id="nav-rank" onclick="vaiA('ranking')">🏆 RANKING</div>
+</nav>
+
+<script>
+    let rawData = [];
+    const oggi = new Date();
+    const currY = oggi.getFullYear();
+    const getDOY = d => Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+
+    window.onload = () => {
+        document.getElementById('head-year').innerText = currY;
+        document.getElementById('target-year').innerText = currY;
+        document.getElementById('today-label').innerText = oggi.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
+        const s = localStorage.getItem('bainzuretta_raw');
+        if (s) { rawData = JSON.parse(s); aggiornaStats(); }
+        document.getElementById('in-date').valueAsDate = oggi;
+    };
+
+    // FUNZIONE CRITICA: Traduce "sabato 4 gennaio 2025" in una data vera
+    function parseDateCustom(val) {
+        if (!val) return null;
+        if (val instanceof Date && !isNaN(val)) return val;
+        
+        const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+        let str = val.toString().toLowerCase().trim();
+        
+        // Pulizia: togliamo il nome del giorno (sabato, domenica, etc)
+        const giorniSettimana = ["lunedì","martedì","mercoledì","giovedì","venerdì","sabato","domenica"];
+        giorniSettimana.forEach(g => str = str.replace(g, ""));
+        
+        // Estraiamo i numeri
+        const numeri = str.match(/\d+/g);
+        if (!numeri) return null;
+
+        let d = parseInt(numeri[0]);
+        let y = numeri.find(n => n.length === 4) || currY;
+        let m = mesi.findIndex(mese => str.includes(mese));
+
+        if (m === -1 && numeri.length >= 2) {
+            m = parseInt(numeri[1]) - 1;
+        }
+
+        const finalDate = new Date(y, m, d);
+        return isNaN(finalDate.getTime()) ? null : finalDate;
+    }
+
+    function tempoDecimale(v) {
+        if(!v) return 0;
+        if(typeof v === 'number') return v * 24;
+        let p = v.toString().split(':');
+        if(p.length < 2) return 0;
+        return (parseInt(p[0])||0) + (parseInt(p[1]||0)/60) + (parseInt(p[2]||0)/3600);
+    }
+
+    function aggiornaStats() {
+        let totK = 0, dbAnni = {};
+        rawData.forEach(a => {
+            const d = new Date(a.data);
+            const y = d.getFullYear();
+            if(!dbAnni[y]) dbAnni[y] = { d:0, t:0, mSum:0, count:0 };
+            dbAnni[y].d += a.distanza; dbAnni[y].t += a.tempo; dbAnni[y].mSum += a.media; dbAnni[y].count++;
+            totK += a.distanza;
+        });
+        document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
+        document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
+        let maxS = 0;
+        Object.values(dbAnni).forEach(v => { if(v.count > 0) maxS = Math.max(maxS, v.mSum/v.count); });
+        document.getElementById('st-speed').innerText = maxS.toFixed(1) + " km/h";
+        const kY = (dbAnni[currY] || {d:0}).d;
+        document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(5000 - kY)).toLocaleString();
+        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, getDOY(oggi))) * 365).toLocaleString();
+    }
+
+    function disegnaClassifica() {
+        const m = document.getElementById('metrica').value;
+        const container = document.getElementById('lista-ranking');
+        container.innerHTML = "";
+        let p = {};
+        const giornoTarget = getDOY(oggi);
+        rawData.forEach(a => {
+            const d = new Date(a.data);
+            if (getDOY(d) <= giornoTarget) {
+                const y = d.getFullYear();
+                if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
+                p[y].d += a.distanza; p[y].t += a.tempo; p[y].mSum += a.media; p[y].c++;
+            }
+        });
+        const s = Object.keys(p).sort((a,b) => {
+            const vA = m==='media' ? (p[a].mSum/p[a].c) : (m==='distanza' ? p[a].d : p[a].t);
+            const vB = m==='media' ? (p[b].mSum/p[b].c) : (m==='distanza' ? p[b].d : p[b].t);
+            return vB - vA;
+        });
+        if(!s.length) return;
+        const max = m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t);
+        s.forEach((y, i) => {
+            const avg = p[y].c > 0 ? (p[y].mSum/p[y].c) : 0;
+            const label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? avg.toFixed(1)+" km/h" : Math.floor(p[y].t)+"h "+Math.round((p[y].t%1)*60)+"m";
+            const cur = m==='distanza' ? p[y].d : m==='media' ? avg : p[y].t;
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${label}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(cur/max)*100)}%"></div></div></div>`;
+        });
+    }
+
+    document.getElementById('xl-input').onchange = (e) => {
+        const f = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+                const sheet = wb.Sheets[wb.SheetNames[0]];
+                const data = XLSX.utils.sheet_to_json(sheet);
+                const temp = [];
+                
+                data.forEach(row => {
+                    let rawD, dist, time, kmh;
+                    for (let key in row) {
+                        let k = key.toUpperCase();
+                        if (k.includes("DATA")) rawD = row[key];
+                        if (k.includes("DISTANZA")) dist = row[key];
+                        if (k.includes("TEMPO")) time = row[key];
+                        if (k.includes("KM/H")) kmh = row[key];
+                    }
+                    
+                    let parsedD = parseDateCustom(rawD);
+                    if (parsedD && dist) {
+                        temp.push({
+                            data: parsedD.toISOString(),
+                            distanza: parseFloat(dist.toString().replace(',','.')) || 0,
+                            tempo: tempoDecimale(time),
+                            media: parseFloat(kmh.toString().replace(',','.')) || 0
+                        });
+                    }
+                });
+
+                if (temp.length > 0) {
+                    rawData = temp;
+                    localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+                    alert("Caricate " + temp.length + " attività correttamente!");
+                    location.reload();
+                } else { alert("Nessun dato valido trovato nel file."); }
+            } catch(err) { alert("Errore lettura: " + err); }
+        };
+        reader.readAsArrayBuffer(f);
+    };
+
+    function salvaManuale() {
+        const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value), t = document.getElementById('in-time').value, h = parseFloat(document.getElementById('in-kmh').value) || 0;
+        if(!d || isNaN(k)) return;
+        rawData.push({ data: new Date(d).toISOString(), distanza: k, tempo: tempoDecimale(t), media: h });
+        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        location.reload();
+    }
+
+    function esportaDati() {
+        const blob = new Blob([JSON.stringify(rawData)], {type:"application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = "bainzuretta_backup.json"; a.click();
+    }
+
+    function vaiA(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
+        document.getElementById('nav-'+(id==='home'?'home':'rank')).classList.add('active');
+        if(id === 'ranking') disegnaClassifica();
+    }
+</script>
+</body>
+</html>
