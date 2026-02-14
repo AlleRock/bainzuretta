@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icona.png">
     <link rel="icon" type="image/png" href="icona.png">
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { 
             --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; 
@@ -19,89 +19,25 @@
         }
 
         body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; -webkit-font-smoothing: antialiased; }
-        
-        header { 
-            background: var(--primary); color: white; padding: 20px; text-align: center; 
-            font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px;
-        }
-
-        .profile-img { 
-            width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; 
-            background: url('icona.png') center/cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
-        }
-        
+        header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .profile-img { width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; background: url('icona.png') center/cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .page { display: none; padding: 12px; max-width: 450px; margin: auto; box-sizing: border-box; }
         .page.active { display: block; }
-
-        /* Card con protezione overflow per evitare sforamenti */
-        .card { 
-            background: var(--card); padding: 20px; border-radius: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; 
-            border: 1px solid var(--border); box-sizing: border-box; 
-            width: 100%; overflow: hidden; 
-        }
-
+        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); box-sizing: border-box; width: 100%; overflow: hidden; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
         .target-box b { font-size: 1.8em; font-weight: 900; }
         .edit-target { position: absolute; top: 10px; right: 15px; font-size: 1.2em; cursor: pointer; }
-
         label { display: block; font-weight: 800; margin: 12px 0 6px 0; font-size: 0.95em; }
-
-        /* RESET AGGRESSIVO INPUT */
-        input, select { 
-            width: 100% !important; 
-            max-width: 100% !important;
-            min-width: 0 !important; /* Reset fondamentale */
-            display: block;
-            padding: 14px 5px; 
-            margin: 0 0 15px 0; 
-            border: 2px solid var(--border); 
-            border-radius: 12px; 
-            background: var(--card); 
-            color: var(--text-main); 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            font-weight: 700;
-            text-align: center;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        input[type="date"] {
-            position: relative;
-            background-color: var(--card);
-        }
-
-        /* Rimuove freccine e icone che spostano il layout a destra */
-        input::-webkit-inner-spin-button, 
-        input::-webkit-calendar-picker-indicator { 
-            margin: 0; 
-            padding: 0;
-        }
-
-        .btn-add { 
-            background: var(--primary); color: white; border: none; width: 100%; 
-            padding: 18px; border-radius: 15px; font-weight: 900; 
-            font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; 
-        }
-        
+        input, select { width: 100% !important; max-width: 100% !important; min-width: 0 !important; display: block; padding: 14px 5px; margin: 0 0 15px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); box-sizing: border-box; font-size: 16px; font-weight: 700; text-align: center; -webkit-appearance: none; appearance: none; }
+        input[type="date"] { position: relative; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-box { 
-            background: rgba(251, 140, 0, 0.12); padding: 15px; border-radius: 15px; 
-            text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); 
-        }
+        .stat-box { background: rgba(251, 140, 0, 0.12); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); }
         .stat-box b { color: var(--primary); font-size: 1.2em; font-weight: 900; }
-        .stat-box small { font-weight: 800; font-size: 0.7em; }
-
         .rank-item { padding: 15px; background: var(--card); border-radius: 15px; margin-bottom: 10px; border: 2px solid var(--border); }
-        .rank-info { font-weight: 900; display: flex; justify-content: space-between; }
         .progress-bg { background: #e0e0e0; height: 12px; border-radius: 6px; margin-top: 10px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 1s; }
-
-        nav { 
-            display: flex; position: fixed; bottom: 0; width: 100%; 
-            background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 100; 
-        }
+        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 100; }
         nav div { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #8e8e93; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); background: rgba(251, 140, 0, 0.05); }
     </style>
@@ -133,18 +69,16 @@
 
     <div class="card">
         <h3 style="color:var(--primary); margin-top:0; font-weight:900;">➕ Nuova Pedalata</h3>
-        <label>Seleziona Giorno</label>
         <input type="date" id="in-date">
-        <label>Distanza Percorsa (KM)</label>
-        <input type="number" id="in-dist" placeholder="Es. 35.5">
-        <label>Tempo (HH:MM:SS)</label>
-        <input type="text" id="in-time" placeholder="00:00:00">
+        <input type="number" id="in-dist" placeholder="KM fatti oggi">
+        <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
 
     <div style="text-align: center; padding: 10px;">
-        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 0.8em; border:none;">
-        <button onclick="if(confirm('Resetti tutto?')) { localStorage.clear(); location.reload(); }" style="background:none; border:none; color:red; font-size: 0.8em; text-decoration: underline; margin-top:10px;">Reset Memoria</button>
+        <label style="margin-bottom:10px;">Importa dati da Excel:</label>
+        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 0.8em; border:none; background:none;">
+        <button onclick="if(confirm('Vuoi cancellare tutti i dati salvati?')) { localStorage.clear(); location.reload(); }" style="background:none; border:none; color:red; font-size: 0.7em; text-decoration: underline; margin-top:15px; cursor:pointer;">Reset Memoria</button>
     </div>
 </div>
 
@@ -191,11 +125,14 @@
         document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.getElementById('nav-' + (id==='home'?'home':'rank')).classList.add('active');
+        if(id === 'ranking') disegnaClassifica();
     }
 
     function tempoDecimale(str) {
-        if (!str || !str.includes(':')) return 0;
-        const p = str.split(':');
+        if (!str) return 0;
+        if (typeof str === 'number') return str * 24;
+        if (!str.toString().includes(':')) return 0;
+        const p = str.toString().split(':');
         return (parseInt(p[0])||0) + ((parseInt(p[1])||0)/60) + ((parseInt(p[2])||0)/3600);
     }
 
@@ -211,7 +148,7 @@
         const dt = document.getElementById('in-date').value;
         const km = parseFloat(document.getElementById('in-dist').value);
         const tm = document.getElementById('in-time').value;
-        if (!dt || isNaN(km) || !tm.includes(':')) return;
+        if (!dt || isNaN(km)) { alert("Inserisci dati validi!"); return; }
         const anno = new Date(dt).getFullYear().toString();
         if (!db[anno]) db[anno] = { distanza: 0, tempo: 0 };
         db[anno].distanza += km;
@@ -221,24 +158,30 @@
     }
 
     document.getElementById('xl-input').onchange = function(e) {
+        if (!e.target.files[0]) return;
         const reader = new FileReader();
         reader.onload = function(event) {
-            const data = new Uint8Array(event.target.result);
-            const wb = XLSX.read(data, {type: 'array'});
-            wb.SheetNames.forEach(nome => {
-                const righe = XLSX.utils.sheet_to_json(wb.Sheets[nome], {range: 9});
-                let kmA = 0, tmA = 0;
-                righe.forEach(r => {
-                    const dAtt = r["DATA DELL'ATTIVITÀ"];
-                    if(dAtt) {
-                        kmA += parseFloat(r["DISTANZA"] || 0);
-                        tmA += tempoDecimale(r["TEMPO IN MOVIMENTO"]);
-                    }
+            try {
+                const data = new Uint8Array(event.target.result);
+                const wb = XLSX.read(data, {type: 'array'});
+                wb.SheetNames.forEach(nome => {
+                    const righe = XLSX.utils.sheet_to_json(wb.Sheets[nome], {range: 9});
+                    let kmA = 0, tmA = 0;
+                    righe.forEach(r => {
+                        const dist = parseFloat(r["DISTANZA"]);
+                        if(!isNaN(dist)) {
+                            kmA += dist;
+                            tmA += tempoDecimale(r["TEMPO IN MOVIMENTO"]);
+                        }
+                    });
+                    if (kmA > 0) db[nome] = { distanza: kmA, tempo: tmA };
                 });
-                if (kmA > 0) db[nome] = { distanza: kmA, tempo: tmA };
-            });
-            localStorage.setItem('bainzuretta_v9', JSON.stringify(db));
-            location.reload();
+                localStorage.setItem('bainzuretta_v9', JSON.stringify(db));
+                alert("Dati importati con successo!");
+                location.reload();
+            } catch (err) {
+                alert("Errore nella lettura del file. Assicurati che sia il file Excel corretto.");
+            }
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     };
@@ -247,7 +190,7 @@
         let totK = 0, maxS = 0, bestY = "-";
         Object.keys(db).forEach(y => {
             totK += db[y].distanza;
-            let s = db[y].distanza / db[y].tempo;
+            let s = db[y].tempo > 0 ? (db[y].distanza / db[y].tempo) : 0;
             if (s > maxS) { maxS = s; bestY = y; }
         });
 
@@ -267,14 +210,14 @@
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
         const anni = Object.keys(db).sort((a,b) => {
-            const vA = m === 'media' ? (db[a].distanza/db[a].tempo) : db[a][m];
-            const vB = m === 'media' ? (db[b].distanza/db[b].tempo) : db[b][m];
+            const vA = m === 'media' ? (db[a].distanza/(db[a].tempo||1)) : db[a][m];
+            const vB = m === 'media' ? (db[b].distanza/(db[b].tempo||1)) : db[b][m];
             return vB - vA;
         });
         if (!anni.length) return;
-        const maxV = (m === 'media' ? (db[anni[0]].distanza/db[anni[0]].tempo) : db[anni[0]][m]) || 1;
+        const maxV = (m === 'media' ? (db[anni[0]].distanza/(db[anni[0]].tempo||1)) : db[anni[0]][m]) || 1;
         anni.forEach((y, i) => {
-            const v = m === 'media' ? (db[y].distanza/db[y].tempo) : db[y][m];
+            const v = m === 'media' ? (db[y].distanza/(db[y].tempo||1)) : db[y][m];
             const p = (v / maxV) * 100;
             const t = m === 'tempo' ? formattazioneTempo(db[y].tempo) : m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km";
             container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${t}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${p}%"></div></div></div>`;
