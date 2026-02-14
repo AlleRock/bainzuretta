@@ -12,26 +12,51 @@
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text-main: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text-main: #ffffff; --border: #444444; } }
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; }
+        
+        * { box-sizing: border-box; } /* Impedisce agli input di sforare */
+
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; -webkit-font-smoothing: antialiased; }
         header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px; text-transform: uppercase; }
         .profile-img { width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; background: url('icona.png') center/cover; }
-        .page { display: none; padding: 12px; max-width: 450px; margin: auto; box-sizing: border-box; }
+        
+        .page { display: none; padding: 12px; max-width: 450px; margin: auto; }
         .page.active { display: block; }
-        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); }
+        
+        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); width: 100%; }
+        
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
         .target-box b { font-size: 1.8em; font-weight: 900; }
-        input, select { width: 100%; padding: 14px 5px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); font-weight: 700; text-align: center; box-sizing: border-box; }
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; }
+        
+        /* Fix Layout Input */
+        input, select { 
+            width: 100%; 
+            display: block;
+            padding: 14px; 
+            margin: 10px 0; 
+            border: 2px solid var(--border); 
+            border-radius: 12px; 
+            background: var(--card); 
+            color: var(--text-main); 
+            font-weight: 700; 
+            text-align: center; 
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
+
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; text-transform: uppercase; }
+        
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-box { background: rgba(251, 140, 0, 0.12); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); }
         .stat-box.full { grid-column: span 2; }
+        
         .rank-item { padding: 18px; background: var(--card); border-radius: 15px; margin-bottom: 12px; border: 2px solid var(--border); }
-        .rank-info { font-weight: 900; display: flex; justify-content: space-between; }
+        .rank-info { font-weight: 900; display: flex; justify-content: space-between; align-items: center; }
         .progress-bg { background: #e0e0e0; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 1s; }
-        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; }
+        
+        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 1000; }
         nav div { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #8e8e93; }
-        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); background: rgba(251, 140, 0, 0.05); }
     </style>
 </head>
 <body>
@@ -43,43 +68,46 @@
 
 <div id="home" class="page active">
     <div class="card target-box">
-        <span onclick="setNuovoObiettivo()" style="position:absolute; right:15px; top:10px; cursor:pointer;">✏️</span>
+        <span onclick="setNuovoObiettivo()" style="position:absolute; right:15px; top:10px; cursor:pointer; font-size: 1.2em;">✏️</span>
         <small>🎯 OBIETTIVO <span class="cy"></span></small><br>
         <b id="km-mancanti">0</b> <small>KM AL TRAGUARDO</small>
         <div style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.3); padding-top:10px; font-size:0.8em;">
             Previsione fine anno: <span id="val-proiezione">0</span> KM
         </div>
     </div>
+
     <div class="card">
-        <h3 style="color:var(--primary); margin:0 0 10px 0;">🚀 Record Storici Totali</h3>
+        <h3 style="color:var(--primary); margin:0 0 10px 0; font-weight: 900;">🚀 Record Storici Totali</h3>
         <div class="stats-grid">
             <div class="stat-box"><small>KM TOTALI</small><br><b id="st-km">0</b></div>
             <div class="stat-box"><small>GIRI MONDO</small><br><b id="st-world">0.00</b></div>
-            <div class="stat-box full"><small>MEDIA TOP ANNUALE</small><br><b id="st-speed">0.0</b> <small>nel</small> <span id="st-year">-</span></div>
+            <div class="stat-box full"><small>MEDIA TOP ANNUALE</small><br><b id="st-speed">0.0 km/h</b> <small>nel</small> <span id="st-year">-</span></div>
         </div>
     </div>
+
     <div class="card">
-        <h3 style="color:var(--primary); margin:0 0 10px 0;">➕ Nuova Attività</h3>
+        <h3 style="color:var(--primary); margin:0 0 10px 0; font-weight: 900;">➕ Nuova Attività</h3>
         <input type="date" id="in-date">
-        <input type="number" id="in-dist" placeholder="KM">
+        <input type="number" id="in-dist" placeholder="Chilometri (KM)">
         <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
-        <button class="btn-add" onclick="salvaManuale()">SALVA</button>
+        <button class="btn-add" onclick="salvaManuale()">SALVA ATTIVITÀ</button>
     </div>
-    <div style="text-align:center; padding:10px;">
-        <label style="font-size: 0.8em; font-weight: bold; display: block; margin-bottom: 5px;">CARICA EXCEL O BACKUP JSON</label>
-        <input type="file" id="xl-input" accept=".xlsx,.json">
-        <button onclick="esportaDati()" style="width:100%; margin-top:10px; padding:10px; border-radius:10px; background:#444; color:white; border:none; font-weight:700;">⬇️ ESPORTA BACKUP</button>
-        <button onclick="if(confirm('Vuoi resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; text-decoration:underline; font-size:0.8em; margin-top:20px; cursor:pointer; font-weight:bold;">⚠️ RESET MEMORIA</button>
+
+    <div style="text-align:center; padding:10px; margin-bottom: 20px;">
+        <label style="font-size: 0.8em; font-weight: bold; display: block; margin-bottom: 10px;">IMPORTA EXCEL O BACKUP</label>
+        <input type="file" id="xl-input" accept=".xlsx,.json" style="border: none; background: none; padding: 0;">
+        <button onclick="esportaDati()" style="width:100%; margin-top:15px; padding:12px; border-radius:12px; background:#444; color:white; border:none; font-weight:700;">⬇️ ESPORTA BACKUP .JSON</button>
+        <button onclick="if(confirm('Attenzione: cancellerai tutti i dati salvati. Procedere?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; text-decoration:underline; font-size:0.8em; margin-top:25px; cursor:pointer; font-weight:bold; display: block; width: 100%;">⚠️ RESET COMPLETO MEMORIA</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card" style="text-align:center;">
-        <h3 style="color:var(--primary); margin:0;">🏆 Confronto al <span id="today-label"></span></h3>
-        <p style="font-size:0.8em; margin:5px 0;">Dal 1° Gennaio al <span id="today-label2"></span> di ogni anno.</p>
+        <h3 style="color:var(--primary); margin:0; font-weight: 900;">🏆 Confronto al <span id="today-label"></span></h3>
+        <p style="font-size:0.85em; margin:8px 0; opacity: 0.8;">Dati dal 1° Gennaio al <span id="today-label2"></span> per ogni anno.</p>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza (KM)</option>
-            <option value="tempo">Tempo (GG:HH:MM:SS)</option>
+            <option value="tempo">Tempo (Ore/Giorni)</option>
             <option value="media">Velocità Media (KM/H)</option>
         </select>
     </div>
@@ -95,6 +123,16 @@
     let rawData = [];
     const oggi = new Date();
     const currY = oggi.getFullYear().toString();
+
+    // Utility: Calcola il giorno dell'anno (1-366)
+    function getDayOfYear(date) {
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = date - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay);
+    }
+
+    const giornoLimite = getDayOfYear(oggi);
 
     window.onload = function() {
         document.getElementById('main-title').innerText = "BAINZURETTA " + currY;
@@ -116,7 +154,8 @@
         let totK = 0;
         
         rawData.forEach(att => {
-            const anno = new Date(att.data).getFullYear().toString();
+            const d = new Date(att.data);
+            const anno = d.getFullYear().toString();
             if (!dbTotale[anno]) dbTotale[anno] = { distanza: 0, tempo: 0 };
             dbTotale[anno].distanza += att.distanza;
             dbTotale[anno].tempo += att.tempo;
@@ -149,13 +188,13 @@
         container.innerHTML = "";
         
         let parziali = {};
-        const giornoOggi = oggi.getDate();
-        const meseOggi = oggi.getMonth();
 
         rawData.forEach(att => {
             const d = new Date(att.data);
             const anno = d.getFullYear().toString();
-            if (d.getMonth() < meseOggi || (d.getMonth() === meseOggi && d.getDate() <= giornoOggi)) {
+            
+            // FILTRO CRUCIALE: Solo se il giorno dell'anno è <= a oggi
+            if (getDayOfYear(d) <= giornoLimite) {
                 if (!parziali[anno]) parziali[anno] = { distanza: 0, tempo: 0 };
                 parziali[anno].distanza += att.distanza;
                 parziali[anno].tempo += att.tempo;
@@ -168,24 +207,34 @@
             return vB - vA;
         });
 
-        if (anniSorted.length === 0) { container.innerHTML = "<p style='text-align:center'>Nessun dato per questo periodo.</p>"; return; }
+        if (anniSorted.length === 0) { 
+            container.innerHTML = "<p style='text-align:center; padding:20px; opacity:0.6;'>Nessun dato trovato per questo periodo.</p>"; 
+            return; 
+        }
 
-        const maxVal = m === 'media' ? 40 : parziali[anniSorted[0]][m];
+        const maxVal = m === 'media' ? 45 : parziali[anniSorted[0]][m];
 
         anniSorted.forEach((y, i) => {
             const v = m === 'media' ? (parziali[y].distanza/(parziali[y].tempo||1)) : parziali[y][m];
             const tTxt = m === 'tempo' ? formattazioneTempo(parziali[y].tempo) : (m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km");
             const perc = Math.min(100, (v / (maxVal || 1)) * 100);
+            
             container.innerHTML += `
                 <div class="rank-item">
-                    <div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${tTxt}</span></div>
-                    <div class="progress-bg"><div class="progress-fill" style="width:${perc}%"></div></div>
+                    <div class="rank-info">
+                        <span>${i+1}. ${y}</span>
+                        <span style="color:var(--primary)">${tTxt}</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-fill" style="width:${perc}%"></div>
+                    </div>
                 </div>`;
         });
     }
 
     function tempoDecimale(s) { 
-        if (!s) return 0; if (typeof s === 'number') return s * 24;
+        if (!s) return 0; 
+        if (typeof s === 'number') return s * 24;
         const p = s.toString().split(':'); 
         if (p.length < 2) return 0;
         return (parseInt(p[0])||0) + (parseInt(p[1])/60) + (parseInt(p[2]||0)/3600);
@@ -193,10 +242,9 @@
 
     function formattazioneTempo(dec) {
         let s = Math.round(dec * 3600); 
-        const d = Math.floor(s/86400); s%=86400;
         const h = Math.floor(s/3600); s%=3600; 
         const m = Math.floor(s/60);
-        return d > 0 ? `${d}g ${h}h` : `${h}h ${m}m`;
+        return h > 24 ? Math.floor(h/24)+"g "+(h%24)+"h" : h+"h "+m+"m";
     }
 
     function vaiA(id) { 
@@ -211,9 +259,10 @@
         const d = document.getElementById('in-date').value;
         const k = parseFloat(document.getElementById('in-dist').value);
         const t = document.getElementById('in-time').value;
-        if (!d || isNaN(k)) return;
+        if (!d || isNaN(k)) { alert("Inserisci almeno data e KM!"); return; }
         rawData.push({ data: new Date(d).toISOString(), distanza: k, tempo: tempoDecimale(t) });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        alert("Salvato!");
         location.reload();
     }
 
@@ -233,21 +282,17 @@
                         let dist = parseFloat(r["DISTANZA"]);
                         let dataAtt = r["DATA DELL'ATTIVITÀ"];
                         let tempo = r["TEMPO IN MOVIMENTO"];
-
                         if (dist > 0 && dataAtt) {
                             let d = dataAtt instanceof Date ? dataAtt : new Date(dataAtt);
                             if (!isNaN(d.getTime())) {
-                                rawData.push({ 
-                                    data: d.toISOString(), 
-                                    distanza: dist, 
-                                    tempo: tempoDecimale(tempo) 
-                                });
+                                rawData.push({ data: d.toISOString(), distanza: dist, tempo: tempoDecimale(tempo) });
                             }
                         }
                     });
                 });
             }
             localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            alert("Importazione completata!");
             location.reload();
         };
         file.name.endsWith('.json') ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
@@ -260,8 +305,8 @@
     }
 
     function setNuovoObiettivo() {
-        let n = prompt("Obiettivo KM per il " + currY + ":", 5000);
-        if (n) { localStorage.setItem('target_' + currY, n); aggiornaStats(); }
+        let n = prompt("Nuovo obiettivo KM per l'anno in corso:", 5000);
+        if (n) { localStorage.setItem('target_' + currY, n); location.reload(); }
     }
 </script>
 </body>
