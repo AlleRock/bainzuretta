@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta Pro</title>
     
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/blob/main/icona.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/blob/main/icona.png?v=1">
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/blob/main/icona.png?v=1">
     
+    <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJpdCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL1RVT19VVEVOVEUvVVPfUkVQTy9tYWluL2ljb25hLnBuZyIsCiAgICAgICJzaXplcyI6ICIxODR4MTg0IiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIgogICAgfQogIF0KfQ==">
+
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -51,54 +54,21 @@
             Target: <b id="val-target-tot">5000</b> KM | Proiezione: <b id="val-proiezione">0</b> KM
         </div>
     </div>
-
-    <div class="card">
-        <div class="stats-grid">
-            <div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div>
-            <div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div>
-            <div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.0</b></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3 style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
-        <div class="input-grid">
-            <input type="date" id="in-date">
-            <input type="number" step="0.01" id="in-dist" placeholder="KM">
-            <input type="text" id="in-time" placeholder="HH:MM:SS" class="full-width">
-            <input type="number" step="0.01" id="in-kmh" placeholder="KM/H" class="full-width">
-        </div>
-        <button class="btn-add" onclick="salvaManuale()">SALVA</button>
-    </div>
-
-    <div class="card" style="text-align:center;">
-        <input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;">
-        <button class="btn-export" onclick="esportaJSON()">📦 ESPORTA BACKUP (JSON)</button>
-    </div>
-
-    <div style="text-align:center; margin-bottom: 20px;">
-        <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; font-size: 10px; text-decoration:underline;">RESET MEMORIA</button>
-    </div>
+    <div class="card"><div class="stats-grid"><div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div><div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div><div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.0</b></div></div></div>
+    <div class="card"><h3 style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3><div class="input-grid"><input type="date" id="in-date"><input type="number" step="0.01" id="in-dist" placeholder="KM"><input type="text" id="in-time" placeholder="HH:MM:SS" class="full-width"><input type="number" step="0.01" id="in-kmh" placeholder="KM/H" class="full-width"></div><button class="btn-add" onclick="salvaManuale()">SALVA</button></div>
+    <div class="card" style="text-align:center;"><input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;"><button class="btn-export" onclick="esportaJSON()">📦 ESPORTA BACKUP (JSON)</button></div>
+    <div style="text-align:center; margin-bottom: 20px;"><button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; font-size: 10px; text-decoration:underline;">RESET MEMORIA</button></div>
 </div>
 
 <div id="ranking" class="page">
-    <div class="card" style="text-align:center;">
-        <h3 style="margin:0; font-size: 1em;">🏆 RANKING AL <span id="today-label"></span></h3>
-        <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
-            <option value="distanza">Distanza (KM)</option>
-            <option value="tempo">Tempo (GG:HH:MM:SS)</option>
-            <option value="media">Velocità Media (KM/H)</option>
-        </select>
-    </div>
+    <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">🏆 RANKING AL <span id="today-label"></span></h3><select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;"><option value="distanza">Distanza (KM)</option><option value="tempo">Tempo (GG:HH:MM:SS)</option><option value="media">Velocità Media (KM/H)</option></select></div>
     <div id="lista-ranking"></div>
 </div>
 
-<nav>
-    <div id="nav-home" class="active" onclick="vaiA('home')">🏠 HOME</div>
-    <div id="nav-rank" onclick="vaiA('ranking')">🏆 RANKING</div>
-</nav>
+<nav><div id="nav-home" class="active" onclick="vaiA('home')">🏠 HOME</div><div id="nav-rank" onclick="vaiA('ranking')">🏆 RANKING</div></nav>
 
 <script>
+    // Logica JavaScript identica alla V30/31 per mantenere decimali e layout
     let rawData = [];
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target')) || 5000;
     const oggi = new Date();
