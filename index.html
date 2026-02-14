@@ -19,38 +19,26 @@
         }
 
         body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; -webkit-font-smoothing: antialiased; }
-        header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px; text-transform: uppercase; }
         .profile-img { width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; background: url('icona.png') center/cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        
         .page { display: none; padding: 12px; max-width: 450px; margin: auto; box-sizing: border-box; }
         .page.active { display: block; }
-
         .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); box-sizing: border-box; width: 100%; overflow: hidden; }
-        
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
         .target-box b { font-size: 1.8em; font-weight: 900; }
         .projection { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.85em; font-weight: 600; }
         .edit-target { position: absolute; top: 10px; right: 15px; font-size: 1.2em; cursor: pointer; }
-
-        label { display: block; font-weight: 800; margin: 12px 0 6px 0; font-size: 0.95em; }
-        input, select { width: 100% !important; max-width: 100% !important; min-width: 0 !important; display: block; padding: 14px 5px; margin: 0 0 15px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); box-sizing: border-box; font-size: 16px; font-weight: 700; text-align: center; -webkit-appearance: none; appearance: none; }
-        
+        input, select { width: 100% !important; max-width: 100% !important; min-width: 0 !important; display: block; padding: 14px 5px; margin: 0 0 15px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); box-sizing: border-box; font-size: 16px; font-weight: 700; text-align: center; appearance: none; -webkit-appearance: none; }
         .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; }
-        
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-box { background: rgba(251, 140, 0, 0.12); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); }
         .stat-box.full { grid-column: span 2; }
         .stat-box b { color: var(--primary); font-size: 1.2em; font-weight: 900; }
-        .stat-box span { color: var(--text-main); font-weight: 800; font-size: 1.1em; }
-
+        .stat-box span { color: var(--primary); font-weight: 900; font-size: 1.2em; }
         .rank-item { padding: 18px; background: var(--card); border-radius: 15px; margin-bottom: 12px; border: 2px solid var(--border); }
         .rank-info { font-weight: 900; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .rank-year { font-size: 1.2em; padding-right: 15px; }
-        .rank-value { color: var(--primary); font-size: 1.1em; }
-        
         .progress-bg { background: #e0e0e0; height: 12px; border-radius: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 1s; }
-
         nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 100; }
         nav div { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #8e8e93; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); background: rgba(251, 140, 0, 0.05); }
@@ -66,7 +54,7 @@
 <div id="home" class="page active">
     <div class="card target-box">
         <span class="edit-target" onclick="setNuovoObiettivo()">✏️</span>
-        <small>🎯 OBIETTIVO <span class="current-year-txt"></span></small><br>
+        <small>🎯 OBIETTIVO <span id="year-label"></span></small><br>
         <b id="km-mancanti">0</b> <small>KM AL TRAGUARDO</small>
         <div class="projection">
             Previsione fine anno: <span id="val-proiezione">0</span> KM
@@ -74,23 +62,23 @@
     </div>
 
     <div class="card">
-        <h3 style="color:var(--primary); margin-top:0; font-weight:900;">🚀 Record Personali</h3>
+        <h3 style="color:var(--primary); margin:0 0 15px 0; font-weight:900;">🚀 Record Personali</h3>
         <div class="stats-grid">
             <div class="stat-box"><small>KM TOTALI</small><br><b id="st-km">0</b></div>
-            <div class="stat-box"><small>GIRI MONDO</small><br><b id="st-world">0.0</b></div>
+            <div class="stat-box"><small>GIRI MONDO</small><br><b id="st-world">0.00</b></div>
             <div class="stat-box full">
                 <small>RECORD VELOCITÀ MEDIA ANNUALE</small><br>
-                <b id="st-speed">0</b> <small>nell'anno</small> <span id="st-year">-</span>
+                <b id="st-speed">0.0 km/h</b> <small>nel</small> <span id="st-year">-</span>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <h3 style="color:var(--primary); margin-top:0; font-weight:900;">➕ Nuova Pedalata</h3>
+        <h3 style="color:var(--primary); margin:0 0 15px 0; font-weight:900;">➕ Nuova Pedalata</h3>
         <input type="date" id="in-date">
         <input type="number" id="in-dist" placeholder="KM fatti">
         <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
-        <button class="btn-add" onclick="salvaManuale()">SALVA NEL DIARIO</button>
+        <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
 
     <div style="text-align: center; padding: 10px;">
@@ -101,7 +89,6 @@
 
 <div id="ranking" class="page">
     <div class="card">
-        <label>Ordina classifica per:</label>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza Totale (KM)</option>
             <option value="tempo">Tempo Totale (GG:HH:MM:SS)</option>
@@ -118,26 +105,23 @@
 
 <script>
     let db = {};
-    const annoCorrente = new Date().getFullYear().toString();
-    let targetKm = localStorage.getItem('bainzuretta_target_' + annoCorrente) || 5000;
+    const currY = new Date().getFullYear().toString();
+    let targetKm = localStorage.getItem('bainzuretta_target_' + currY) || 5000;
 
     window.onload = function() {
-        // Aggiorna titoli dinamici
-        document.getElementById('main-title').innerText = "BAINZURETTA " + annoCorrente;
-        document.querySelectorAll('.current-year-txt').forEach(el => el.innerText = annoCorrente);
-
+        document.getElementById('main-title').innerText = "BAINZURETTA " + currY;
+        document.getElementById('year-label').innerText = currY;
         const salvati = localStorage.getItem('bainzuretta_v9');
         if (salvati) db = JSON.parse(salvati);
         document.getElementById('in-date').valueAsDate = new Date();
         aggiornaStats();
-        disegnaClassifica();
     };
 
     function setNuovoObiettivo() {
-        let nuovo = prompt("Imposta il tuo obiettivo KM per il " + annoCorrente + ":", targetKm);
-        if (nuovo && !isNaN(nuovo)) {
-            targetKm = nuovo;
-            localStorage.setItem('bainzuretta_target_' + annoCorrente, nuovo);
+        let n = prompt("Obiettivo KM per il " + currY + ":", targetKm);
+        if (n && !isNaN(n)) {
+            targetKm = n;
+            localStorage.setItem('bainzuretta_target_' + currY, n);
             aggiornaStats();
         }
     }
@@ -147,7 +131,7 @@
         document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.getElementById('nav-' + (id==='home'?'home':'rank')).classList.add('active');
-        if(id === 'ranking') disegnaClassifica();
+        if(id==='ranking') disegnaClassifica();
     }
 
     function tempoDecimale(str) {
@@ -205,27 +189,32 @@
 
     function aggiornaStats() {
         let totK = 0, maxS = 0, bestY = "-";
+        
         Object.keys(db).forEach(y => {
             totK += db[y].distanza;
-            let s = db[y].tempo > 0 ? (db[y].distanza / db[y].tempo) : 0;
-            if (s > maxS) { maxS = s; bestY = y; }
+            let velMediaAnno = db[y].tempo > 0 ? (db[y].distanza / db[y].tempo) : 0;
+            if (velMediaAnno > maxS) {
+                maxS = velMediaAnno;
+                bestY = y;
+            }
         });
 
-        const kmInCorso = db[annoCorrente] ? db[annoCorrente].distanza : 0;
+        // Stats Home
+        document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
+        document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
+        document.getElementById('st-speed').innerText = maxS > 0 ? maxS.toFixed(1) + " km/h" : "0.0 km/h";
+        document.getElementById('st-year').innerText = bestY;
+
+        // Obiettivo e Proiezione
+        const kmInCorso = db[currY] ? db[currY].distanza : 0;
         const diff = targetKm - kmInCorso;
-        document.getElementById('km-mancanti').innerText = diff > 0 ? Math.round(diff).toLocaleString() : "TRAGUARDO OK! 🏆";
+        document.getElementById('km-mancanti').innerText = diff > 0 ? Math.round(diff).toLocaleString() : "COMPLETATO! 🏆";
         
         const oggi = new Date();
         const inizioAnno = new Date(oggi.getFullYear(), 0, 1);
         const giorniPassati = Math.max(1, Math.ceil((oggi - inizioAnno) / (1000 * 60 * 60 * 24)));
         const proiezione = (kmInCorso / giorniPassati) * 365;
-        document.getElementById('val-proiezione').innerText = isNaN(proiezione) ? "0" : Math.round(proiezione).toLocaleString();
-        document.getElementById('valore-target').innerText = targetKm;
-
-        document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
-        document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
-        document.getElementById('st-speed').innerText = maxS ? maxS.toFixed(1) + " km/h" : "0";
-        document.getElementById('st-year').innerText = bestY;
+        document.getElementById('val-proiezione').innerText = (kmInCorso > 0) ? Math.round(proiezione).toLocaleString() : "0";
     }
 
     function disegnaClassifica() {
@@ -243,16 +232,7 @@
             const v = m === 'media' ? (db[y].distanza/(db[y].tempo||1)) : db[y][m];
             const p = (v / maxV) * 100;
             const t = m === 'tempo' ? formattazioneTempo(db[y].tempo) : m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km";
-            container.innerHTML += `
-                <div class="rank-item">
-                    <div class="rank-info">
-                        <span class="rank-year">${i+1}. ${y}</span>
-                        <span class="rank-value">${t}</span>
-                    </div>
-                    <div class="progress-bg">
-                        <div class="progress-fill" style="width:${p}%"></div>
-                    </div>
-                </div>`;
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${t}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${p}%"></div></div></div>`;
         });
     }
 </script>
