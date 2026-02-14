@@ -66,9 +66,10 @@
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
     <div style="text-align:center; padding:10px;">
+        <label style="font-size: 0.8em; font-weight: bold; display: block; margin-bottom: 5px;">CARICA EXCEL O BACKUP JSON</label>
         <input type="file" id="xl-input" accept=".xlsx,.json">
         <button onclick="esportaDati()" style="width:100%; margin-top:10px; padding:10px; border-radius:10px; background:#444; color:white; border:none; font-weight:700;">⬇️ ESPORTA BACKUP</button>
-        <button onclick="if(confirm('Vuoi resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; text-decoration:underline; font-size:0.7em; margin-top:15px;">Reset Memoria</button>
+        <button onclick="if(confirm('Vuoi resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; text-decoration:underline; font-size:0.8em; margin-top:20px; cursor:pointer; font-weight:bold;">⚠️ RESET MEMORIA</button>
     </div>
 </div>
 
@@ -229,7 +230,6 @@
                 wb.SheetNames.forEach(n => {
                     const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], {range: 9, defval: null});
                     rows.forEach(r => {
-                        // NOMI COLONNE AGGIORNATI SECONDO IL TUO FILE
                         let dist = parseFloat(r["DISTANZA"]);
                         let dataAtt = r["DATA DELL'ATTIVITÀ"];
                         let tempo = r["TEMPO IN MOVIMENTO"];
