@@ -10,46 +10,43 @@
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; overflow-x: hidden; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; overflow-x: hidden; width: 100vw; }
         
         header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; text-transform: uppercase; width: 100%; }
         
         .page { display: none; padding: 15px; width: 100%; max-width: 500px; margin: 0 auto; }
         .page.active { display: block; }
         
-        .card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; width: 100%; }
+        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; width: 100%; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; }
 
-        /* FIX DEFINITIVO INPUT IPHONE */
-        .input-group { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .input-group { width: 100%; display: flex; flex-direction: column; gap: 8px; }
         input, select { 
             width: 100% !important; 
-            min-width: 100%;
             max-width: 100%;
-            height: 50px;
-            padding: 0 15px; 
+            height: 45px;
+            padding: 0 10px; 
             border: 2px solid var(--border); 
-            border-radius: 12px; 
+            border-radius: 10px; 
             background: var(--card); 
             color: var(--text); 
             font-size: 16px; 
-            font-weight: 700;
-            -webkit-appearance: none; /* Rimuove stili iOS */
+            -webkit-appearance: none;
         }
 
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; margin-top: 10px; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: 900; margin-top: 5px; }
         
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--primary); }
-        .stat-box b { font-size: 1.2em; color: var(--primary); }
+        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
+        .stat-box b { font-size: 1.1em; color: var(--primary); }
 
-        .rank-item { padding: 15px; background: var(--card); border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); }
-        .rank-info { display: flex; justify-content: space-between; font-weight: 800; }
-        .progress-bg { background: #e0e0e0; height: 10px; border-radius: 5px; margin-top: 8px; overflow: hidden; }
+        .rank-item { padding: 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.9em; }
+        .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
 
-        nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 999; }
-        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 14px; }
+        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 999; }
+        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 13px; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
     </style>
 </head>
@@ -60,8 +57,8 @@
 <div id="home" class="page active">
     <div class="card target-box">
         <small>🎯 OBIETTIVO <span id="target-year"></span></small><br>
-        <b id="km-mancanti" style="font-size: 2.2em;">0</b> <small>KM AL TRAGUARDO</small>
-        <div style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.3); padding-top:10px; font-size:0.8em;">
+        <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
+        <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
             Previsione fine anno: <b id="val-proiezione">0</b> KM
         </div>
     </div>
@@ -75,27 +72,27 @@
     </div>
 
     <div class="card">
-        <h3 style="color:var(--primary); font-size: 1.1em;">➕ AGGIUNGI ATTIVITÀ</h3>
+        <h3 style="color:var(--primary); font-size: 1em; margin-bottom: 8px;">➕ AGGIUNGI ATTIVITÀ</h3>
         <div class="input-group">
             <input type="date" id="in-date">
-            <input type="number" id="in-dist" placeholder="Chilometri (KM)">
+            <input type="number" id="in-dist" placeholder="KM">
             <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
             <button class="btn-add" onclick="salvaManuale()">SALVA</button>
         </div>
     </div>
 
     <div style="text-align:center; padding:10px;">
-        <p style="font-size: 0.7em; font-weight: bold; margin-bottom: 5px;">IMPORTA FILE EXCEL (.XLSX)</p>
-        <input type="file" id="xl-input" accept=".xlsx,.json" style="padding: 10px; border: none; font-size: 12px;">
-        <button onclick="esportaDati()" style="width:100%; margin-top:15px; padding:12px; border-radius:12px; background:#444; color:white; border:none; font-weight:700;">⬇️ ESPORTA BACKUP</button>
-        <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; margin-top:20px; font-weight:bold; text-decoration:underline; font-size: 12px;">⚠️ RESET MEMORIA</button>
+        <p style="font-size: 0.7em; font-weight: bold; margin-bottom: 5px;">IMPORTA EXCEL (.XLSX)</p>
+        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 12px; width: 100%;">
+        <button onclick="esportaDati()" style="width:100%; margin-top:12px; padding:10px; border-radius:10px; background:#444; color:white; border:none; font-weight:700; font-size: 13px;">⬇️ BACKUP JSON</button>
+        <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; margin-top:15px; font-weight:bold; text-decoration:underline; font-size: 11px;">⚠️ RESET MEMORIA</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card" style="text-align:center;">
-        <h3 style="margin:0;">🏆 CLASSIFICA AL <span id="today-label"></span></h3>
-        <p style="font-size:0.8em; opacity:0.7; margin-bottom: 10px;">Confronto anni dal 1° Gen al <span id="today-label2"></span></p>
+        <h3 style="margin:0; font-size: 1.1em;">🏆 CLASSIFICA AL <span id="today-label"></span></h3>
+        <p style="font-size:0.75em; opacity:0.7; margin-bottom: 8px;">Dal 1° Gen al <span id="today-label2"></span></p>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (ORE)</option>
@@ -114,36 +111,25 @@
     let rawData = [];
     const oggi = new Date();
     const currY = oggi.getFullYear();
-    
-    // Calcola il giorno dell'anno
-    function getDOY(date) {
-        const start = new Date(date.getFullYear(), 0, 0);
-        const diff = date - start;
-        return Math.floor(diff / 86400000);
-    }
+    const getDOY = d => Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
     const giornoAnnoOggi = getDOY(oggi);
 
-    window.onload = function() {
+    window.onload = () => {
         document.getElementById('head-year').innerText = currY;
         document.getElementById('target-year').innerText = currY;
         const dStr = oggi.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
         document.getElementById('today-label').innerText = dStr;
         document.getElementById('today-label2').innerText = dStr;
-
-        const salvati = localStorage.getItem('bainzuretta_raw');
-        if (salvati) {
-            rawData = JSON.parse(salvati);
-            aggiornaStats();
-        }
+        const s = localStorage.getItem('bainzuretta_raw');
+        if (s) { rawData = JSON.parse(s); aggiornaStats(); }
         document.getElementById('in-date').valueAsDate = oggi;
     };
 
-    function tempoDecimale(s) {
-        if(!s) return 0;
-        if(typeof s === 'number') return s * 24; // Formato Excel
-        const p = s.toString().split(':');
-        if(p.length < 2) return 0;
-        return (parseInt(p[0])||0) + (parseInt(p[1]||0)/60) + (parseInt(p[2]||0)/3600);
+    function tempoDecimale(v) {
+        if(!v) return 0;
+        if(typeof v === 'number') return v * 24;
+        const p = v.toString().split(':');
+        return p.length >= 2 ? (parseInt(p[0])||0) + (parseInt(p[1]||0)/60) + (parseInt(p[2]||0)/3600) : 0;
     }
 
     function aggiornaStats() {
@@ -151,114 +137,87 @@
         rawData.forEach(a => {
             const y = new Date(a.data).getFullYear();
             if(!dbAnni[y]) dbAnni[y] = { d:0, t:0 };
-            dbAnni[y].d += a.distanza;
-            dbAnni[y].t += a.tempo;
+            dbAnni[y].d += a.distanza; dbAnni[y].t += a.tempo;
             totK += a.distanza;
         });
-
         document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
-        
         let maxS = 0;
         Object.values(dbAnni).forEach(v => { if(v.t > 0) maxS = Math.max(maxS, v.d/v.t); });
         document.getElementById('st-speed').innerText = maxS.toFixed(1) + " km/h";
-
-        const kmQuestAnno = (dbAnni[currY] || {d:0}).d;
-        document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(5000 - kmQuestAnno)).toLocaleString();
-        document.getElementById('val-proiezione').innerText = Math.round((kmQuestAnno / Math.max(1, giornoAnnoOggi)) * 365).toLocaleString();
+        const kY = (dbAnni[currY] || {d:0}).d;
+        document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(5000 - kY)).toLocaleString();
+        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, giornoAnnoOggi)) * 365).toLocaleString();
     }
 
     function disegnaClassifica() {
-        const metrica = document.getElementById('metrica').value;
+        const m = document.getElementById('metrica').value;
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
-        
-        let parziali = {};
+        let p = {};
         rawData.forEach(a => {
             const d = new Date(a.data);
-            const y = d.getFullYear();
             if (getDOY(d) <= giornoAnnoOggi) {
-                if(!parziali[y]) parziali[y] = { d:0, t:0 };
-                parziali[y].d += a.distanza;
-                parziali[y].t += a.tempo;
+                const y = d.getFullYear();
+                if(!p[y]) p[y] = { d:0, t:0 };
+                p[y].d += a.distanza; p[y].t += a.tempo;
             }
         });
-
-        const sorted = Object.keys(parziali).sort((a,b) => {
-            const valA = metrica === 'media' ? (parziali[a].d/parziali[a].t) : (metrica === 'distanza' ? parziali[a].d : parziali[a].t);
-            const valB = metrica === 'media' ? (parziali[b].d/parziali[b].t) : (metrica === 'distanza' ? parziali[b].d : parziali[b].t);
-            return valB - valA;
+        const s = Object.keys(p).sort((a,b) => {
+            const vA = m==='media' ? (p[a].d/(p[a].t||1)) : (m==='distanza' ? p[a].d : p[a].t);
+            const vB = m==='media' ? (p[b].d/(p[b].t||1)) : (m==='distanza' ? p[b].d : p[b].t);
+            return vB - vA;
         });
-
-        if(sorted.length === 0) return;
-        const topKey = sorted[0];
-        const maxVal = metrica === 'media' ? 40 : (metrica === 'distanza' ? parziali[topKey].d : parziali[topKey].t);
-
-        sorted.forEach((y, i) => {
-            const item = parziali[y];
-            const avg = item.t > 0 ? (item.d/item.t) : 0;
-            let label = metrica === 'distanza' ? item.d.toFixed(1) + " km" : 
-                        metrica === 'media' ? avg.toFixed(1) + " km/h" : 
-                        Math.floor(item.t) + "h " + Math.round((item.t % 1)*60) + "m";
-            
-            let curVal = metrica === 'distanza' ? item.d : (metrica === 'media' ? avg : item.t);
-            let perc = Math.min(100, (curVal / maxVal) * 100);
-
-            container.innerHTML += `<div class="rank-item">
-                <div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${label}</span></div>
-                <div class="progress-bg"><div class="progress-fill" style="width:${perc}%"></div></div>
-            </div>`;
+        if(!s.length) return;
+        const max = m==='media' ? 40 : (m==='distanza' ? p[s[0]].d : p[s[0]].t);
+        s.forEach((y, i) => {
+            const avg = p[y].t > 0 ? (p[y].d/p[y].t) : 0;
+            const label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? avg.toFixed(1)+" km/h" : Math.floor(p[y].t)+"h "+Math.round((p[y].t%1)*60)+"m";
+            const cur = m==='distanza' ? p[y].d : m==='media' ? avg : p[y].t;
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span>${label}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(cur/max)*100)}%"></div></div></div>`;
         });
     }
 
-    document.getElementById('xl-input').onchange = function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(ev) {
+    document.getElementById('xl-input').onchange = (e) => {
+        const f = e.target.files[0];
+        const r = new FileReader();
+        r.onload = (ev) => {
             try {
-                const data = new Uint8Array(ev.target.result);
-                const wb = XLSX.read(data, {type:'array', cellDates:true});
-                const tempArr = [];
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+                const temp = [];
+                const sheet = wb.Sheets[wb.SheetNames[0]];
+                const data = XLSX.utils.sheet_to_json(sheet, {defval:null});
                 
-                wb.SheetNames.forEach(name => {
-                    const sheet = wb.Sheets[name];
-                    const json = XLSX.utils.sheet_to_json(sheet, {range: 9});
-                    
-                    json.forEach(row => {
-                        // Cerchiamo le colonne indipendentemente da maiuscole/minuscole o apostrofi
-                        let colData = row["DATA DELL'ATTIVITÀ"] || row["DATA DELL'ATTIVITA"] || row["DATA"];
-                        let colDist = row["DISTANZA"];
-                        let colTempo = row["TEMPO IN MOVIMENTO"] || row["TEMPO"];
-
-                        if(colData && colDist) {
-                            tempArr.push({
-                                data: new Date(colData).toISOString(),
-                                distanza: parseFloat(colDist),
-                                tempo: tempoDecimale(colTempo)
-                            });
-                        }
-                    });
+                data.forEach(row => {
+                    let dVal, distVal, tVal;
+                    // Ricerca flessibile delle colonne
+                    for(let key in row) {
+                        const k = key.toUpperCase();
+                        if(k.includes("DATA")) dVal = row[key];
+                        if(k.includes("DISTANZA")) distVal = row[key];
+                        if(k.includes("TEMPO")) tVal = row[key];
+                    }
+                    if(dVal && distVal) {
+                        temp.push({
+                            data: new Date(dVal).toISOString(),
+                            distanza: parseFloat(distVal),
+                            tempo: tempoDecimale(tVal)
+                        });
+                    }
                 });
-
-                if(tempArr.length > 0) {
-                    rawData = tempArr;
+                if(temp.length) {
+                    rawData = temp;
                     localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-                    alert("Caricate " + tempArr.length + " attività!");
+                    alert("Caricate " + temp.length + " attività!");
                     location.reload();
-                } else {
-                    alert("Non ho trovato dati validi nel file. Controlla le intestazioni.");
-                }
-            } catch(err) {
-                alert("Errore nella lettura del file Excel.");
-            }
+                } else { alert("Nessuna colonna valida trovata."); }
+            } catch(err) { alert("Errore lettura Excel."); }
         };
-        reader.readAsArrayBuffer(file);
+        r.readAsArrayBuffer(f);
     };
 
     function salvaManuale() {
-        const d = document.getElementById('in-date').value;
-        const k = parseFloat(document.getElementById('in-dist').value);
-        const t = document.getElementById('in-time').value;
+        const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value), t = document.getElementById('in-time').value;
         if(!d || isNaN(k)) return;
         rawData.push({ data: new Date(d).toISOString(), distanza: k, tempo: tempoDecimale(t) });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
