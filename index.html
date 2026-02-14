@@ -38,4 +38,198 @@
     <div class="card target-box">
         <small>🎯 OBIETTIVO <span id="target-year"></span></small><br>
         <b id="km-mancanti" style="font-size: 2.2em;">0</b> <small>KM AL TRAGUARDO</small>
-        <div style="margin-top:10px;
+        <div style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.3); padding-top:10px; font-size:0.8em;">
+            Previsione fine anno: <b id="val-proiezione">0</b> KM
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="stats-grid">
+            <div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div>
+            <div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div>
+            <div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.0</b></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="color:var(--primary); font-size: 0.9em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
+        <div class="input-group">
+            <input type="date" id="in-date">
+            <input type="number" step="0.01" id="in-dist" placeholder="KM">
+            <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
+            <input type="number" step="0.01" id="in-kmh" placeholder="Velocità KM/H">
+            <button class="btn-add" onclick="salvaManuale()">SALVA</button>
+        </div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+        <small style="color:var(--primary); font-weight:bold;">CARICA EXCEL (TUTTI I FOGLI)</small>
+        <input type="file" id="xl-input" style="font-size: 12px; margin-top:10px;">
+        <p id="status-log" style="font-size: 10px; margin-top:5px; color:var(--primary); font-weight:bold;"></p>
+    </div>
+
+    <div style="text-align:center;">
+        <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; font-weight:bold; text-decoration:underline; font-size: 11px;">⚠️ RESET MEMORIA</button>
+    </div>
+</div>
+
+<div id="ranking" class="page">
+    <div class="card" style="text-align:center;">
+        <h3 style="margin:0;">🏆 RANKING AL <span id="today-label"></span></h3>
+        <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
+            <option value="distanza">Distanza (KM)</option>
+            <option value="tempo">Tempo (ORE)</option>
+            <option value="media">Velocità Media (KM/H)</option>
+        </select>
+    </div>
+    <div id="lista-ranking"></div>
+</div>
+
+<nav>
+    <div id="nav-home" class="active" onclick="vaiA('home')">🏠 HOME</div>
+    <div id="nav-rank" onclick="vaiA('ranking')">🏆 RANKING</div>
+</nav>
+
+<script>
+    let rawData = [];
+    const oggi = new Date();
+    const currY = oggi.getFullYear();
+    const getDOY = d => Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000) + 1;
+
+    window.onload = () => {
+        document.getElementById('head-year').innerText = currY;
+        document.getElementById('target-year').innerText = currY;
+        document.getElementById('today-label').innerText = oggi.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
+        const s = localStorage.getItem('bainzuretta_raw');
+        if (s) { rawData = JSON.parse(s); aggiornaStats(); }
+        document.getElementById('in-date').valueAsDate = oggi;
+    };
+
+    function parseItalianDate(val) {
+        if (!val) return null;
+        if (val instanceof Date && !isNaN(val)) return val;
+        const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+        let s = val.toString().toLowerCase().trim();
+        const num = s.match(/\d+/g);
+        if (!num) return null;
+        let d = parseInt(num[0]);
+        let y = num.find(n => n.length === 4) || currY;
+        let m = mesi.findIndex(ms => s.includes(ms));
+        if (m === -1 && num.length >= 2) m = parseInt(num[1]) - 1;
+        const res = new Date(y, m, d);
+        return isNaN(res.getTime()) ? null : res;
+    }
+
+    function tempoDecimale(v) {
+        if(!v) return 0;
+        if(typeof v === 'number') return v * 24;
+        const p = v.toString().split(':');
+        return p.length >= 2 ? (parseInt(p[0])||0) + (parseInt(p[1]||0)/60) + (parseInt(p[2]||0)/3600) : 0;
+    }
+
+    document.getElementById('xl-input').onchange = (e) => {
+        const reader = new FileReader();
+        const log = document.getElementById('status-log');
+        log.innerText = "Analisi in corso...";
+
+        reader.onload = (ev) => {
+            try {
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+                let allCollected = [];
+                wb.SheetNames.forEach(name => {
+                    const json = XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:""});
+                    json.forEach(row => {
+                        let dStr, dist, time, kmh;
+                        for (let key in row) {
+                            let k = key.toString().toUpperCase();
+                            if (k.includes("DATA")) dStr = row[key];
+                            if (k.includes("DISTANZA")) dist = row[key];
+                            if (k.includes("TEMPO")) time = row[key];
+                            if (k.includes("KM/H")) kmh = row[key];
+                        }
+                        let dObj = parseItalianDate(dStr);
+                        if (dObj && dist !== "") {
+                            allCollected.push({
+                                data: dObj.toISOString(),
+                                distanza: parseFloat(dist.toString().replace(',','.')) || 0,
+                                tempo: tempoDecimale(time),
+                                media: parseFloat(kmh.toString().replace(',','.')) || 0
+                            });
+                        }
+                    });
+                });
+
+                if (allCollected.length) {
+                    rawData = allCollected;
+                    localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+                    log.innerText = `Letti ${wb.SheetNames.length} fogli!`;
+                    location.reload();
+                }
+            } catch(err) { log.innerText = "Errore!"; }
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    };
+
+    function aggiornaStats() {
+        let totK = 0, dbAnni = {};
+        rawData.forEach(a => {
+            const y = new Date(a.data).getFullYear();
+            if(!dbAnni[y]) dbAnni[y] = { d:0, t:0, mSum:0, c:0 };
+            dbAnni[y].d += a.distanza; dbAnni[y].t += a.tempo; dbAnni[y].mSum += a.media; dbAnni[y].c++;
+            totK += a.distanza;
+        });
+        document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
+        document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
+        let maxS = 0;
+        Object.values(dbAnni).forEach(v => { if(v.c > 0) maxS = Math.max(maxS, v.mSum/v.c); });
+        document.getElementById('st-speed').innerText = maxS.toFixed(1) + " km/h";
+        const kY = (dbAnni[currY] || {d:0}).d;
+        document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(5000 - kY)).toLocaleString();
+        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, getDOY(oggi))) * 365).toLocaleString();
+    }
+
+    function disegnaClassifica() {
+        const m = document.getElementById('metrica').value;
+        const container = document.getElementById('lista-ranking');
+        container.innerHTML = "";
+        let p = {};
+        const dOggi = getDOY(oggi);
+        rawData.forEach(a => {
+            const d = new Date(a.data);
+            if (getDOY(d) <= dOggi) {
+                const y = d.getFullYear();
+                if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
+                p[y].d += a.distanza; p[y].t += a.tempo; p[y].mSum += a.media; p[y].c++;
+            }
+        });
+        const s = Object.keys(p).sort((a,b) => {
+            if(m==='media') return (p[b].mSum/p[b].c) - (p[a].mSum/p[a].c);
+            return (m==='distanza' ? p[b].d - p[a].d : p[b].t - p[a].t);
+        });
+        const maxVal = s.length ? (m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t)) : 1;
+        s.forEach((y, i) => {
+            const avg = p[y].c > 0 ? (p[y].mSum/p[y].c) : 0;
+            const val = m==='distanza' ? p[y].d : m==='media' ? avg : p[y].t;
+            const label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? avg.toFixed(1)+" km/h" : Math.floor(p[y].t)+"h";
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${label}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(val/maxVal)*100)}%"></div></div></div>`;
+        });
+    }
+
+    function salvaManuale() {
+        const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
+        if(!d || isNaN(k)) return;
+        rawData.push({ data: new Date(d).toISOString(), distanza: k, tempo: tempoDecimale(document.getElementById('in-time').value), media: parseFloat(document.getElementById('in-kmh').value) || 0 });
+        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        location.reload();
+    }
+
+    function vaiA(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
+        document.getElementById('nav-'+(id==='home'?'home':'rank')).classList.add('active');
+        if(id === 'ranking') disegnaClassifica();
+    }
+</script>
+</body>
+</html>
