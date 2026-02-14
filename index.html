@@ -2,67 +2,78 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta Ultra Pro</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { 
-            --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #333; --border: #ddd;
+            --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text-main: #222222; --text-sub: #555555; --border: #bbbbbb;
         }
         @media (prefers-color-scheme: dark) {
-            :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333; }
+            :root { --bg: #121212; --card: #1e1e1e; --text-main: #ffffff; --text-sub: #bbbbbb; --border: #444444; }
         }
 
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; }
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 80px; -webkit-font-smoothing: antialiased; }
+        header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: 800; font-size: 1.3em; letter-spacing: 1px; }
         
-        .page { display: none; padding: 15px; max-width: 500px; margin: auto; }
+        .page { display: none; padding: 12px; max-width: 450px; margin: auto; box-sizing: border-box; }
         .page.active { display: block; }
 
-        .card { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); }
-        h3 { margin-top: 0; color: var(--primary); font-size: 1.1em; }
+        .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 15px; border: 1px solid var(--border); box-sizing: border-box; width: 100%; overflow: hidden; }
+        h3 { margin-top: 0; color: var(--primary); font-size: 1.2em; font-weight: 700; display: flex; align-items: center; }
         
-        /* Correzione per il campo data e input */
+        /* CORREZIONE INPUT E LEGGIBILITÀ */
+        label { display: block; font-weight: 700; font-size: 0.95em; color: var(--text-main); margin-bottom: 6px; margin-top: 10px; }
+        
         input, select { 
             width: 100%; 
-            padding: 12px; 
-            margin: 5px 0 15px 0; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
+            max-width: 100%; /* Impedisce lo sforamento */
+            padding: 14px; 
+            margin: 0 0 15px 0; 
+            border: 2px solid var(--border); 
+            border-radius: 10px; 
             background: var(--card); 
-            color: var(--text); 
-            box-sizing: border-box; /* Essenziale per non far sforare l'input */
-            font-size: 16px; /* Evita lo zoom automatico su iOS */
+            color: var(--text-main); 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            font-weight: 500;
             display: block;
-            appearance: none;
         }
 
-        /* Specifica per il campo data per evitare sforamenti su mobile */
+        /* Correzione specifica per il selettore Data */
         input[type="date"] {
-            min-height: 45px;
+            min-height: 50px;
+            appearance: none;
+            -webkit-appearance: none;
             position: relative;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
         }
+
+        input::placeholder { color: var(--text-sub); opacity: 0.8; }
         
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1.1em; text-transform: uppercase; box-shadow: 0 4px 0 #c66f00; transition: all 0.1s; }
+        .btn-add:active { transform: translateY(2px); box-shadow: 0 2px 0 #c66f00; }
         
         /* Stats & Ranking */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 8px; text-align: center; }
-        .stat-box small { font-size: 0.65em; color: #888; display: block; text-transform: uppercase; margin-bottom: 4px; }
-        .stat-box b { font-size: 1em; color: var(--primary); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-box { background: rgba(251, 140, 0, 0.12); padding: 14px; border-radius: 12px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.3); }
+        .stat-box small { font-size: 0.7em; color: var(--text-sub); display: block; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+        .stat-box b { font-size: 1.1em; color: var(--primary); font-weight: 800; }
 
-        .rank-item { padding: 12px; background: var(--card); border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
-        .rank-info { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9em; align-items: center; }
-        .progress-bg { background: #eee; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
-        @media (prefers-color-scheme: dark) { .progress-bg { background: #333; } }
-        .progress-fill { background: var(--primary); height: 100%; width: 0; transition: width 0.8s ease-out; }
+        .rank-item { padding: 15px; background: var(--card); border-radius: 12px; margin-bottom: 10px; border: 2px solid var(--border); }
+        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 1em; align-items: center; }
+        .progress-bg { background: #dddddd; height: 10px; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+        @media (prefers-color-scheme: dark) { .progress-bg { background: #333333; } }
+        .progress-fill { background: var(--primary); height: 100%; width: 0; transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
         
-        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 1px solid var(--border); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        nav div { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; font-size: 0.85em; color: #888; }
-        nav div.active { color: var(--primary); border-top: 3px solid var(--primary); }
+        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); }
+        nav div { flex: 1; text-align: center; padding: 18px; cursor: pointer; font-weight: 800; font-size: 0.9em; color: #777777; transition: 0.2s; }
+        nav div.active { color: var(--primary); background: rgba(251, 140, 0, 0.08); }
 
-        .btn-reset { color: #d32f2f; background: none; border: none; width: 100%; font-size: 0.75em; cursor: pointer; margin-top: 20px; text-decoration: underline; }
-        label { font-size: 0.8em; font-weight: bold; opacity: 0.7; margin-left: 2px; }
+        .btn-reset { color: #d32f2f; background: none; border: none; width: 100%; font-size: 0.8em; cursor: pointer; margin-top: 25px; font-weight: 700; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -82,32 +93,31 @@
 
     <div class="card">
         <h3>➕ Nuova Pedalata</h3>
-        <label>Data Pedalata</label>
+        <label>Seleziona Data</label>
         <input type="date" id="in-date">
         
-        <label>Distanza Percorsa (KM)</label>
-        <input type="number" id="in-dist" placeholder="Es: 42.5" step="0.1">
+        <label>Distanza (KM)</label>
+        <input type="number" id="in-dist" placeholder="Quanti km hai fatto?" step="0.1">
         
-        <label>Tempo Impiegato (HH:MM:SS)</label>
-        <input type="text" id="in-time" placeholder="Es: 01:45:00">
+        <label>Tempo (HH:MM:SS)</label>
+        <input type="text" id="in-time" placeholder="Esempio 02:15:00">
         
         <button class="btn-add" onclick="salvaManuale()">SALVA NEL DIARIO</button>
     </div>
 
-    <div class="card" style="border-style: dashed; text-align: center;">
-        <h3>📁 Gestione Dati</h3>
-        <input type="file" id="xl-input" accept=".xlsx">
-        <p style="font-size: 0.7em; color: #888;">Se l'app non si aggiorna, carica il tuo file Excel.</p>
-        <button class="btn-reset" onclick="resetTutto()">RESET MEMORIA</button>
+    <div class="card" style="border-style: dashed; text-align: center; opacity: 0.9;">
+        <h3>📁 Dati e Backup</h3>
+        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 0.8em; padding: 8px;">
+        <button class="btn-reset" onclick="resetTutto()">RESET MEMORIA APP</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card">
-        <label>Ordina Classifica per:</label>
+        <label>Ordina Classifica:</label>
         <select id="metrica" onchange="disegnaClassifica()">
-            <option value="distanza">Distanza (KM)</option>
-            <option value="tempo">Tempo (GG:HH:MM:SS)</option>
+            <option value="distanza">Distanza Totale (KM)</option>
+            <option value="tempo">Tempo Totale (GG:HH:MM:SS)</option>
             <option value="media">Velocità Media (KM/H)</option>
         </select>
     </div>
@@ -139,10 +149,8 @@
     }
 
     function tempoDecimale(str) {
-        if (!str) return 0;
-        if (typeof str === 'number') return str * 24;
+        if (!str || typeof str !== 'string' || !str.includes(':')) return 0;
         const p = str.split(':');
-        if (p.length < 2) return 0;
         return (parseInt(p[0])||0) + ((parseInt(p[1])||0)/60) + ((parseInt(p[2])||0)/3600);
     }
 
@@ -151,25 +159,19 @@
         const d = Math.floor(s / 86400); s %= 86400;
         const h = Math.floor(s / 3600); s %= 3600;
         const m = Math.floor(s / 60);
-        const sec = s % 60;
-        return `${d.toString().padStart(2,'0')}:${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        return `${d.toString().padStart(2,'0')}:${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
     }
 
     function salvaManuale() {
         const dt = document.getElementById('in-date').value;
         const km = parseFloat(document.getElementById('in-dist').value);
         const tm = document.getElementById('in-time').value;
-
-        if (!dt || isNaN(km) || !tm.includes(':')) { alert("Inserisci dati validi!"); return; }
-
+        if (!dt || isNaN(km) || !tm.includes(':')) { alert("Dati non validi!"); return; }
         const anno = new Date(dt).getFullYear().toString();
         if (!datiCiclista[anno]) datiCiclista[anno] = { distanza: 0, tempo: 0 };
-        
         datiCiclista[anno].distanza += km;
         datiCiclista[anno].tempo += tempoDecimale(tm);
-
         localStorage.setItem('bainzuretta_v9', JSON.stringify(datiCiclista));
-        alert("Pedalata salvata!");
         location.reload();
     }
 
@@ -179,18 +181,15 @@
             const data = new Uint8Array(event.target.result);
             const wb = XLSX.read(data, {type: 'array'});
             const oggi = new Date();
-
             wb.SheetNames.forEach(nome => {
                 const righe = XLSX.utils.sheet_to_json(wb.Sheets[nome], {range: 9});
                 let kmAnno = 0, tmAnno = 0;
-                
                 righe.forEach(r => {
                     const dataAtt = r["DATA DELL'ATTIVITÀ"];
                     if(!dataAtt) return;
                     const p = dataAtt.split(' ');
                     const d = parseInt(p[1]);
                     const m = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"].indexOf(p[2].toLowerCase());
-                    
                     if (m < oggi.getMonth() || (m === oggi.getMonth() && d <= oggi.getDate())) {
                         kmAnno += parseFloat(r["DISTANZA"] || 0);
                         tmAnno += tempoDecimale(r["TEMPO IN MOVIMENTO"]);
@@ -221,44 +220,22 @@
         const m = document.getElementById('metrica').value;
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
-        
         const anni = Object.keys(datiCiclista).sort((a,b) => {
             const valA = m === 'media' ? (datiCiclista[a].distanza/datiCiclista[a].tempo) : datiCiclista[a][m];
             const valB = m === 'media' ? (datiCiclista[b].distanza/datiCiclista[b].tempo) : datiCiclista[b][m];
             return valB - valA;
         });
-
-        if (anni.length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#888;'>Nessun dato presente.</p>";
-            return;
-        }
-
+        if (!anni.length) { container.innerHTML = "<p style='text-align:center;'>Nessun dato.</p>"; return; }
         const maxVal = (m === 'media' ? (datiCiclista[anni[0]].distanza/datiCiclista[anni[0]].tempo) : datiCiclista[anni[0]][m]) || 1;
-
         anni.forEach((y, i) => {
             const v = m === 'media' ? (datiCiclista[y].distanza/datiCiclista[y].tempo) : datiCiclista[y][m];
             const perc = (v / maxVal) * 100;
             const testo = m === 'tempo' ? formattazioneTempo(datiCiclista[y].tempo) : m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km";
-
-            container.innerHTML += `
-                <div class="rank-item">
-                    <div class="rank-info">
-                        <span>${i+1}. ${y}</span>
-                        <span style="color:var(--primary)">${testo}</span>
-                    </div>
-                    <div class="progress-bg">
-                        <div class="progress-fill" style="width:${perc}%"></div>
-                    </div>
-                </div>`;
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${testo}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${perc}%"></div></div></div>`;
         });
     }
 
-    function resetTutto() {
-        if(confirm("Sei sicuro di voler cancellare tutta la memoria dell'app?")) { 
-            localStorage.clear(); 
-            location.reload(); 
-        }
-    }
+    function resetTutto() { if(confirm("Cancellare tutto?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
