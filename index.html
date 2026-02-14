@@ -8,11 +8,13 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --primary: #fb8c00; /* Arancione dinamico tipo Strava */
+            --primary: #fb8c00; 
             --secondary: #2c3e50;
             --bg: #f0f2f5;
             --white: #ffffff;
             --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
         }
 
         body { 
@@ -20,10 +22,18 @@
             margin: 0; 
             background: var(--bg); 
             color: var(--secondary); 
-            padding-bottom: 70px; /* Spazio per la nav bar mobile */
+            padding-bottom: 80px; 
         }
 
-        /* Navigazione Bottom Estetica */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-size: 1.5em; letter-spacing: 2px; text-transform: uppercase; }
+
         nav { 
             display: flex; 
             background: var(--white); 
@@ -38,7 +48,7 @@
             text-align: center; 
             padding: 15px 0; 
             cursor: pointer; 
-            font-size: 0.9em; 
+            font-size: 0.8em; 
             color: #888;
             transition: 0.3s;
         }
@@ -47,16 +57,6 @@
             border-top: 3px solid var(--primary);
             font-weight: bold;
         }
-
-        /* Header */
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        header h1 { margin: 0; font-size: 1.5em; letter-spacing: 2px; }
 
         .page { display: none; padding: 15px; max-width: 600px; margin: auto; animation: fadeIn 0.4s; }
         .page.active { display: block; }
@@ -71,16 +71,13 @@
             margin-bottom: 20px;
         }
 
-        /* Upload Area */
         .upload-area {
             border: 2px dashed #ccc;
             border-radius: 15px;
-            padding: 40px 20px;
+            padding: 30px 20px;
             text-align: center;
             background: #fafafa;
-            transition: 0.3s;
         }
-        .upload-area:active { border-color: var(--primary); background: #fff5e6; }
         input[type="file"] { display: none; }
         .custom-upload {
             background: var(--primary);
@@ -93,7 +90,6 @@
             margin-top: 15px;
         }
 
-        /* Classifica */
         .rank-item {
             display: flex;
             align-items: center;
@@ -101,162 +97,13 @@
             background: var(--white);
             border-radius: 15px;
             margin-bottom: 10px;
-            transition: 0.2s;
+            border-left: 5px solid transparent;
         }
-        .rank-pos {
-            width: 35px;
-            font-weight: bold;
-            font-size: 1.2em;
-            color: #aaa;
-        }
+        .rank-pos { width: 40px; font-weight: bold; font-size: 1.2em; color: #aaa; }
         .rank-year { flex: 1; font-weight: bold; font-size: 1.1em; }
         .rank-val { text-align: right; font-weight: bold; color: var(--primary); }
         .rank-unit { font-size: 0.7em; color: #888; display: block; }
 
-        /* Effetti Podio */
-        .pos-1 { border-left: 5px solid var(--gold); background: #fffdf0; }
+        .pos-1 { border-left-color: var(--gold); background: #fffdf0; }
         .pos-1 .rank-pos { color: var(--gold); }
-        .pos-2 { border-left: 5px solid #c0c0c0; }
-        .pos-3 { border-left: 5px solid #cd7f32; }
-
-        select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            font-size: 1em;
-            background: var(--white);
-            appearance: none;
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <h1>BAINZURETTA</h1>
-</header>
-
-<div id="page1" class="page active">
-    <div class="card">
-        <h3>Carica Attività</h3>
-        <p>Seleziona il tuo file Excel per aggiornare la sfida tra gli anni.</p>
-        <div class="upload-area">
-            <span style="font-size: 3em;">🚲</span><br>
-            <label for="excel-input" class="custom-upload">Scegli File</label>
-            <input type="file" id="excel-input" accept=".xlsx">
-        </div>
-        <p id="status" style="text-align:center; margin-top:15px;"></p>
-    </div>
-</div>
-
-<div id="page2" class="page">
-    <div class="card" style="padding: 15px;">
-        <label style="font-size: 0.8em; color: #888; margin-left: 5px;">CLASSIFICA PER</label>
-        <select id="metric-select" onchange="renderRanking()">
-            <option value="distanza">Distanza Totale (KM)</option>
-            <option value="tempo">Tempo in Sella (ORE)</option>
-            <option value="media">Velocità Media (KM/H)</option>
-        </select>
-    </div>
-    
-    <p style="text-align:center; font-size: 0.8em; color: #666;">Situazione YTD al: <strong id="date-label"></strong></p>
-    
-    <div id="ranking-container">
-        </div>
-</div>
-
-<nav>
-    <div id="btn-1" class="active" onclick="showPage(1)">
-        <span>📥</span><br>Dati
-    </div>
-    <div id="btn-2" onclick="showPage(2)">
-        <span>🏆</span><br>Classifica
-    </div>
-</nav>
-
-<script>
-    let db = {};
-
-    function showPage(n) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('nav div').forEach(d => d.classList.remove('active'));
-        document.getElementById('page'+n).classList.add('active');
-        document.getElementById('btn-'+n).classList.add('active');
-    }
-
-    function timeToDecimal(timeStr) {
-        if (!timeStr || typeof timeStr !== 'string') return 0;
-        const parts = timeStr.split(':');
-        return parseInt(parts[0]) + (parseInt(parts[1])/60) + (parseInt(parts[2])/3600);
-    }
-
-    document.getElementById('excel-input').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const data = new Uint8Array(event.target.result);
-            const wb = XLSX.read(data, {type: 'array'});
-            processWorkbook(wb);
-            document.getElementById('status').innerHTML = "<span style='color:green'>✨ Dati pronti per la sfida!</span>";
-            setTimeout(() => showPage(2), 1000);
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    function processWorkbook(wb) {
-        const today = new Date();
-        const tDay = today.getDate();
-        const tMonth = today.getMonth();
-        db = {};
-
-        wb.SheetNames.forEach(sheetName => {
-            const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {range: 9});
-            let dTot = 0, tTot = 0, sSum = 0, count = 0;
-
-            data.forEach(row => {
-                const rawDate = row["DATA DELL'ATTIVITÀ"];
-                if(!rawDate) return;
-                const p = rawDate.split(' ');
-                const d = parseInt(p[1]);
-                const m = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"].indexOf(p[2].toLowerCase());
-
-                if (m < tMonth || (m === tMonth && d <= tDay)) {
-                    dTot += parseFloat(row["DISTANZA"] || 0);
-                    tTot += timeToDecimal(row["TEMPO IN MOVIMENTO"]);
-                    sSum += parseFloat(row["KM/H"] || 0);
-                    count++;
-                }
-            });
-            if (count > 0) db[sheetName] = { distanza: dTot, tempo: tTot, media: sSum / count };
-        });
-        document.getElementById('date-label').innerText = today.toLocaleDateString('it-IT', {day:'numeric', month:'long'});
-        renderRanking();
-    }
-
-    function renderRanking() {
-        const metric = document.getElementById('metric-select').value;
-        const container = document.getElementById('ranking-container');
-        const units = { distanza: 'KM', tempo: 'ORE', media: 'KM/H' };
-        container.innerHTML = "";
-        
-        const sorted = Object.keys(db).sort((a,b) => db[b][metric] - db[a][metric]);
-
-        sorted.forEach((year, i) => {
-            const div = document.createElement('div');
-            div.className = `rank-item pos-${i+1}`;
-            div.innerHTML = `
-                <div class="rank-pos">${i+1}</div>
-                <div class="rank-year">${year}</div>
-                <div class="rank-val">
-                    ${db[year][metric].toFixed(metric === 'media' ? 2 : 1)}
-                    <span class="rank-unit">${units[metric]}</span>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-</script>
-</body>
-</html>
+        .pos-2 {
