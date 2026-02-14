@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bainzuretta - Diario Infinito</title>
+    <title>Bainzuretta - Pro Timer</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -19,15 +19,14 @@
         .card { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
         h3 { margin: 0 0 15px 0; font-size: 1.1em; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 10px; }
         label { font-size: 0.8em; font-weight: bold; color: #666; }
-        input { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1em; cursor: pointer; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .rank-item { display: flex; align-items: center; padding: 12px; background: var(--white); border-radius: 12px; margin-bottom: 8px; border-left: 5px solid transparent; }
         .rank-pos { width: 35px; font-weight: bold; color: #aaa; }
         .rank-year { flex: 1; font-weight: bold; }
         .rank-val { text-align: right; color: var(--primary); font-weight: bold; }
         .pos-1 { border-left-color: #ffd700; background: #fffdf0; }
         .btn-clear { color: #d32f2f; background: none; border: none; width: 100%; margin-top: 20px; font-size: 0.75em; cursor: pointer; }
-        select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -43,11 +42,11 @@
         <input type="number" id="new-dist" step="0.1" placeholder="0.0">
         <label>Tempo (HH:MM:SS)</label>
         <input type="text" id="new-time" placeholder="00:00:00">
-        <button class="btn-add" onclick="addManualEntry()">AGGIUNGI AL DIARIO</button>
+        <button class="btn-add" onclick="addManualEntry()">SALVA NEL DIARIO</button>
     </div>
 
     <div class="card" style="background: #fdfdfd; border: 1px dashed #ccc;">
-        <h3>📁 Importa File Excel</h3>
+        <h3>📁 Importa Excel</h3>
         <input type="file" id="excel-input" accept=".xlsx">
         <div id="status" style="text-align:center; font-size:0.8em; font-weight:bold; margin-top:10px;"></div>
         <button class="btn-clear" onclick="clearMemory()">Reset totale memoria</button>
@@ -59,11 +58,11 @@
         <label>ORDINA PER</label>
         <select id="metric-select" onchange="renderRanking()">
             <option value="distanza">Distanza Totale (KM)</option>
-            <option value="tempo">Tempo Totale (ORE)</option>
+            <option value="tempo">Tempo Totale (HH:MM:SS)</option>
             <option value="media">Velocità Media (KM/H)</option>
         </select>
     </div>
-    <p style="text-align:center; font-size: 0.8em; color: #666;">Confronto YTD al: <strong id="date-label"></strong></p>
+    <p style="text-align:center; font-size: 0.8em; color: #666;">Situazione YTD al: <strong id="date-label"></strong></p>
     <div id="ranking-container"></div>
 </div>
 
@@ -77,14 +76,11 @@
     const currentYear = new Date().getFullYear().toString();
 
     window.onload = function() {
-        // Carica i dati salvati
-        const saved = localStorage.getItem('bainzuretta_db_v3');
+        const saved = localStorage.getItem('bainzuretta_v5');
         if (saved) {
             db = JSON.parse(saved);
             renderRanking();
         }
-        
-        // Imposta l'anno nel titolo e nell'input data
         document.getElementById('main-title').innerText = "BAINZURETTA " + currentYear;
         document.getElementById('entry-title').innerText = "📝 Nuova Pedalata (" + currentYear + ")";
         document.getElementById('new-date').valueAsDate = new Date();
@@ -98,10 +94,25 @@
         document.getElementById('btn-'+n).classList.add('active');
     }
 
+    // Trasforma HH:MM:SS in ore decimali
     function timeToDecimal(timeStr) {
-        if (!timeStr || !timeStr.includes(':')) return 0;
+        if (!timeStr) return 0;
+        if (typeof timeStr === 'number') return timeStr * 24;
         const parts = timeStr.split(':');
-        return parseInt(parts[0]) + (parseInt(parts[1])/60) + (parseInt(parts[2] || 0)/3600);
+        if (parts.length < 2) return 0;
+        return (parseInt(parts[0]) || 0) + ((parseInt(parts[1]) || 0) / 60) + ((parseInt(parts[2]) || 0) / 3600);
+    }
+
+    // Trasforma ore decimali in HH:MM:SS (Esempio: 1.5 -> 01:30:00)
+    function decimalToTime(decimal) {
+        const hrs = Math.floor(decimal);
+        const mins = Math.floor((decimal - hrs) * 60);
+        const secs = Math.round(((decimal - hrs) * 60 - mins) * 60);
+        
+        const h = hrs.toString().padStart(2, '0');
+        const m = mins.toString().padStart(2, '0');
+        const s = secs.toString().padStart(2, '0');
+        return `${h}:${m}:${s}`;
     }
 
     function addManualEntry() {
@@ -110,112 +121,17 @@
         const timeStr = document.getElementById('new-time').value;
         
         if (!dateInput || isNaN(dist) || !timeStr.includes(':')) {
-            alert("Compila tutti i campi correttamente!");
+            alert("Errore! Inserisci KM e Tempo (HH:MM:SS)");
             return;
         }
 
         const year = new Date(dateInput).getFullYear().toString();
-
-        if (!db[year]) db[year] = { distanza: 0, tempo: 0, mediaSum: 0, count: 0, media: 0 };
-
         const timeDec = timeToDecimal(timeStr);
+
+        if (!db[year]) db[year] = { distanza: 0, tempo: 0 };
+
         db[year].distanza += dist;
         db[year].tempo += timeDec;
-        db[year].mediaSum += (dist / timeDec);
-        db[year].count += 1;
-        db[year].media = db[year].mediaSum / db[year].count;
+        db[year].media = db[year].distanza / db[year].tempo;
 
-        localStorage.setItem('bainzuretta_db_v3', JSON.stringify(db));
-        
-        document.getElementById('new-dist').value = "";
-        document.getElementById('new-time').value = "";
-        
-        alert("Pedalata salvata nel " + year + "!");
-        renderRanking();
-        showPage(2);
-    }
-
-    document.getElementById('excel-input').addEventListener('change', function(e) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const data = new Uint8Array(event.target.result);
-            const wb = XLSX.read(data, {type: 'array'});
-            const today = new Date();
-            const tDay = today.getDate();
-            const tMonth = today.getMonth();
-
-            wb.SheetNames.forEach(sheetName => {
-                const sheetData = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {range: 9});
-                let dTot = 0, tTot = 0, sSum = 0, count = 0;
-
-                sheetData.forEach(row => {
-                    const rawDate = row["DATA DELL'ATTIVITÀ"];
-                    if(!rawDate) return;
-                    const p = rawDate.split(' ');
-                    const d = parseInt(p[1]);
-                    const months = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-                    const m = months.indexOf(p[2].toLowerCase());
-
-                    // Logica YTD (Year To Date)
-                    if (m < tMonth || (m === tMonth && d <= tDay)) {
-                        const dist = parseFloat(row["DISTANZA"] || 0);
-                        const time = timeToDecimal(row["TEMPO IN MOVIMENTO"]);
-                        if (dist > 0 && time > 0) {
-                            dTot += dist;
-                            tTot += time;
-                            sSum += (dist / time);
-                            count++;
-                        }
-                    }
-                });
-                if (count > 0) {
-                    db[sheetName] = { distanza: dTot, tempo: tTot, mediaSum: sSum, count: count, media: sSum / count };
-                }
-            });
-            localStorage.setItem('bainzuretta_db_v3', JSON.stringify(db));
-            document.getElementById('status').innerHTML = "<span style='color:green'>✅ Storico Sincronizzato!</span>";
-            renderRanking();
-        };
-        reader.readAsArrayBuffer(e.target.files[0]);
-    });
-
-    function renderRanking() {
-        const metric = document.getElementById('metric-select').value;
-        const container = document.getElementById('ranking-container');
-        const units = { distanza: 'KM', tempo: 'ORE', media: 'KM/H' };
-        container.innerHTML = "";
-        
-        const years = Object.keys(db).sort((a,b) => db[b][metric] - db[a][metric]);
-        if (years.length === 0) {
-            container.innerHTML = "<p style='text-align:center;color:#999;margin-top:20px;'>Nessun dato. Carica l'Excel o aggiungi una pedalata.</p>";
-            return;
-        }
-
-        years.forEach((year, i) => {
-            const div = document.createElement('div');
-            div.className = `rank-item ${i === 0 ? 'pos-1' : ''}`;
-            const val = db[year][metric].toFixed(metric === 'media' ? 2 : 1);
-            const isCurrent = (year === currentYear);
-            div.innerHTML = `
-                <div class="rank-pos">${i+1}</div>
-                <div class="rank-year">${year} ${isCurrent ? '🚲' : ''}</div>
-                <div class="rank-val">${val} <span style="font-size:0.7em">${units[metric]}</span></div>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function updateDateLabel() {
-        document.getElementById('date-label').innerText = new Date().toLocaleDateString('it-IT', {day:'numeric', month:'long'});
-    }
-
-    function clearMemory() {
-        if(confirm("Vuoi resettare tutto?")) {
-            localStorage.removeItem('bainzuretta_db_v3');
-            db = {};
-            location.reload();
-        }
-    }
-</script>
-</body>
-</html>
+        localStorage.setItem('bainzuretta_
