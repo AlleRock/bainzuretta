@@ -10,36 +10,98 @@
     <link rel="icon" type="image/png" href="icona.png">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text-main: #1a1a1a; --border: #999999; }
-        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text-main: #ffffff; --border: #38383a; } }
+        :root { 
+            --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; 
+            --text-main: #111111; --text-sub: #333333; --border: #888888; 
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #000000; --card: #1c1c1e; --text-main: #ffffff; --text-sub: #dddddd; --border: #444444; }
+        }
 
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; }
-        header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .profile-img { width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; background: url('icona.png') center/cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; -webkit-font-smoothing: antialiased; }
+        
+        header { 
+            background: var(--primary); color: white; padding: 20px; text-align: center; 
+            font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+
+        .profile-img { 
+            width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; 
+            background: url('icona.png') center/cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+        }
         
         .page { display: none; padding: 12px; max-width: 450px; margin: auto; box-sizing: border-box; }
         .page.active { display: block; }
 
-        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); box-sizing: border-box; }
-        
-        /* Sezione OBIETTIVO PERSONALE */
-        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
-        .target-box b { font-size: 1.8em; }
-        .edit-target { position: absolute; top: 10px; right: 15px; font-size: 1.2em; cursor: pointer; opacity: 0.8; }
+        /* Card con protezione overflow per evitare sforamenti */
+        .card { 
+            background: var(--card); padding: 20px; border-radius: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; 
+            border: 1px solid var(--border); box-sizing: border-box; 
+            width: 100%; overflow: hidden; 
+        }
 
-        label { display: block; font-weight: 800; margin: 12px 0 8px 0; }
-        input, select { width: 100%; padding: 16px; margin-bottom: 15px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); box-sizing: border-box; font-size: 16px; font-weight: 600; }
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; }
+        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
+        .target-box b { font-size: 1.8em; font-weight: 900; }
+        .edit-target { position: absolute; top: 10px; right: 15px; font-size: 1.2em; cursor: pointer; }
+
+        label { display: block; font-weight: 800; margin: 12px 0 6px 0; font-size: 0.95em; }
+
+        /* RESET AGGRESSIVO INPUT */
+        input, select { 
+            width: 100% !important; 
+            max-width: 100% !important;
+            min-width: 0 !important; /* Reset fondamentale */
+            display: block;
+            padding: 14px 5px; 
+            margin: 0 0 15px 0; 
+            border: 2px solid var(--border); 
+            border-radius: 12px; 
+            background: var(--card); 
+            color: var(--text-main); 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            font-weight: 700;
+            text-align: center;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="date"] {
+            position: relative;
+            background-color: var(--card);
+        }
+
+        /* Rimuove freccine e icone che spostano il layout a destra */
+        input::-webkit-inner-spin-button, 
+        input::-webkit-calendar-picker-indicator { 
+            margin: 0; 
+            padding: 0;
+        }
+
+        .btn-add { 
+            background: var(--primary); color: white; border: none; width: 100%; 
+            padding: 18px; border-radius: 15px; font-weight: 900; 
+            font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; 
+        }
         
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.3); }
-        .stat-box b { color: var(--primary); font-size: 1.2em; }
+        .stat-box { 
+            background: rgba(251, 140, 0, 0.12); padding: 15px; border-radius: 15px; 
+            text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); 
+        }
+        .stat-box b { color: var(--primary); font-size: 1.2em; font-weight: 900; }
+        .stat-box small { font-weight: 800; font-size: 0.7em; }
 
         .rank-item { padding: 15px; background: var(--card); border-radius: 15px; margin-bottom: 10px; border: 2px solid var(--border); }
+        .rank-info { font-weight: 900; display: flex; justify-content: space-between; }
         .progress-bg { background: #e0e0e0; height: 12px; border-radius: 6px; margin-top: 10px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 1s; }
 
-        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 100; }
+        nav { 
+            display: flex; position: fixed; bottom: 0; width: 100%; 
+            background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 100; 
+        }
         nav div { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #8e8e93; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); background: rgba(251, 140, 0, 0.05); }
     </style>
@@ -54,13 +116,13 @@
 <div id="home" class="page active">
     <div class="card target-box">
         <span class="edit-target" onclick="setNuovoObiettivo()">✏️</span>
-        <small>🎯 IL MIO OBIETTIVO 2026</small><br>
+        <small>🎯 OBIETTIVO 2026</small><br>
         <b id="km-mancanti">0</b><br>
-        <small>KM MANCANTI PER RAGGIUNGERE <span id="valore-target">0</span> KM</small>
+        <small>KM PER RAGGIUNGERE <span id="valore-target">0</span> KM</small>
     </div>
 
     <div class="card">
-        <h3>🚀 Record Personali</h3>
+        <h3 style="color:var(--primary); margin-top:0; font-weight:900;">🚀 Record Personali</h3>
         <div class="stats-grid">
             <div class="stat-box"><small>KM TOTALI</small><br><b id="st-km">0</b></div>
             <div class="stat-box"><small>GIRI MONDO</small><br><b id="st-world">0.0</b></div>
@@ -70,21 +132,25 @@
     </div>
 
     <div class="card">
-        <h3>➕ Nuova Pedalata</h3>
+        <h3 style="color:var(--primary); margin-top:0; font-weight:900;">➕ Nuova Pedalata</h3>
+        <label>Seleziona Giorno</label>
         <input type="date" id="in-date">
-        <input type="number" id="in-dist" placeholder="Distanza (KM)">
-        <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
+        <label>Distanza Percorsa (KM)</label>
+        <input type="number" id="in-dist" placeholder="Es. 35.5">
+        <label>Tempo (HH:MM:SS)</label>
+        <input type="text" id="in-time" placeholder="00:00:00">
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
 
-    <div style="text-align: center;">
-        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 0.7em;">
-        <button onclick="localStorage.clear(); location.reload();" style="background:none; border:none; color:red; font-size: 0.7em; margin-top: 15px; text-decoration: underline;">Reset Memoria</button>
+    <div style="text-align: center; padding: 10px;">
+        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 0.8em; border:none;">
+        <button onclick="if(confirm('Resetti tutto?')) { localStorage.clear(); location.reload(); }" style="background:none; border:none; color:red; font-size: 0.8em; text-decoration: underline; margin-top:10px;">Reset Memoria</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card">
+        <label>Classifica per:</label>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (GG:HH:MM:SS)</option>
@@ -112,7 +178,7 @@
     };
 
     function setNuovoObiettivo() {
-        let nuovo = prompt("Qual è il tuo obiettivo di KM per il 2026?", targetKm);
+        let nuovo = prompt("Obiettivo KM per il 2026:", targetKm);
         if (nuovo && !isNaN(nuovo)) {
             targetKm = nuovo;
             localStorage.setItem('bainzuretta_target', nuovo);
@@ -185,10 +251,9 @@
             if (s > maxS) { maxS = s; bestY = y; }
         });
 
-        // Logica Obiettivo
         const km2026 = db["2026"] ? db["2026"].distanza : 0;
         const diff = targetKm - km2026;
-        document.getElementById('km-mancanti').innerText = diff > 0 ? Math.round(diff).toLocaleString() : "COMPLETATO! 🎉";
+        document.getElementById('km-mancanti').innerText = diff > 0 ? Math.round(diff).toLocaleString() : "TRAGUARDO RAGGIUNTO! 🏆";
         document.getElementById('valore-target').innerText = targetKm;
 
         document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
