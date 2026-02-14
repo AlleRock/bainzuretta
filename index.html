@@ -20,7 +20,7 @@
         .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
         .target-box b { font-size: 1.8em; font-weight: 900; }
-        input, select { width: 100%; padding: 14px 5px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); font-weight: 700; text-align: center; }
+        input, select { width: 100%; padding: 14px 5px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); font-weight: 700; text-align: center; box-sizing: border-box; }
         .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-box { background: rgba(251, 140, 0, 0.12); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); }
@@ -43,7 +43,7 @@
 
 <div id="home" class="page active">
     <div class="card target-box">
-        <span onclick="setNuovoObiettivo()" style="position:absolute; right:15px; top:10px;">✏️</span>
+        <span onclick="setNuovoObiettivo()" style="position:absolute; right:15px; top:10px; cursor:pointer;">✏️</span>
         <small>🎯 OBIETTIVO <span class="cy"></span></small><br>
         <b id="km-mancanti">0</b> <small>KM AL TRAGUARDO</small>
         <div style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.3); padding-top:10px; font-size:0.8em;">
@@ -68,13 +68,14 @@
     <div style="text-align:center; padding:10px;">
         <input type="file" id="xl-input" accept=".xlsx,.json">
         <button onclick="esportaDati()" style="width:100%; margin-top:10px; padding:10px; border-radius:10px; background:#444; color:white; border:none; font-weight:700;">⬇️ ESPORTA BACKUP</button>
+        <button onclick="if(confirm('Vuoi resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; text-decoration:underline; font-size:0.7em; margin-top:15px;">Reset Memoria</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card" style="text-align:center;">
         <h3 style="color:var(--primary); margin:0;">🏆 Confronto al <span id="today-label"></span></h3>
-        <p style="font-size:0.8em; margin:5px 0;">Dati calcolati dal 1° Gennaio al <span id="today-label2"></span> di ogni anno.</p>
+        <p style="font-size:0.8em; margin:5px 0;">Dal 1° Gennaio al <span id="today-label2"></span> di ogni anno.</p>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (GG:HH:MM:SS)</option>
@@ -90,44 +91,43 @@
 </nav>
 
 <script>
-    let rawData = []; // Memorizziamo le singole attività
-    let dbTotale = {}; // Per i record storici
+    let rawData = [];
     const oggi = new Date();
-    const giornoMeseOggi = (oggi.getMonth() + 1).toString().padStart(2, '0') + "-" + oggi.getDate().toString().padStart(2, '0');
     const currY = oggi.getFullYear().toString();
 
     window.onload = function() {
         document.getElementById('main-title').innerText = "BAINZURETTA " + currY;
         document.querySelectorAll('.cy').forEach(e => e.innerText = currY);
-        document.getElementById('today-label').innerText = oggi.toLocaleDateString('it-IT', {day:'numeric', month:'long'});
-        document.getElementById('today-label2').innerText = oggi.toLocaleDateString('it-IT', {day:'numeric', month:'long'});
+        const dataLabel = oggi.toLocaleDateString('it-IT', {day:'numeric', month:'long'});
+        document.getElementById('today-label').innerText = dataLabel;
+        document.getElementById('today-label2').innerText = dataLabel;
         
         const salvati = localStorage.getItem('bainzuretta_raw');
         if (salvati) {
             rawData = JSON.parse(salvati);
-            elaboraDati();
+            aggiornaStats();
         }
         document.getElementById('in-date').valueAsDate = oggi;
     };
 
-    function elaboraDati() {
-        dbTotale = {};
+    function aggiornaStats() {
+        let dbTotale = {};
+        let totK = 0;
+        
         rawData.forEach(att => {
             const anno = new Date(att.data).getFullYear().toString();
             if (!dbTotale[anno]) dbTotale[anno] = { distanza: 0, tempo: 0 };
             dbTotale[anno].distanza += att.distanza;
             dbTotale[anno].tempo += att.tempo;
+            totK += att.distanza;
         });
-        aggiornaStats();
-    }
 
-    function aggiornaStats() {
-        let totK = 0, maxS = 0, bestY = "-";
+        let maxS = 0, bestY = "-";
         Object.keys(dbTotale).forEach(y => {
-            totK += dbTotale[y].distanza;
             let v = dbTotale[y].tempo > 0 ? (dbTotale[y].distanza / dbTotale[y].tempo) : 0;
             if (v > maxS) { maxS = v; bestY = y; }
         });
+
         document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
         document.getElementById('st-speed').innerText = maxS.toFixed(1) + " km/h";
@@ -147,14 +147,14 @@
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
         
-        // Calcoliamo i parziali "alla data odierna" per ogni anno
         let parziali = {};
+        const giornoOggi = oggi.getDate();
+        const meseOggi = oggi.getMonth();
+
         rawData.forEach(att => {
             const d = new Date(att.data);
             const anno = d.getFullYear().toString();
-            const mmdd = (d.getMonth() + 1).toString().padStart(2, '0') + "-" + d.getDate().toString().padStart(2, '0');
-            
-            if (mmdd <= giornoMeseOggi) {
+            if (d.getMonth() < meseOggi || (d.getMonth() === meseOggi && d.getDate() <= giornoOggi)) {
                 if (!parziali[anno]) parziali[anno] = { distanza: 0, tempo: 0 };
                 parziali[anno].distanza += att.distanza;
                 parziali[anno].tempo += att.tempo;
@@ -167,23 +167,37 @@
             return vB - vA;
         });
 
+        if (anniSorted.length === 0) { container.innerHTML = "<p style='text-align:center'>Nessun dato per questo periodo.</p>"; return; }
+
+        const maxVal = m === 'media' ? 40 : parziali[anniSorted[0]][m];
+
         anniSorted.forEach((y, i) => {
             const v = m === 'media' ? (parziali[y].distanza/(parziali[y].tempo||1)) : parziali[y][m];
             const tTxt = m === 'tempo' ? formattazioneTempo(parziali[y].tempo) : (m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km");
-            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span>${tTxt}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(v/(m==='media'?40:parziali[anniSorted[0]][m]))*100}%"></div></div></div>`;
+            const perc = Math.min(100, (v / (maxVal || 1)) * 100);
+            container.innerHTML += `
+                <div class="rank-item">
+                    <div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${tTxt}</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:${perc}%"></div></div>
+                </div>`;
         });
     }
 
-    // --- FUNZIONI UTILITY (Excel, Salvataggio, Tempo) ---
     function tempoDecimale(s) { 
         if (!s) return 0; if (typeof s === 'number') return s * 24;
-        const p = s.split(':'); return p.length < 2 ? 0 : (parseInt(p[0])||0) + (parseInt(p[1])/60) + (parseInt(p[2]||0)/3600);
+        const p = s.toString().split(':'); 
+        if (p.length < 2) return 0;
+        return (parseInt(p[0])||0) + (parseInt(p[1])/60) + (parseInt(p[2]||0)/3600);
     }
+
     function formattazioneTempo(dec) {
-        let s = Math.round(dec * 3600); const d = Math.floor(s/86400); s%=86400;
-        const h = Math.floor(s/3600); s%=3600; const m = Math.floor(s/60);
-        return `${d}g ${h}h ${m}m`;
+        let s = Math.round(dec * 3600); 
+        const d = Math.floor(s/86400); s%=86400;
+        const h = Math.floor(s/3600); s%=3600; 
+        const m = Math.floor(s/60);
+        return d > 0 ? `${d}g ${h}h` : `${h}h ${m}m`;
     }
+
     function vaiA(id) { 
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -191,15 +205,17 @@
         document.getElementById('nav-' + (id==='home'?'home':'rank')).classList.add('active');
         if(id==='ranking') disegnaClassifica();
     }
+
     function salvaManuale() {
         const d = document.getElementById('in-date').value;
         const k = parseFloat(document.getElementById('in-dist').value);
         const t = document.getElementById('in-time').value;
         if (!d || isNaN(k)) return;
-        rawData.push({ data: d, distanza: k, tempo: tempoDecimale(t) });
+        rawData.push({ data: new Date(d).toISOString(), distanza: k, tempo: tempoDecimale(t) });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
     }
+
     document.getElementById('xl-input').onchange = function(e) {
         const file = e.target.files[0]; if (!file) return;
         const reader = new FileReader();
@@ -207,19 +223,26 @@
             if (file.name.endsWith('.json')) {
                 rawData = JSON.parse(event.target.result);
             } else {
-                const wb = XLSX.read(new Uint8Array(event.target.result), {type: 'array'});
+                const data = new Uint8Array(event.target.result);
+                const wb = XLSX.read(data, {type: 'array', cellDates: true});
                 rawData = [];
                 wb.SheetNames.forEach(n => {
-                    const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], {range: 9});
+                    const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], {range: 9, defval: null});
                     rows.forEach(r => {
-                        if (r["DISTANZA"] && r["DATA"]) {
-                            let dateObj;
-                            if (typeof r["DATA"] === 'number') { // Excel date format
-                                dateObj = new Date(Math.round((r["DATA"] - 25569) * 86400 * 1000));
-                            } else {
-                                dateObj = new Date(r["DATA"]);
+                        // NOMI COLONNE AGGIORNATI SECONDO IL TUO FILE
+                        let dist = parseFloat(r["DISTANZA"]);
+                        let dataAtt = r["DATA DELL'ATTIVITÀ"];
+                        let tempo = r["TEMPO IN MOVIMENTO"];
+
+                        if (dist > 0 && dataAtt) {
+                            let d = dataAtt instanceof Date ? dataAtt : new Date(dataAtt);
+                            if (!isNaN(d.getTime())) {
+                                rawData.push({ 
+                                    data: d.toISOString(), 
+                                    distanza: dist, 
+                                    tempo: tempoDecimale(tempo) 
+                                });
                             }
-                            rawData.push({ data: dateObj.toISOString(), distanza: parseFloat(r["DISTANZA"]), tempo: tempoDecimale(r["TEMPO IN MOVIMENTO"]) });
                         }
                     });
                 });
@@ -229,13 +252,15 @@
         };
         file.name.endsWith('.json') ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
     };
+
     function esportaDati() {
         const blob = new Blob([JSON.stringify(rawData)], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = "bainzuretta_backup.json"; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = "bainzuretta_backup.json"; a.click();
     }
+
     function setNuovoObiettivo() {
-        let n = prompt("Obiettivo KM:", 5000);
+        let n = prompt("Obiettivo KM per il " + currY + ":", 5000);
         if (n) { localStorage.setItem('target_' + currY, n); aggiornaStats(); }
     }
 </script>
