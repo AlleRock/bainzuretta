@@ -9,29 +9,205 @@
         :root { 
             --primary: #fb8c00; --secondary: #2c3e50; --bg: #f0f2f5; --card: #ffffff; --text: #333; --border: #ddd;
         }
-        /* Dark Mode Automatica */
         @media (prefers-color-scheme: dark) {
             :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333; --secondary: #ffa726; }
         }
 
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); padding-bottom: 90px; transition: 0.3s; }
-        header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.2em; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.2em; }
         
         nav { display: flex; background: var(--card); position: fixed; bottom: 0; width: 100%; border-top: 1px solid var(--border); z-index: 1000; }
         nav div { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; color: #888; font-weight: bold; font-size: 0.8em; }
-        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); background: rgba(251, 140, 0, 0.05); }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
 
         .page { display: none; padding: 15px; max-width: 500px; margin: auto; }
-        .page.active { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page.active { display: block; }
 
         .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; border: 1px solid var(--border); }
-        h3 { margin: 0 0 15px 0; font-size: 1.1em; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        h3 { margin: 0 0 15px 0; font-size: 1.1em; color: var(--primary); }
         
-        label { font-size: 0.75em; font-weight: bold; color: #888; display: block; margin-top: 10px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); box-sizing: border-box; font-size: 1em; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); box-sizing: border-box; }
         
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1em; box-shadow: 0 4px 10px rgba(251, 140, 0, 0.3); }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         
-        /* Classifica con Barre */
         .rank-item { padding: 15px; background: var(--card); border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .rank-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; }
+        .progress-container { background: #eee; height: 8px; border-radius: 4px; overflow: hidden; }
+        @media (prefers-color-scheme: dark) { .progress-container { background: #333; } }
+        .progress-bar { background: var(--primary); height: 100%; border-radius: 4px; width: 0; transition: width 0.8s; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 10px; text-align: center; }
+        .stat-box small { font-size: 0.65em; display: block; color: #888; }
+        .stat-box span { font-weight: bold; font-size: 0.9em; color: var(--primary); }
+
+        .btn-clear { color: #d32f2f; background: none; border: none; width: 100%; margin-top: 20px; font-size: 0.75em; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header id="main-title">BAINZURETTA 2026</header>
+
+<div id="page1" class="page active">
+    <div class="card">
+        <h3>🚀 Record Personali</h3>
+        <div class="stats-grid">
+            <div class="stat-box"><small>KM TOTALI</small><span id="stat-total-km">0</span></div>
+            <div class="stat-box"><small>GIRI DEL MONDO</small><span id="stat-world">0.00</span></div>
+            <div class="stat-box"><small>MAX MEDIA</small><span id="stat-max-speed">0 km/h</span></div>
+            <div class="stat-box"><small>ANNO RECORD</small><span id="stat-best-year">-</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>➕ Nuova Pedalata</h3>
+        <input type="date" id="new-date">
+        <input type="number" id="new-dist" step="0.1" placeholder="KM (es: 32.5)">
+        <input type="text" id="new-time" placeholder="Tempo (HH:MM:SS)">
+        <input type="text" id="new-note" placeholder="Note (es: Genova-Bogliasco)">
+        <button class="btn-add" onclick="addManualEntry()">SALVA NEL DIARIO</button>
+    </div>
+
+    <div class="card" style="border-style: dashed;">
+        <h3>📁 Importa Excel</h3>
+        <input type="file" id="excel-input" accept=".xlsx">
+        <button class="btn-clear" onclick="clearMemory()">Reset Totale Memoria</button>
+    </div>
+</div>
+
+<div id="page2" class="page">
+    <div class="card">
+        <select id="metric-select" onchange="renderRanking()">
+            <option value="distanza">Distanza (KM)</option>
+            <option value="tempo">Tempo (GG:HH:MM:SS)</option>
+            <option value="media">Velocità Media (KM/H)</option>
+        </select>
+    </div>
+    <div id="ranking-container"></div>
+</div>
+
+<nav>
+    <div id="btn-1" class="active" onclick="showPage(1)">HOME</div>
+    <div id="btn-2" onclick="showPage(2)">RANKING</div>
+</nav>
+
+<script>
+    let db = {};
+
+    window.onload = () => {
+        const saved = localStorage.getItem('bainzuretta_final');
+        if (saved) db = JSON.parse(saved);
+        document.getElementById('new-date').valueAsDate = new Date();
+        updateStats();
+        renderRanking();
+    };
+
+    function showPage(n) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('nav div').forEach(d => d.classList.remove('active'));
+        document.getElementById('page'+n).classList.add('active');
+        document.getElementById('btn-'+n).classList.add('active');
+    }
+
+    function timeToDecimal(t) {
+        if (!t) return 0;
+        if (typeof t === 'number') return t * 24;
+        const p = t.split(':');
+        return (parseInt(p[0])||0) + ((parseInt(p[1])||0)/60) + ((parseInt(p[2])||0)/3600);
+    }
+
+    function decimalToFullTime(dec) {
+        let s = Math.round(dec * 3600);
+        const d = Math.floor(s / 86400); s %= 86400;
+        const h = Math.floor(s / 3600); s %= 3600;
+        const m = Math.floor(s / 60);
+        return `${d.toString().padStart(2,'0')}:${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+    }
+
+    function addManualEntry() {
+        const d = document.getElementById('new-date').value;
+        const dist = parseFloat(document.getElementById('new-dist').value);
+        const time = document.getElementById('new-time').value;
+        if (!d || isNaN(dist) || !time.includes(':')) return alert("Dati non validi!");
+
+        const yr = new Date(d).getFullYear().toString();
+        if (!db[yr]) db[yr] = { distanza: 0, tempo: 0 };
+        db[yr].distanza += dist;
+        db[yr].tempo += timeToDecimal(time);
+
+        localStorage.setItem('bainzuretta_final', JSON.stringify(db));
+        location.reload();
+    }
+
+    document.getElementById('excel-input').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const data = new Uint8Array(event.target.result);
+            const wb = XLSX.read(data, {type: 'array'});
+            const today = new Date();
+            wb.SheetNames.forEach(name => {
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {range: 9});
+                let dY = 0, tY = 0;
+                rows.forEach(r => {
+                    const rawDate = r["DATA DELL'ATTIVITÀ"];
+                    if(!rawDate) return;
+                    const p = rawDate.split(' ');
+                    const day = parseInt(p[1]);
+                    const mon = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"].indexOf(p[2].toLowerCase());
+                    if (mon < today.getMonth() || (mon === today.getMonth() && day <= today.getDate())) {
+                        dY += parseFloat(r["DISTANZA"] || 0);
+                        tY += timeToDecimal(r["TEMPO IN MOVIMENTO"]);
+                    }
+                });
+                if (dY > 0) db[name] = { distanza: dY, tempo: tY };
+            });
+            localStorage.setItem('bainzuretta_final', JSON.stringify(db));
+            location.reload();
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    };
+
+    function updateStats() {
+        let totalKm = 0, maxSpeed = 0, bestYear = "-";
+        Object.keys(db).forEach(y => {
+            totalKm += db[y].distanza;
+            const speed = db[y].distanza / db[y].tempo;
+            if (speed > maxSpeed) { maxSpeed = speed; bestYear = y; }
+        });
+        document.getElementById('stat-total-km').innerText = Math.round(totalKm) + " KM";
+        document.getElementById('stat-world').innerText = (totalKm / 40075).toFixed(2);
+        document.getElementById('stat-max-speed').innerText = maxSpeed ? maxSpeed.toFixed(2) + " km/h" : "0 km/h";
+        document.getElementById('stat-best-year').innerText = bestYear;
+    }
+
+    function renderRanking() {
+        const m = document.getElementById('metric-select').value;
+        const container = document.getElementById('ranking-container');
+        container.innerHTML = "";
+        const years = Object.keys(db).sort((a,b) => {
+            const vA = m === 'media' ? (db[a].distanza/db[a].tempo) : db[a][m];
+            const vB = m === 'media' ? (db[b].distanza/db[b].tempo) : db[b][m];
+            return vB - vA;
+        });
+
+        const maxVal = years.length ? (m === 'media' ? (db[years[0]].distanza/db[years[0]].tempo) : db[years[0]][m]) : 1;
+
+        years.forEach((y, i) => {
+            const curVal = m === 'media' ? (db[y].distanza/db[y].tempo) : db[y][m];
+            const percent = (curVal / maxVal) * 100;
+            const display = m === 'tempo' ? decimalToFullTime(db[y].tempo) : m === 'media' ? curVal.toFixed(2) + " km/h" : db[y].distanza.toFixed(1) + " km";
+
+            container.innerHTML += `
+                <div class="rank-item">
+                    <div class="rank-header"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${display}</span></div>
+                    <div class="progress-container"><div class="progress-bar" style="width:${percent}%"></div></div>
+                </div>`;
+        });
+    }
+
+    function clearMemory() {
+        if(confirm("Vuoi resettare?")) { localStorage.clear(); location.reload(); }
+    }
+</script>
+</body>
+</html>
