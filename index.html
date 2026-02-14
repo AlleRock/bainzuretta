@@ -3,89 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <title>Bainzuretta</title>
-    <meta name="apple-mobile-web-app-title" content="Bainzuretta">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icona.png">
     <link rel="icon" type="image/png" href="icona.png">
-
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root { 
-            --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text-main: #1a1a1a; --text-sub: #444444; --border: #999999;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root { --bg: #000000; --card: #1c1c1e; --text-main: #ffffff; --text-sub: #aeaeb2; --border: #38383a; }
-        }
+        :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text-main: #1a1a1a; --border: #999999; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text-main: #ffffff; --border: #38383a; } }
 
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; -webkit-font-smoothing: antialiased; }
-        
-        header { 
-            background: var(--primary); 
-            color: white; 
-            padding: 20px 15px; 
-            text-align: center; 
-            font-weight: 900; 
-            font-size: 1.4em; 
-            letter-spacing: 1px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Spazio per la tua foto profilo nell'header */
-        .profile-img {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 3px solid white;
-            background: url('icona.png') center/cover;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .profile-img { width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; background: url('icona.png') center/cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
         .page { display: none; padding: 12px; max-width: 450px; margin: auto; box-sizing: border-box; }
         .page.active { display: block; }
 
-        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); box-sizing: border-box; width: 100%; overflow: hidden; }
-        h3 { margin-top: 0; color: var(--primary); font-size: 1.2em; font-weight: 800; }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid var(--border); box-sizing: border-box; }
         
-        label { display: block; font-weight: 800; font-size: 1em; color: var(--text-main); margin-bottom: 8px; margin-top: 12px; }
-        
-        input, select { 
-            width: 100%; 
-            max-width: 100%;
-            padding: 16px; 
-            margin: 0 0 15px 0; 
-            border: 2px solid var(--border); 
-            border-radius: 12px; 
-            background: var(--card); 
-            color: var(--text-main); 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            font-weight: 600;
-        }
+        /* Sezione OBIETTIVO PERSONALE */
+        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; position: relative; }
+        .target-box b { font-size: 1.8em; }
+        .edit-target { position: absolute; top: 10px; right: 15px; font-size: 1.2em; cursor: pointer; opacity: 0.8; }
 
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; }
+        label { display: block; font-weight: 800; margin: 12px 0 8px 0; }
+        input, select { width: 100%; padding: 16px; margin-bottom: 15px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-main); box-sizing: border-box; font-size: 16px; font-weight: 600; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; font-size: 1.1em; text-transform: uppercase; box-shadow: 0 5px 0 #bf6a00; }
         
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-box { background: rgba(251, 140, 0, 0.15); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.4); }
-        .stat-box small { font-size: 0.75em; color: var(--text-sub); display: block; text-transform: uppercase; font-weight: 800; margin-bottom: 5px; }
-        .stat-box b { font-size: 1.2em; color: var(--primary); font-weight: 900; }
+        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(251, 140, 0, 0.3); }
+        .stat-box b { color: var(--primary); font-size: 1.2em; }
 
-        .rank-item { padding: 18px; background: var(--card); border-radius: 15px; margin-bottom: 12px; border: 2px solid var(--border); }
-        .rank-info { display: flex; justify-content: space-between; font-weight: 900; font-size: 1.1em; align-items: center; }
-        .progress-bg { background: #e0e0e0; height: 12px; border-radius: 6px; margin-top: 12px; overflow: hidden; }
-        @media (prefers-color-scheme: dark) { .progress-bg { background: #333333; } }
-        .progress-fill { background: var(--primary); height: 100%; width: 0; transition: width 1s ease-out; }
-        
-        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; }
-        nav div { flex: 1; text-align: center; padding: 15px 5px; cursor: pointer; font-weight: 900; font-size: 0.9em; color: #8e8e93; display: flex; align-items: center; justify-content: center; }
-        nav div.active { color: var(--primary); background: rgba(251, 140, 0, 0.1); border-top: 4px solid var(--primary); }
+        .rank-item { padding: 15px; background: var(--card); border-radius: 15px; margin-bottom: 10px; border: 2px solid var(--border); }
+        .progress-bg { background: #e0e0e0; height: 12px; border-radius: 6px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { background: var(--primary); height: 100%; transition: width 1s; }
 
-        .btn-reset { color: #ff3b30; background: none; border: none; width: 100%; font-size: 0.85em; cursor: pointer; margin-top: 30px; font-weight: 700; text-decoration: underline; }
+        nav { display: flex; position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 2px solid var(--border); height: 75px; z-index: 100; }
+        nav div { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #8e8e93; }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); background: rgba(251, 140, 0, 0.05); }
     </style>
 </head>
 <body>
@@ -96,36 +52,39 @@
 </header>
 
 <div id="home" class="page active">
+    <div class="card target-box">
+        <span class="edit-target" onclick="setNuovoObiettivo()">✏️</span>
+        <small>🎯 IL MIO OBIETTIVO 2026</small><br>
+        <b id="km-mancanti">0</b><br>
+        <small>KM MANCANTI PER RAGGIUNGERE <span id="valore-target">0</span> KM</small>
+    </div>
+
     <div class="card">
         <h3>🚀 Record Personali</h3>
         <div class="stats-grid">
-            <div class="stat-box"><small>KM Totali</small><b id="st-km">0</b></div>
-            <div class="stat-box"><small>Giri del Mondo</small><b id="st-world">0.0</b></div>
-            <div class="stat-box"><small>Media Top</small><b id="st-speed">0</b></div>
-            <div class="stat-box"><small>Anno Top</small><b id="st-year">-</b></div>
+            <div class="stat-box"><small>KM TOTALI</small><br><b id="st-km">0</b></div>
+            <div class="stat-box"><small>GIRI MONDO</small><br><b id="st-world">0.0</b></div>
+            <div class="stat-box"><small>MEDIA TOP</small><br><b id="st-speed">0</b></div>
+            <div class="stat-box"><small>ANNO TOP</small><br><b id="st-year">-</b></div>
         </div>
     </div>
 
     <div class="card">
         <h3>➕ Nuova Pedalata</h3>
-        <label>Data</label>
         <input type="date" id="in-date">
-        <label>Distanza (KM)</label>
-        <input type="number" id="in-dist" placeholder="KM">
-        <label>Tempo (HH:MM:SS)</label>
-        <input type="text" id="in-time" placeholder="00:00:00">
+        <input type="number" id="in-dist" placeholder="Distanza (KM)">
+        <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
 
-    <div class="card" style="border-style: dashed; text-align: center;">
-        <input type="file" id="xl-input" accept=".xlsx" style="margin-bottom: 10px;">
-        <button class="btn-reset" onclick="resetTutto()">RESET MEMORIA</button>
+    <div style="text-align: center;">
+        <input type="file" id="xl-input" accept=".xlsx" style="font-size: 0.7em;">
+        <button onclick="localStorage.clear(); location.reload();" style="background:none; border:none; color:red; font-size: 0.7em; margin-top: 15px; text-decoration: underline;">Reset Memoria</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card">
-        <label>Ordina per:</label>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (GG:HH:MM:SS)</option>
@@ -141,22 +100,31 @@
 </nav>
 
 <script>
-    let datiCiclista = {};
+    let db = {};
+    let targetKm = localStorage.getItem('bainzuretta_target') || 5000;
 
     window.onload = function() {
         const salvati = localStorage.getItem('bainzuretta_v9');
-        if (salvati) datiCiclista = JSON.parse(salvati);
+        if (salvati) db = JSON.parse(salvati);
         document.getElementById('in-date').valueAsDate = new Date();
         aggiornaStats();
         disegnaClassifica();
     };
+
+    function setNuovoObiettivo() {
+        let nuovo = prompt("Qual è il tuo obiettivo di KM per il 2026?", targetKm);
+        if (nuovo && !isNaN(nuovo)) {
+            targetKm = nuovo;
+            localStorage.setItem('bainzuretta_target', nuovo);
+            aggiornaStats();
+        }
+    }
 
     function vaiA(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.getElementById('nav-' + (id==='home'?'home':'rank')).classList.add('active');
-        if(id === 'ranking') disegnaClassifica();
     }
 
     function tempoDecimale(str) {
@@ -177,12 +145,12 @@
         const dt = document.getElementById('in-date').value;
         const km = parseFloat(document.getElementById('in-dist').value);
         const tm = document.getElementById('in-time').value;
-        if (!dt || isNaN(km) || !tm.includes(':')) { alert("Dati non validi!"); return; }
+        if (!dt || isNaN(km) || !tm.includes(':')) return;
         const anno = new Date(dt).getFullYear().toString();
-        if (!datiCiclista[anno]) datiCiclista[anno] = { distanza: 0, tempo: 0 };
-        datiCiclista[anno].distanza += km;
-        datiCiclista[anno].tempo += tempoDecimale(tm);
-        localStorage.setItem('bainzuretta_v9', JSON.stringify(datiCiclista));
+        if (!db[anno]) db[anno] = { distanza: 0, tempo: 0 };
+        db[anno].distanza += km;
+        db[anno].tempo += tempoDecimale(tm);
+        localStorage.setItem('bainzuretta_v9', JSON.stringify(db));
         location.reload();
     }
 
@@ -191,39 +159,41 @@
         reader.onload = function(event) {
             const data = new Uint8Array(event.target.result);
             const wb = XLSX.read(data, {type: 'array'});
-            const oggi = new Date();
             wb.SheetNames.forEach(nome => {
                 const righe = XLSX.utils.sheet_to_json(wb.Sheets[nome], {range: 9});
-                let kmAnno = 0, tmAnno = 0;
+                let kmA = 0, tmA = 0;
                 righe.forEach(r => {
-                    const dataAtt = r["DATA DELL'ATTIVITÀ"];
-                    if(!dataAtt) return;
-                    const p = dataAtt.split(' ');
-                    const d = parseInt(p[1]);
-                    const m = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"].indexOf(p[2].toLowerCase());
-                    if (m < oggi.getMonth() || (m === oggi.getMonth() && d <= oggi.getDate())) {
-                        kmAnno += parseFloat(r["DISTANZA"] || 0);
-                        tmAnno += tempoDecimale(r["TEMPO IN MOVIMENTO"]);
+                    const dAtt = r["DATA DELL'ATTIVITÀ"];
+                    if(dAtt) {
+                        kmA += parseFloat(r["DISTANZA"] || 0);
+                        tmA += tempoDecimale(r["TEMPO IN MOVIMENTO"]);
                     }
                 });
-                if (kmAnno > 0) datiCiclista[nome] = { distanza: kmAnno, tempo: tmAnno };
+                if (kmA > 0) db[nome] = { distanza: kmA, tempo: tmA };
             });
-            localStorage.setItem('bainzuretta_v9', JSON.stringify(datiCiclista));
+            localStorage.setItem('bainzuretta_v9', JSON.stringify(db));
             location.reload();
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     };
 
     function aggiornaStats() {
-        let totKm = 0, maxSpd = 0, bestY = "-";
-        Object.keys(datiCiclista).forEach(y => {
-            totKm += datiCiclista[y].distanza;
-            const spd = datiCiclista[y].distanza / datiCiclista[y].tempo;
-            if (spd > maxSpd) { maxSpd = spd; bestY = y; }
+        let totK = 0, maxS = 0, bestY = "-";
+        Object.keys(db).forEach(y => {
+            totK += db[y].distanza;
+            let s = db[y].distanza / db[y].tempo;
+            if (s > maxS) { maxS = s; bestY = y; }
         });
-        document.getElementById('st-km').innerText = Math.round(totKm).toLocaleString();
-        document.getElementById('st-world').innerText = (totKm / 40075).toFixed(2);
-        document.getElementById('st-speed').innerText = maxSpd ? maxSpd.toFixed(1) + " km/h" : "0";
+
+        // Logica Obiettivo
+        const km2026 = db["2026"] ? db["2026"].distanza : 0;
+        const diff = targetKm - km2026;
+        document.getElementById('km-mancanti').innerText = diff > 0 ? Math.round(diff).toLocaleString() : "COMPLETATO! 🎉";
+        document.getElementById('valore-target').innerText = targetKm;
+
+        document.getElementById('st-km').innerText = Math.round(totK).toLocaleString();
+        document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
+        document.getElementById('st-speed').innerText = maxS ? maxS.toFixed(1) + " km/h" : "0";
         document.getElementById('st-year').innerText = bestY;
     }
 
@@ -231,22 +201,20 @@
         const m = document.getElementById('metrica').value;
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
-        const anni = Object.keys(datiCiclista).sort((a,b) => {
-            const valA = m === 'media' ? (datiCiclista[a].distanza/datiCiclista[a].tempo) : datiCiclista[a][m];
-            const valB = m === 'media' ? (datiCiclista[b].distanza/datiCiclista[b].tempo) : datiCiclista[b][m];
-            return valB - valA;
+        const anni = Object.keys(db).sort((a,b) => {
+            const vA = m === 'media' ? (db[a].distanza/db[a].tempo) : db[a][m];
+            const vB = m === 'media' ? (db[b].distanza/db[b].tempo) : db[b][m];
+            return vB - vA;
         });
         if (!anni.length) return;
-        const maxVal = (m === 'media' ? (datiCiclista[anni[0]].distanza/datiCiclista[anni[0]].tempo) : datiCiclista[anni[0]][m]) || 1;
+        const maxV = (m === 'media' ? (db[anni[0]].distanza/db[anni[0]].tempo) : db[anni[0]][m]) || 1;
         anni.forEach((y, i) => {
-            const v = m === 'media' ? (datiCiclista[y].distanza/datiCiclista[y].tempo) : datiCiclista[y][m];
-            const perc = (v / maxVal) * 100;
-            const testo = m === 'tempo' ? formattazioneTempo(datiCiclista[y].tempo) : m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km";
-            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${testo}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${perc}%"></div></div></div>`;
+            const v = m === 'media' ? (db[y].distanza/db[y].tempo) : db[y][m];
+            const p = (v / maxV) * 100;
+            const t = m === 'tempo' ? formattazioneTempo(db[y].tempo) : m === 'media' ? v.toFixed(2) + " km/h" : v.toFixed(1) + " km";
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${t}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${p}%"></div></div></div>`;
         });
     }
-
-    function resetTutto() { if(confirm("Cancellare tutto?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
