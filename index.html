@@ -3,107 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bainzuretta - Bike Stats</title>
+    <title>Bainzuretta - Diario Infinito</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root {
-            --primary: #fb8c00; 
-            --secondary: #2c3e50;
-            --bg: #f0f2f5;
-            --white: #ffffff;
-            --gold: #ffd700;
-            --silver: #c0c0c0;
-            --bronze: #cd7f32;
-        }
-
-        body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; 
-            background: var(--bg); 
-            color: var(--secondary); 
-            padding-bottom: 80px; 
-        }
-
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        header h1 { margin: 0; font-size: 1.5em; letter-spacing: 2px; text-transform: uppercase; }
-
-        nav { 
-            display: flex; 
-            background: var(--white); 
-            position: fixed; 
-            bottom: 0; 
-            width: 100%; 
-            box-shadow: 0 -2px 15px rgba(0,0,0,0.1); 
-            z-index: 1000;
-        }
-        nav div { 
-            flex: 1; 
-            text-align: center; 
-            padding: 15px 0; 
-            cursor: pointer; 
-            font-size: 0.8em; 
-            color: #888;
-            transition: 0.3s;
-        }
-        nav div.active { 
-            color: var(--primary); 
-            border-top: 3px solid var(--primary);
-            font-weight: bold;
-        }
-
-        .page { display: none; padding: 15px; max-width: 600px; margin: auto; animation: fadeIn 0.4s; }
+        :root { --primary: #fb8c00; --secondary: #2c3e50; --bg: #f0f2f5; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; letter-spacing: 1px; }
+        nav { display: flex; background: var(--white); position: fixed; bottom: 0; width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        nav div { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; color: #888; font-size: 0.8em; font-weight: bold; }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        .page { display: none; padding: 15px; max-width: 500px; margin: auto; animation: fadeIn 0.3s; }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--white); padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        h3 { margin: 0 0 15px 0; font-size: 1.1em; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        label { font-size: 0.8em; font-weight: bold; color: #666; }
+        input { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1em; cursor: pointer; }
+        .rank-item { display: flex; align-items: center; padding: 12px; background: var(--white); border-radius: 12px; margin-bottom: 8px; border-left: 5px solid transparent; }
+        .rank-pos { width: 35px; font-weight: bold; color: #aaa; }
+        .rank-year { flex: 1; font-weight: bold; }
+        .rank-val { text-align: right; color: var(--primary); font-weight: bold; }
+        .pos-1 { border-left-color: #ffd700; background: #fffdf0; }
+        .btn-clear { color: #d32f2f; background: none; border: none; width: 100%; margin-top: 20px; font-size: 0.75em; cursor: pointer; }
+        select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+<header id="main-title">BAINZURETTA</header>
 
-        .card { 
-            background: var(--white); 
-            padding: 20px; 
-            border-radius: 20px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            margin-bottom: 20px;
+<div id="page1" class="page active">
+    <div class="card">
+        <h3 id="entry-title">📝 Nuova Pedalata</h3>
+        <label>Data</label>
+        <input type="date" id="new-date">
+        <label>Distanza (KM)</label>
+        <input type="number" id="new-dist" step="0.1" placeholder="0.0">
+        <label>Tempo (HH:MM:SS)</label>
+        <input type="text" id="new-time" placeholder="00:00:00">
+        <button class="btn-add" onclick="addManualEntry()">AGGIUNGI AL DIARIO</button>
+    </div>
+
+    <div class="card" style="background: #fdfdfd; border: 1px dashed #ccc;">
+        <h3>📁 Importa File Excel</h3>
+        <input type="file" id="excel-input" accept=".xlsx">
+        <div id="status" style="text-align:center; font-size:0.8em; font-weight:bold; margin-top:10px;"></div>
+        <button class="btn-clear" onclick="clearMemory()">Reset totale memoria</button>
+    </div>
+</div>
+
+<div id="page2" class="page">
+    <div class="card">
+        <label>ORDINA PER</label>
+        <select id="metric-select" onchange="renderRanking()">
+            <option value="distanza">Distanza Totale (KM)</option>
+            <option value="tempo">Tempo Totale (ORE)</option>
+            <option value="media">Velocità Media (KM/H)</option>
+        </select>
+    </div>
+    <p style="text-align:center; font-size: 0.8em; color: #666;">Confronto YTD al: <strong id="date-label"></strong></p>
+    <div id="ranking-container"></div>
+</div>
+
+<nav>
+    <div id="btn-1" class="active" onclick="showPage(1)">➕ INSERIMENTO</div>
+    <div id="btn-2" onclick="showPage(2)">🏆 CLASSIFICA</div>
+</nav>
+
+<script>
+    let db = {};
+    const currentYear = new Date().getFullYear().toString();
+
+    window.onload = function() {
+        // Carica i dati salvati
+        const saved = localStorage.getItem('bainzuretta_db_v3');
+        if (saved) {
+            db = JSON.parse(saved);
+            renderRanking();
+        }
+        
+        // Imposta l'anno nel titolo e nell'input data
+        document.getElementById('main-title').innerText = "BAINZURETTA " + currentYear;
+        document.getElementById('entry-title').innerText = "📝 Nuova Pedalata (" + currentYear + ")";
+        document.getElementById('new-date').valueAsDate = new Date();
+        updateDateLabel();
+    };
+
+    function showPage(n) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('nav div').forEach(d => d.classList.remove('active'));
+        document.getElementById('page'+n).classList.add('active');
+        document.getElementById('btn-'+n).classList.add('active');
+    }
+
+    function timeToDecimal(timeStr) {
+        if (!timeStr || !timeStr.includes(':')) return 0;
+        const parts = timeStr.split(':');
+        return parseInt(parts[0]) + (parseInt(parts[1])/60) + (parseInt(parts[2] || 0)/3600);
+    }
+
+    function addManualEntry() {
+        const dateInput = document.getElementById('new-date').value;
+        const dist = parseFloat(document.getElementById('new-dist').value);
+        const timeStr = document.getElementById('new-time').value;
+        
+        if (!dateInput || isNaN(dist) || !timeStr.includes(':')) {
+            alert("Compila tutti i campi correttamente!");
+            return;
         }
 
-        .upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 15px;
-            padding: 30px 20px;
-            text-align: center;
-            background: #fafafa;
-        }
-        input[type="file"] { display: none; }
-        .custom-upload {
-            background: var(--primary);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 50px;
-            display: inline-block;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 15px;
+        const year = new Date(dateInput).getFullYear().toString();
+
+        if (!db[year]) db[year] = { distanza: 0, tempo: 0, mediaSum: 0, count: 0, media: 0 };
+
+        const timeDec = timeToDecimal(timeStr);
+        db[year].distanza += dist;
+        db[year].tempo += timeDec;
+        db[year].mediaSum += (dist / timeDec);
+        db[year].count += 1;
+        db[year].media = db[year].mediaSum / db[year].count;
+
+        localStorage.setItem('bainzuretta_db_v3', JSON.stringify(db));
+        
+        document.getElementById('new-dist').value = "";
+        document.getElementById('new-time').value = "";
+        
+        alert("Pedalata salvata nel " + year + "!");
+        renderRanking();
+        showPage(2);
+    }
+
+    document.getElementById('excel-input').addEventListener('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const data = new Uint8Array(event.target.result);
+            const wb = XLSX.read(data, {type: 'array'});
+            const today = new Date();
+            const tDay = today.getDate();
+            const tMonth = today.getMonth();
+
+            wb.SheetNames.forEach(sheetName => {
+                const sheetData = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {range: 9});
+                let dTot = 0, tTot = 0, sSum = 0, count = 0;
+
+                sheetData.forEach(row => {
+                    const rawDate = row["DATA DELL'ATTIVITÀ"];
+                    if(!rawDate) return;
+                    const p = rawDate.split(' ');
+                    const d = parseInt(p[1]);
+                    const months = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+                    const m = months.indexOf(p[2].toLowerCase());
+
+                    // Logica YTD (Year To Date)
+                    if (m < tMonth || (m === tMonth && d <= tDay)) {
+                        const dist = parseFloat(row["DISTANZA"] || 0);
+                        const time = timeToDecimal(row["TEMPO IN MOVIMENTO"]);
+                        if (dist > 0 && time > 0) {
+                            dTot += dist;
+                            tTot += time;
+                            sSum += (dist / time);
+                            count++;
+                        }
+                    }
+                });
+                if (count > 0) {
+                    db[sheetName] = { distanza: dTot, tempo: tTot, mediaSum: sSum, count: count, media: sSum / count };
+                }
+            });
+            localStorage.setItem('bainzuretta_db_v3', JSON.stringify(db));
+            document.getElementById('status').innerHTML = "<span style='color:green'>✅ Storico Sincronizzato!</span>";
+            renderRanking();
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    function renderRanking() {
+        const metric = document.getElementById('metric-select').value;
+        const container = document.getElementById('ranking-container');
+        const units = { distanza: 'KM', tempo: 'ORE', media: 'KM/H' };
+        container.innerHTML = "";
+        
+        const years = Object.keys(db).sort((a,b) => db[b][metric] - db[a][metric]);
+        if (years.length === 0) {
+            container.innerHTML = "<p style='text-align:center;color:#999;margin-top:20px;'>Nessun dato. Carica l'Excel o aggiungi una pedalata.</p>";
+            return;
         }
 
-        .rank-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background: var(--white);
-            border-radius: 15px;
-            margin-bottom: 10px;
-            border-left: 5px solid transparent;
-        }
-        .rank-pos { width: 40px; font-weight: bold; font-size: 1.2em; color: #aaa; }
-        .rank-year { flex: 1; font-weight: bold; font-size: 1.1em; }
-        .rank-val { text-align: right; font-weight: bold; color: var(--primary); }
-        .rank-unit { font-size: 0.7em; color: #888; display: block; }
+        years.forEach((year, i) => {
+            const div = document.createElement('div');
+            div.className = `rank-item ${i === 0 ? 'pos-1' : ''}`;
+            const val = db[year][metric].toFixed(metric === 'media' ? 2 : 1);
+            const isCurrent = (year === currentYear);
+            div.innerHTML = `
+                <div class="rank-pos">${i+1}</div>
+                <div class="rank-year">${year} ${isCurrent ? '🚲' : ''}</div>
+                <div class="rank-val">${val} <span style="font-size:0.7em">${units[metric]}</span></div>
+            `;
+            container.appendChild(div);
+        });
+    }
 
-        .pos-1 { border-left-color: var(--gold); background: #fffdf0; }
-        .pos-1 .rank-pos { color: var(--gold); }
-        .pos-2 {
+    function updateDateLabel() {
+        document.getElementById('date-label').innerText = new Date().toLocaleDateString('it-IT', {day:'numeric', month:'long'});
+    }
+
+    function clearMemory() {
+        if(confirm("Vuoi resettare tutto?")) {
+            localStorage.removeItem('bainzuretta_db_v3');
+            db = {};
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
