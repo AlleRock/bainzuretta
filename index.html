@@ -10,21 +10,18 @@
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; overflow-x: hidden; width: 100%; position: relative; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; overflow-x: hidden; width: 100%; }
         
         header { background: var(--primary); color: white; padding: 20px; text-align: center; font-weight: 900; text-transform: uppercase; width: 100%; }
-        
         .page { display: none; padding: 15px; width: 100%; max-width: 500px; margin: 0 auto; }
         .page.active { display: block; }
         
         .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; width: 100%; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; }
 
-        /* FIX IPHONE: Forza gli input a restare dentro lo schermo */
         .input-group { width: 100%; display: flex; flex-direction: column; gap: 10px; }
         input, select { 
             width: 100% !important; 
-            max-width: 100% !important;
             height: 48px;
             padding: 0 12px; 
             border: 2px solid var(--border); 
@@ -33,10 +30,9 @@
             color: var(--text); 
             font-size: 16px; 
             -webkit-appearance: none;
-            display: block;
         }
 
-        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 900; margin-top: 5px; }
+        .btn-add { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 900; }
         
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
@@ -77,9 +73,9 @@
         <h3 style="color:var(--primary); font-size: 1em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
         <div class="input-group">
             <input type="date" id="in-date">
-            <input type="number" id="in-dist" placeholder="Chilometri (KM)">
+            <input type="number" id="in-dist" placeholder="KM percorsi">
             <input type="text" id="in-time" placeholder="Tempo (HH:MM:SS)">
-            <input type="number" id="in-kmh" placeholder="Velocità Media (KM/H)">
+            <input type="number" step="0.01" id="in-kmh" placeholder="Velocità KM/H">
             <button class="btn-add" onclick="salvaManuale()">SALVA</button>
         </div>
     </div>
@@ -87,14 +83,14 @@
     <div style="text-align:center; padding:10px;">
         <input type="file" id="xl-input" accept=".xlsx" style="font-size: 12px; margin-bottom: 10px;">
         <button onclick="esportaDati()" style="width:100%; padding:12px; border-radius:12px; background:#444; color:white; border:none; font-weight:700;">⬇️ BACKUP JSON</button>
-        <button onclick="if(confirm('Resettare?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; margin-top:20px; font-weight:bold; text-decoration:underline; font-size: 12px;">⚠️ RESET MEMORIA</button>
+        <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" style="color:red; background:none; border:none; margin-top:20px; font-weight:bold; text-decoration:underline; font-size: 12px;">⚠️ RESET MEMORIA</button>
     </div>
 </div>
 
 <div id="ranking" class="page">
     <div class="card" style="text-align:center;">
-        <h3 style="margin:0;">🏆 RANKING AL <span id="today-label"></span></h3>
-        <p style="font-size:0.8em; opacity:0.7; margin-bottom: 10px;">Filtro: dal 1° Gen al <span id="today-label2"></span></p>
+        <h3 style="margin:0;">🏆 CLASSIFICA AL <span id="today-label"></span></h3>
+        <p style="font-size:0.8em; opacity:0.7; margin-bottom: 10px;">Dal 1° Gen al <span id="today-label2"></span> di ogni anno</p>
         <select id="metrica" onchange="disegnaClassifica()">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (ORE)</option>
@@ -134,14 +130,22 @@
         return p.length >= 2 ? (parseInt(p[0])||0) + (parseInt(p[1]||0)/60) + (parseInt(p[2]||0)/3600) : 0;
     }
 
+    // Normalizza i nomi delle colonne (toglie accenti, spazi e mette in minuscolo)
+    function cleanKey(key) {
+        return key.toString().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // toglie accenti
+            .replace(/[^a-z0-h/]/g, "") // tiene solo lettere e il simbolo /
+            .trim();
+    }
+
     function aggiornaStats() {
         let totK = 0, dbAnni = {};
         rawData.forEach(a => {
             const y = new Date(a.data).getFullYear();
-            if(!dbAnni[y]) dbAnni[y] = { d:0, t:0, mediaSomma:0, count:0 };
+            if(!dbAnni[y]) dbAnni[y] = { d:0, t:0, mSum:0, count:0 };
             dbAnni[y].d += a.distanza; 
             dbAnni[y].t += a.tempo;
-            dbAnni[y].mediaSomma += a.media;
+            dbAnni[y].mSum += a.media;
             dbAnni[y].count++;
             totK += a.distanza;
         });
@@ -149,10 +153,7 @@
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
         
         let maxS = 0;
-        Object.values(dbAnni).forEach(v => { 
-            let mediaAnnuale = v.count > 0 ? (v.mediaSomma / v.count) : 0;
-            maxS = Math.max(maxS, mediaAnnuale); 
-        });
+        Object.values(dbAnni).forEach(v => { if(v.count > 0) maxS = Math.max(maxS, v.mSum/v.count); });
         document.getElementById('st-speed').innerText = maxS.toFixed(1) + " km/h";
         
         const kY = (dbAnni[currY] || {d:0}).d;
@@ -179,8 +180,7 @@
             return vB - vA;
         });
         if(!s.length) return;
-        const topKey = s[0];
-        const max = m==='media' ? 40 : (m==='distanza' ? p[topKey].d : p[topKey].t);
+        const max = m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t);
         s.forEach((y, i) => {
             const avg = p[y].c > 0 ? (p[y].mSum/p[y].c) : 0;
             const label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? avg.toFixed(1)+" km/h" : Math.floor(p[y].t)+"h "+Math.round((p[y].t%1)*60)+"m";
@@ -200,15 +200,20 @@
                 const data = XLSX.utils.sheet_to_json(sheet);
                 
                 data.forEach(row => {
-                    let dVal = row["DATA DELL'ATTIVITÀ"];
-                    let distVal = row["DISTANZA"];
-                    let tVal = row["TEMPO IN MOVIMENTO"];
-                    let kmhVal = row["KM/H"];
+                    let dVal, distVal, tVal, kmhVal;
+                    // Mappatura intelligente delle colonne pulite
+                    Object.keys(row).forEach(key => {
+                        const ck = cleanKey(key);
+                        if(ck.includes("data")) dVal = row[key];
+                        if(ck.includes("distanza")) distVal = row[key];
+                        if(ck.includes("tempo")) tVal = row[key];
+                        if(ck.includes("km/h")) kmhVal = row[key];
+                    });
 
                     if(dVal && distVal) {
                         temp.push({
                             data: new Date(dVal).toISOString(),
-                            distanza: parseFloat(distVal),
+                            distanza: parseFloat(distVal) || 0,
                             tempo: tempoDecimale(tVal),
                             media: parseFloat(kmhVal) || 0
                         });
@@ -217,10 +222,10 @@
                 if(temp.length) {
                     rawData = temp;
                     localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-                    alert("Dati importati con successo!");
+                    alert("Importazione completata: " + temp.length + " attività trovate.");
                     location.reload();
-                } else { alert("Nessun dato trovato. Verifica i nomi delle colonne."); }
-            } catch(err) { alert("Errore nel file Excel."); }
+                } else { alert("Nessun dato trovato. Assicurati che le intestazioni siano sulla prima riga."); }
+            } catch(err) { alert("Errore nel file Excel: " + err); }
         };
         reader.readAsArrayBuffer(f);
     };
