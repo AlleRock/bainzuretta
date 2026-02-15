@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta</title>
+    <title>Bainzuretta V43</title>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
@@ -18,7 +19,7 @@
         .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
         input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
         .stat-box b { font-size: 1.1em; color: var(--primary); }
@@ -69,7 +70,7 @@
 
 <div id="ranking" class="page">
     <div class="card" style="text-align:center;">
-        <h3 style="margin:0; font-size: 1em;">🏆 RANKING AL <span id="today-label"></span></h3>
+        <h3 style="margin:0; font-size: 1em;">🏆 CLASSIFICA STORICA</h3>
         <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
             <option value="distanza">Distanza (KM)</option>
             <option value="tempo">Tempo (GG:HH:MM:SS)</option>
@@ -85,19 +86,16 @@
     <div id="nav-rank" onclick="vaiA('ranking')">🏆<span>RANKING</span></div>
 </nav>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     let rawData = [];
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target')) || 5000;
     const oggi = new Date();
     const currY = oggi.getFullYear();
-    const getDOY = d => Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000) + 1;
 
     window.onload = () => {
         document.getElementById('head-year').innerText = currY;
         document.getElementById('target-year').innerText = currY;
         document.getElementById('val-target-tot').innerText = myTarget;
-        document.getElementById('today-label').innerText = oggi.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
         const s = localStorage.getItem('bainzuretta_raw');
         if (s) { rawData = JSON.parse(s); aggiornaStats(); }
         document.getElementById('in-date').valueAsDate = oggi;
@@ -114,12 +112,10 @@
         if (m === -1 && num.length >= 2) m = parseInt(num[1]) - 1;
         let yRaw = num.find((n, i) => i > 0 && (n.length === 4 || n.length === 2)) || currY;
         let y = parseInt(yRaw); if (y < 100) y += 2000;
-        const res = new Date(y, m, d);
-        return isNaN(res.getTime()) ? null : res;
+        return new Date(y, m, d);
     }
 
     function formatFullTime(hrs) {
-        if (!hrs || hrs <= 0) return "00:00:00";
         let ts = Math.round(hrs * 3600);
         let d = Math.floor(ts / 86400), h = Math.floor((ts % 86400) / 3600), m = Math.floor((ts % 3600) / 60), s = ts % 60;
         const p = (n) => n.toString().padStart(2, '0');
@@ -128,7 +124,7 @@
 
     function tempoDecimale(v) {
         if(!v) return 0;
-        if(typeof v === 'number') return v * 24; 
+        if(typeof v === 'number') return v * 24;
         const p = v.toString().replace(',','.').split(':');
         if(p.length === 3) return parseInt(p[0]) + (parseInt(p[1])/60) + (parseInt(p[2])/3600);
         if(p.length === 2) return parseInt(p[0]) + (parseInt(p[1])/60);
@@ -139,10 +135,7 @@
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
         let t = tempoDecimale(document.getElementById('in-time').value);
-        rawData.push({ 
-            id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: t, 
-            media: parseFloat(document.getElementById('in-kmh').value) || (k / (t || 1))
-        });
+        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: t, media: parseFloat(document.getElementById('in-kmh').value) || (k / (t || 1)) });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
     }
@@ -153,13 +146,11 @@
         const m = document.getElementById('metrica').value;
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
-        let p = {}; const dOggi = getDOY(oggi);
+        let p = {};
         rawData.forEach(a => {
-            const d = new Date(a.data), y = d.getFullYear();
-            if (getDOY(d) <= dOggi) {
-                if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
-                p[y].d += a.distanza; p[y].t += (a.tempo || 0); p[y].mSum += (a.media || 0); p[y].c++;
-            }
+            const y = new Date(a.data).getFullYear();
+            if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
+            p[y].d += a.distanza; p[y].t += (a.tempo || 0); p[y].mSum += (a.media || 0); p[y].c++;
         });
         const s = Object.keys(p).sort((a,b) => (m==='media' ? (p[b].mSum/p[b].c)-(p[a].mSum/p[a].c) : (m==='distanza' ? p[b].d-p[a].d : p[b].t-p[a].t)));
         const maxVal = s.length ? (m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t)) : 1;
@@ -184,7 +175,8 @@
         document.getElementById('st-speed').innerHTML = maxS.toFixed(2) + ` <small>km/h (${topY})</small>`;
         let kY = 0; rawData.forEach(a => { if(new Date(a.data).getFullYear() === currY) kY += a.distanza; });
         document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(myTarget - kY)).toLocaleString();
-        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, getDOY(oggi))) * 365).toLocaleString();
+        const doy = Math.floor((oggi - new Date(oggi.getFullYear(), 0, 0)) / 86400000) || 1;
+        document.getElementById('val-proiezione').innerText = Math.round((kY / doy) * 365).toLocaleString();
     }
 
     function vaiA(id) {
