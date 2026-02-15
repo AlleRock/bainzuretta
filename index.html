@@ -1,4 +1,4 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -22,9 +22,7 @@ l<!DOCTYPE html>
         .page.active { display: block; }
         .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; cursor: pointer; }
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
-        .full-width { grid-column: span 2; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
@@ -36,7 +34,6 @@ l<!DOCTYPE html>
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 11px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
-        .btn-export { background: #444; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-top: 10px; width: 100%; cursor: pointer; }
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 10px; margin-left: 10px; }
     </style>
 </head>
@@ -52,30 +49,39 @@ l<!DOCTYPE html>
             Target: <b id="val-target-tot">5000</b> KM | Proiezione: <b id="val-proiezione">0</b> KM
         </div>
     </div>
-    <div class="card"><div class="stats-grid"><div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div><div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div><div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.0</b></div></div></div>
+    <div class="card"><div class="stats-grid"><div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div><div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div><div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div></div></div>
     <div class="card">
         <h3 style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
-        <div class="input-grid">
-            <input type="date" id="in-date">
-            <input type="number" step="0.01" id="in-dist" placeholder="KM">
-            <input type="text" id="in-time" placeholder="HH:MM:SS" class="full-width">
-            <input type="number" step="0.01" id="in-kmh" placeholder="KM/H" class="full-width">
-        </div>
+        <input type="date" id="in-date" style="margin-bottom:10px;">
+        <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
+        <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:10px;">
+        <input type="number" step="0.01" id="in-kmh" placeholder="KM/H" style="margin-bottom:15px;">
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
-    <div class="card" style="text-align:center;"><input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;"><button class="btn-export" onclick="esportaJSON()">📦 ESPORTA BACKUP (JSON)</button></div>
+    <div class="card" style="text-align:center;">
+        <small style="display:block; margin-bottom:5px; font-size:10px;">CARICA EXCEL O BACKUP (.JSON)</small>
+        <input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;">
+        <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold;">📦 ESPORTA BACKUP (JSON)</button>
+    </div>
 </div>
 
 <div id="diario" class="page">
     <div class="card" style="text-align:center;">
         <h3 style="margin:0; font-size: 1em;">📖 DIARIO <span id="diario-year"></span></h3>
-        <small style="opacity:0.6">Tutte le tue uscite dell'anno</small>
+        <small style="opacity:0.6">Le tue uscite dell'anno</small>
     </div>
     <div id="lista-diario"></div>
 </div>
 
 <div id="ranking" class="page">
-    <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">🏆 RANKING AL <span id="today-label"></span></h3><select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;"><option value="distanza">Distanza (KM)</option><option value="tempo">Tempo (GG:HH:MM:SS)</option><option value="media">Velocità Media (KM/H)</option></select></div>
+    <div class="card" style="text-align:center;">
+        <h3 style="margin:0; font-size: 1em;">🏆 RANKING AL <span id="today-label"></span></h3>
+        <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
+            <option value="distanza">Distanza (KM)</option>
+            <option value="tempo">Tempo (GG:HH:MM:SS)</option>
+            <option value="media">Velocità Media (KM/H)</option>
+        </select>
+    </div>
     <div id="lista-ranking"></div>
 </div>
 
@@ -103,17 +109,35 @@ l<!DOCTYPE html>
         document.getElementById('in-date').valueAsDate = oggi;
     };
 
+    function parseItalianDate(val) {
+        if (!val) return null;
+        if (val instanceof Date && !isNaN(val)) return val;
+        const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+        let s = val.toString().toLowerCase().trim();
+        s = s.replace(/lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica/g, "").trim();
+        const num = s.match(/\d+/g);
+        if (!num || num.length < 2) return null;
+        let d = parseInt(num[0]);
+        let m = mesi.findIndex(ms => s.includes(ms));
+        if (m === -1 && num.length >= 2) m = parseInt(num[1]) - 1;
+        let yRaw = num.find((n, index) => (n.length === 4 || n.length === 2) && index > 0) || currY;
+        let y = parseInt(yRaw);
+        if (y < 100) y += 2000;
+        const res = new Date(y, m, d);
+        return isNaN(res.getTime()) ? null : res;
+    }
+
     function formatFullTime(hrs) {
         if (!hrs || hrs <= 0) return "00:00:00";
         let ts = Math.round(hrs * 3600);
         let d = Math.floor(ts / 86400), h = Math.floor((ts % 86400) / 3600), m = Math.floor((ts % 3600) / 60), s = ts % 60;
         const p = (n) => n.toString().padStart(2, '0');
-        return d > 0 ? `${p(d)}g ${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
+        return d > 0 ? `${d}g ${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
     }
 
     function tempoDecimale(v) {
         if(!v) return 0;
-        if(typeof v === 'number') return v * 24;
+        if(typeof v === 'number') return v * 24; 
         const p = v.toString().split(':');
         if(p.length === 3) return parseInt(p[0]) + (parseInt(p[1])/60) + (parseInt(p[2])/3600);
         if(p.length === 2) return parseInt(p[0]) + (parseInt(p[1])/60);
@@ -128,45 +152,10 @@ l<!DOCTYPE html>
             data: new Date(d).toISOString(), 
             distanza: k, 
             tempo: tempoDecimale(document.getElementById('in-time').value), 
-            media: parseFloat(document.getElementById('in-kmh').value) || 0 
+            media: parseFloat(document.getElementById('in-kmh').value) || (k / (tempoDecimale(document.getElementById('in-time').value) || 1))
         });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
-    }
-
-    function eliminaAttivita(id) {
-        if(confirm("Eliminare questa attività?")) {
-            rawData = rawData.filter(a => a.id !== id);
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            disegnaDiario();
-            aggiornaStats();
-        }
-    }
-
-    function disegnaDiario() {
-        const container = document.getElementById('lista-diario');
-        container.innerHTML = "";
-        const annoCorrente = rawData
-            .filter(a => new Date(a.data).getFullYear() === currY)
-            .sort((a,b) => new Date(b.data) - new Date(a.data));
-
-        if(annoCorrente.length === 0) {
-            container.innerHTML = "<p style='text-align:center; padding:20px; opacity:0.5;'>Nessuna attività nel "+currY+"</p>";
-            return;
-        }
-
-        annoCorrente.forEach(a => {
-            const dt = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
-            container.innerHTML += `
-                <div class="log-item">
-                    <div class="log-info">
-                        <span>📅 ${dt}</span>
-                        <span style="color:var(--primary)">${a.distanza.toFixed(1)} km</span>
-                        <span>${a.media.toFixed(1)} <small>km/h</small></span>
-                        <button class="btn-del" onclick="eliminaAttivita(${a.id || 0})">ELIMINA</button>
-                    </div>
-                </div>`;
-        });
     }
 
     function disegnaClassifica() {
@@ -175,31 +164,25 @@ l<!DOCTYPE html>
         container.innerHTML = "";
         let p = {};
         const dOggi = getDOY(oggi);
-        
         rawData.forEach(a => {
             const d = new Date(a.data);
             const y = d.getFullYear();
-            // Applica il filtro del giorno dell'anno solo per il ranking (confronto alla pari)
             if (getDOY(d) <= dOggi) {
                 if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
                 p[y].d += a.distanza; 
-                p[y].t += a.tempo; 
-                p[y].mSum += a.media; 
+                p[y].t += (a.tempo || 0); 
+                p[y].mSum += (a.media || 0); 
                 p[y].c++;
             }
         });
-
         const s = Object.keys(p).sort((a,b) => {
             if(m==='media') return (p[b].mSum/p[b].c) - (p[a].mSum/p[a].c);
             return (m==='distanza' ? p[b].d - p[a].d : p[b].t - p[a].t);
         });
-
         const maxVal = s.length ? (m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t)) : 1;
-        
         s.forEach((y, i) => {
-            const avg = p[y].c > 0 ? (p[y].mSum/p[y].c) : 0;
-            const val = m==='distanza' ? p[y].d : m==='media' ? avg : p[y].t;
-            let label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? avg.toFixed(1)+" km/h" : formatFullTime(p[y].t);
+            const val = m==='distanza' ? p[y].d : m==='media' ? (p[y].mSum/p[y].c) : p[y].t;
+            let label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? (p[y].mSum/p[y].c).toFixed(2)+" km/h" : formatFullTime(p[y].t);
             container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${label}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(val/maxVal)*100)}%"></div></div></div>`;
         });
     }
@@ -209,17 +192,17 @@ l<!DOCTYPE html>
         rawData.forEach(a => {
             const y = new Date(a.data).getFullYear();
             if(!dbAnni[y]) dbAnni[y] = { d:0, mSum:0, c:0 };
-            dbAnni[y].d += a.distanza; dbAnni[y].mSum += a.media; dbAnni[y].c++;
+            dbAnni[y].d += a.distanza; dbAnni[y].mSum += (a.media || 0); dbAnni[y].c++;
             totK += a.distanza;
         });
         document.getElementById('st-km').innerText = Math.round(totK).toLocaleString() + " KM";
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
         let maxS = 0, topYear = "-";
         Object.keys(dbAnni).forEach(y => {
-            let avg = dbAnni[y].mSum / dbAnni[y].c;
+            let avg = dbAnni[y].c > 0 ? dbAnni[y].mSum / dbAnni[y].c : 0;
             if(avg > maxS) { maxS = avg; topYear = y; }
         });
-        document.getElementById('st-speed').innerHTML = maxS.toFixed(1) + ` <small>km/h (${topYear})</small>`;
+        document.getElementById('st-speed').innerHTML = maxS.toFixed(2) + ` <small>km/h (${topYear})</small>`;
         let kY = 0;
         rawData.forEach(a => { if(new Date(a.data).getFullYear() === currY) kY += a.distanza; });
         document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(myTarget - kY)).toLocaleString();
@@ -235,6 +218,40 @@ l<!DOCTYPE html>
         if(id === 'diario') disegnaDiario();
     }
 
+    function disegnaDiario() {
+        const container = document.getElementById('lista-diario');
+        container.innerHTML = "";
+        const annoCorrente = rawData
+            .filter(a => new Date(a.data).getFullYear() === currY)
+            .sort((a,b) => new Date(b.data) - new Date(a.data));
+        if(annoCorrente.length === 0) {
+            container.innerHTML = "<p style='text-align:center; padding:20px; opacity:0.5;'>Nessuna attività nel "+currY+"</p>";
+            return;
+        }
+        annoCorrente.forEach(a => {
+            const dt = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
+            container.innerHTML += `<div class="log-item"><div class="log-info"><span>📅 ${dt}</span><span style="color:var(--primary)">${a.distanza.toFixed(1)} km</span><span>${(a.media || 0).toFixed(2)} <small>km/h</small></span><button class="btn-del" onclick="eliminaAttivita(${a.id})">ELIMINA</button></div></div>`;
+        });
+    }
+
+    function eliminaAttivita(id) {
+        if(confirm("Eliminare questa attività?")) {
+            rawData = rawData.filter(a => a.id !== id);
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            disegnaDiario();
+            aggiornaStats();
+        }
+    }
+
+    function cambiaObiettivo() {
+        let n = prompt("Nuovo obiettivo KM:", myTarget);
+        if (n && !isNaN(n)) {
+            myTarget = parseInt(n);
+            localStorage.setItem('bainzuretta_target', myTarget);
+            location.reload();
+        }
+    }
+
     function esportaJSON() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawData));
         const dl = document.createElement('a');
@@ -242,20 +259,46 @@ l<!DOCTYPE html>
         dl.setAttribute("download", "bainzuretta_backup.json");
         dl.click();
     }
-    
-    // Fallback per date Excel se necessario
-    function parseItalianDate(val) {
-        if (!val) return null;
-        if (val instanceof Date && !isNaN(val)) return val;
-        const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-        let s = val.toString().toLowerCase().trim();
-        const num = s.match(/\d+/g);
-        if (!num) return null;
-        let d = parseInt(num[0]), y = num.find(n => n.length === 4) || currY, m = mesi.findIndex(ms => s.includes(ms));
-        if (m === -1 && num.length >= 2) m = parseInt(num[1]) - 1;
-        const res = new Date(y, m, d);
-        return isNaN(res.getTime()) ? null : res;
-    }
+
+    document.getElementById('xl-input').onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            if (file.name.endsWith('.json')) {
+                rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
+            } else {
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+                rawData = [];
+                wb.SheetNames.forEach(name => {
+                    const json = XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:""});
+                    json.forEach(row => {
+                        let dRaw, dist, time;
+                        for (let k in row) {
+                            let key = k.toUpperCase();
+                            if (key.includes("DATA")) dRaw = row[k];
+                            if (key.includes("DISTANZA")) dist = row[k];
+                            if (key.includes("TEMPO")) time = row[k];
+                        }
+                        let dObj = parseItalianDate(dRaw);
+                        if (dObj && dist !== "") {
+                            let dVal = parseFloat(dist.toString().replace(',','.')) || 0;
+                            let tVal = tempoDecimale(time);
+                            rawData.push({
+                                id: Date.now() + Math.random(),
+                                data: dObj.toISOString(),
+                                distanza: dVal,
+                                tempo: tVal,
+                                media: dVal / (tVal || 1)
+                            });
+                        }
+                    });
+                });
+            }
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            location.reload();
+        };
+        reader.readAsArrayBuffer(file);
+    };
 </script>
 </body>
 </html>
