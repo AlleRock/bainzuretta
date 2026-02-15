@@ -35,6 +35,7 @@
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 11px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 10px; margin-left: 10px; }
+        .btn-danger { background: #ff3b30; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -62,6 +63,7 @@
         <small style="display:block; margin-bottom:5px; font-size:10px;">CARICA EXCEL O BACKUP (.JSON)</small>
         <input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;">
         <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold;">📦 ESPORTA BACKUP (JSON)</button>
+        <button onclick="pulisciTutto()" class="btn-danger">🗑️ CANCELLA TUTTI I DATI</button>
     </div>
 </div>
 
@@ -156,6 +158,13 @@
         });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
+    }
+
+    function pulisciTutto() {
+        if(confirm("⚠ ATTENZIONE: Vuoi davvero cancellare TUTTI i dati salvati? L'operazione non è reversibile.")) {
+            localStorage.removeItem('bainzuretta_raw');
+            location.reload();
+        }
     }
 
     function disegnaClassifica() {
