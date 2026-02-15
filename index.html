@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -104,19 +104,11 @@
     };
 
     function formatFullTime(hrs) {
+        if (!hrs || hrs <= 0) return "00:00:00";
         let ts = Math.round(hrs * 3600);
         let d = Math.floor(ts / 86400), h = Math.floor((ts % 86400) / 3600), m = Math.floor((ts % 3600) / 60), s = ts % 60;
         const p = (n) => n.toString().padStart(2, '0');
-        return d > 0 ? `${p(d)}:${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
-    }
-
-    function cambiaObiettivo() {
-        let n = prompt("Nuovo obiettivo KM:", myTarget);
-        if (n && !isNaN(n)) {
-            myTarget = parseInt(n);
-            localStorage.setItem('bainzuretta_target', myTarget);
-            location.reload();
-        }
+        return d > 0 ? `${p(d)}g ${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
     }
 
     function tempoDecimale(v) {
@@ -132,7 +124,7 @@
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
         rawData.push({ 
-            id: Date.now(), // ID unico per modifiche
+            id: Date.now(),
             data: new Date(d).toISOString(), 
             distanza: k, 
             tempo: tempoDecimale(document.getElementById('in-time').value), 
@@ -154,7 +146,6 @@
     function disegnaDiario() {
         const container = document.getElementById('lista-diario');
         container.innerHTML = "";
-        // Filtra per anno corrente e ordina per data decrescente
         const annoCorrente = rawData
             .filter(a => new Date(a.data).getFullYear() === currY)
             .sort((a,b) => new Date(b.data) - new Date(a.data));
@@ -184,23 +175,31 @@
         container.innerHTML = "";
         let p = {};
         const dOggi = getDOY(oggi);
+        
         rawData.forEach(a => {
             const d = new Date(a.data);
+            const y = d.getFullYear();
+            // Applica il filtro del giorno dell'anno solo per il ranking (confronto alla pari)
             if (getDOY(d) <= dOggi) {
-                const y = d.getFullYear();
                 if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
-                p[y].d += a.distanza; p[y].t += a.tempo; p[y].mSum += a.media; p[y].c++;
+                p[y].d += a.distanza; 
+                p[y].t += a.tempo; 
+                p[y].mSum += a.media; 
+                p[y].c++;
             }
         });
+
         const s = Object.keys(p).sort((a,b) => {
             if(m==='media') return (p[b].mSum/p[b].c) - (p[a].mSum/p[a].c);
             return (m==='distanza' ? p[b].d - p[a].d : p[b].t - p[a].t);
         });
+
         const maxVal = s.length ? (m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t)) : 1;
+        
         s.forEach((y, i) => {
             const avg = p[y].c > 0 ? (p[y].mSum/p[y].c) : 0;
             const val = m==='distanza' ? p[y].d : m==='media' ? avg : p[y].t;
-            let label = m==='distanza' ? p[y].d.toFixed(2)+" km" : m==='media' ? avg.toFixed(2)+" km/h" : formatFullTime(p[y].t);
+            let label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? avg.toFixed(1)+" km/h" : formatFullTime(p[y].t);
             container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${label}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(val/maxVal)*100)}%"></div></div></div>`;
         });
     }
@@ -221,7 +220,8 @@
             if(avg > maxS) { maxS = avg; topYear = y; }
         });
         document.getElementById('st-speed').innerHTML = maxS.toFixed(1) + ` <small>km/h (${topYear})</small>`;
-        const kY = (dbAnni[currY] || {d:0}).d;
+        let kY = 0;
+        rawData.forEach(a => { if(new Date(a.data).getFullYear() === currY) kY += a.distanza; });
         document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(myTarget - kY)).toLocaleString();
         document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, getDOY(oggi))) * 365).toLocaleString();
     }
@@ -241,6 +241,20 @@
         dl.setAttribute("href", dataStr);
         dl.setAttribute("download", "bainzuretta_backup.json");
         dl.click();
+    }
+    
+    // Fallback per date Excel se necessario
+    function parseItalianDate(val) {
+        if (!val) return null;
+        if (val instanceof Date && !isNaN(val)) return val;
+        const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+        let s = val.toString().toLowerCase().trim();
+        const num = s.match(/\d+/g);
+        if (!num) return null;
+        let d = parseInt(num[0]), y = num.find(n => n.length === 4) || currY, m = mesi.findIndex(ms => s.includes(ms));
+        if (m === -1 && num.length >= 2) m = parseInt(num[1]) - 1;
+        const res = new Date(y, m, d);
+        return isNaN(res.getTime()) ? null : res;
     }
 </script>
 </body>
