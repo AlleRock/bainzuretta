@@ -4,24 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta</title>
-    
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Bainzuretta">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; -webkit-font-smoothing: antialiased; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
         .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
         .page.active { display: block; }
         .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
-        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; border: none; text-align: center; cursor: pointer; }
+        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
         input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -34,8 +29,8 @@
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 11px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
-        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 10px; margin-left: 10px; }
-        .btn-danger { background: #ff3b30; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-top: 10px; cursor: pointer; }
+        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 10px; }
+        .btn-danger { background: #ff3b30; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -68,10 +63,7 @@
 </div>
 
 <div id="diario" class="page">
-    <div class="card" style="text-align:center;">
-        <h3 style="margin:0; font-size: 1em;">📖 DIARIO <span id="diario-year"></span></h3>
-        <small style="opacity:0.6">Le tue uscite dell'anno</small>
-    </div>
+    <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">📖 DIARIO <span id="diario-year"></span></h3></div>
     <div id="lista-diario"></div>
 </div>
 
@@ -93,6 +85,7 @@
     <div id="nav-rank" onclick="vaiA('ranking')">🏆<span>RANKING</span></div>
 </nav>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     let rawData = [];
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target')) || 5000;
@@ -103,7 +96,6 @@
     window.onload = () => {
         document.getElementById('head-year').innerText = currY;
         document.getElementById('target-year').innerText = currY;
-        document.getElementById('diario-year').innerText = currY;
         document.getElementById('val-target-tot').innerText = myTarget;
         document.getElementById('today-label').innerText = oggi.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
         const s = localStorage.getItem('bainzuretta_raw');
@@ -115,16 +107,13 @@
         if (!val) return null;
         if (val instanceof Date && !isNaN(val)) return val;
         const mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-        let s = val.toString().toLowerCase().trim();
-        s = s.replace(/lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica/g, "").trim();
+        let s = val.toString().toLowerCase().trim().replace(/lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica/g, "").trim();
         const num = s.match(/\d+/g);
         if (!num || num.length < 2) return null;
-        let d = parseInt(num[0]);
-        let m = mesi.findIndex(ms => s.includes(ms));
+        let d = parseInt(num[0]), m = mesi.findIndex(ms => s.includes(ms));
         if (m === -1 && num.length >= 2) m = parseInt(num[1]) - 1;
-        let yRaw = num.find((n, index) => (n.length === 4 || n.length === 2) && index > 0) || currY;
-        let y = parseInt(yRaw);
-        if (y < 100) y += 2000;
+        let yRaw = num.find((n, i) => i > 0 && (n.length === 4 || n.length === 2)) || currY;
+        let y = parseInt(yRaw); if (y < 100) y += 2000;
         const res = new Date(y, m, d);
         return isNaN(res.getTime()) ? null : res;
     }
@@ -140,7 +129,7 @@
     function tempoDecimale(v) {
         if(!v) return 0;
         if(typeof v === 'number') return v * 24; 
-        const p = v.toString().split(':');
+        const p = v.toString().replace(',','.').split(':');
         if(p.length === 3) return parseInt(p[0]) + (parseInt(p[1])/60) + (parseInt(p[2])/3600);
         if(p.length === 2) return parseInt(p[0]) + (parseInt(p[1])/60);
         return parseFloat(v) || 0;
@@ -149,50 +138,35 @@
     function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
+        let t = tempoDecimale(document.getElementById('in-time').value);
         rawData.push({ 
-            id: Date.now(),
-            data: new Date(d).toISOString(), 
-            distanza: k, 
-            tempo: tempoDecimale(document.getElementById('in-time').value), 
-            media: parseFloat(document.getElementById('in-kmh').value) || (k / (tempoDecimale(document.getElementById('in-time').value) || 1))
+            id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: t, 
+            media: parseFloat(document.getElementById('in-kmh').value) || (k / (t || 1))
         });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
     }
 
-    function pulisciTutto() {
-        if(confirm("⚠ ATTENZIONE: Vuoi davvero cancellare TUTTI i dati salvati? L'operazione non è reversibile.")) {
-            localStorage.removeItem('bainzuretta_raw');
-            location.reload();
-        }
-    }
+    function pulisciTutto() { if(confirm("Cancellare tutto?")) { localStorage.removeItem('bainzuretta_raw'); location.reload(); } }
 
     function disegnaClassifica() {
         const m = document.getElementById('metrica').value;
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
-        let p = {};
-        const dOggi = getDOY(oggi);
+        let p = {}; const dOggi = getDOY(oggi);
         rawData.forEach(a => {
-            const d = new Date(a.data);
-            const y = d.getFullYear();
+            const d = new Date(a.data), y = d.getFullYear();
             if (getDOY(d) <= dOggi) {
                 if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
-                p[y].d += a.distanza; 
-                p[y].t += (a.tempo || 0); 
-                p[y].mSum += (a.media || 0); 
-                p[y].c++;
+                p[y].d += a.distanza; p[y].t += (a.tempo || 0); p[y].mSum += (a.media || 0); p[y].c++;
             }
         });
-        const s = Object.keys(p).sort((a,b) => {
-            if(m==='media') return (p[b].mSum/p[b].c) - (p[a].mSum/p[a].c);
-            return (m==='distanza' ? p[b].d - p[a].d : p[b].t - p[a].t);
-        });
+        const s = Object.keys(p).sort((a,b) => (m==='media' ? (p[b].mSum/p[b].c)-(p[a].mSum/p[a].c) : (m==='distanza' ? p[b].d-p[a].d : p[b].t-p[a].t)));
         const maxVal = s.length ? (m==='media' ? 45 : (m==='distanza' ? p[s[0]].d : p[s[0]].t)) : 1;
         s.forEach((y, i) => {
             const val = m==='distanza' ? p[y].d : m==='media' ? (p[y].mSum/p[y].c) : p[y].t;
-            let label = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? (p[y].mSum/p[y].c).toFixed(2)+" km/h" : formatFullTime(p[y].t);
-            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${label}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(val/maxVal)*100)}%"></div></div></div>`;
+            let lbl = m==='distanza' ? p[y].d.toFixed(1)+" km" : m==='media' ? (p[y].mSum/p[y].c).toFixed(2)+" km/h" : formatFullTime(p[y].t);
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${lbl}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${Math.min(100,(val/maxVal)*100)}%"></div></div></div>`;
         });
     }
 
@@ -201,19 +175,14 @@
         rawData.forEach(a => {
             const y = new Date(a.data).getFullYear();
             if(!dbAnni[y]) dbAnni[y] = { d:0, mSum:0, c:0 };
-            dbAnni[y].d += a.distanza; dbAnni[y].mSum += (a.media || 0); dbAnni[y].c++;
-            totK += a.distanza;
+            dbAnni[y].d += a.distanza; dbAnni[y].mSum += (a.media || 0); dbAnni[y].c++; totK += a.distanza;
         });
         document.getElementById('st-km').innerText = Math.round(totK).toLocaleString() + " KM";
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
-        let maxS = 0, topYear = "-";
-        Object.keys(dbAnni).forEach(y => {
-            let avg = dbAnni[y].c > 0 ? dbAnni[y].mSum / dbAnni[y].c : 0;
-            if(avg > maxS) { maxS = avg; topYear = y; }
-        });
-        document.getElementById('st-speed').innerHTML = maxS.toFixed(2) + ` <small>km/h (${topYear})</small>`;
-        let kY = 0;
-        rawData.forEach(a => { if(new Date(a.data).getFullYear() === currY) kY += a.distanza; });
+        let maxS = 0, topY = "-";
+        Object.keys(dbAnni).forEach(y => { let avg = dbAnni[y].mSum / dbAnni[y].c; if(avg > maxS) { maxS = avg; topY = y; } });
+        document.getElementById('st-speed').innerHTML = maxS.toFixed(2) + ` <small>km/h (${topY})</small>`;
+        let kY = 0; rawData.forEach(a => { if(new Date(a.data).getFullYear() === currY) kY += a.distanza; });
         document.getElementById('km-mancanti').innerText = Math.max(0, Math.round(myTarget - kY)).toLocaleString();
         document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, getDOY(oggi))) * 365).toLocaleString();
     }
@@ -228,85 +197,49 @@
     }
 
     function disegnaDiario() {
-        const container = document.getElementById('lista-diario');
-        container.innerHTML = "";
-        const annoCorrente = rawData
-            .filter(a => new Date(a.data).getFullYear() === currY)
-            .sort((a,b) => new Date(b.data) - new Date(a.data));
-        if(annoCorrente.length === 0) {
-            container.innerHTML = "<p style='text-align:center; padding:20px; opacity:0.5;'>Nessuna attività nel "+currY+"</p>";
-            return;
-        }
-        annoCorrente.forEach(a => {
+        const c = document.getElementById('lista-diario'); c.innerHTML = "";
+        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
+        lista.forEach(a => {
             const dt = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
-            container.innerHTML += `<div class="log-item"><div class="log-info"><span>📅 ${dt}</span><span style="color:var(--primary)">${a.distanza.toFixed(1)} km</span><span>${(a.media || 0).toFixed(2)} <small>km/h</small></span><button class="btn-del" onclick="eliminaAttivita(${a.id})">ELIMINA</button></div></div>`;
+            c.innerHTML += `<div class="log-item"><div class="log-info"><span>📅 ${dt}</span><span style="color:var(--primary)">${a.distanza.toFixed(1)} km</span><span>${(a.media || 0).toFixed(2)}</span><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div>`;
         });
     }
 
-    function eliminaAttivita(id) {
-        if(confirm("Eliminare questa attività?")) {
-            rawData = rawData.filter(a => a.id !== id);
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            disegnaDiario();
-            aggiornaStats();
-        }
-    }
-
-    function cambiaObiettivo() {
-        let n = prompt("Nuovo obiettivo KM:", myTarget);
-        if (n && !isNaN(n)) {
-            myTarget = parseInt(n);
-            localStorage.setItem('bainzuretta_target', myTarget);
-            location.reload();
-        }
-    }
-
-    function esportaJSON() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawData));
-        const dl = document.createElement('a');
-        dl.setAttribute("href", dataStr);
-        dl.setAttribute("download", "bainzuretta_backup.json");
-        dl.click();
-    }
+    function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); disegnaDiario(); aggiornaStats(); } }
+    function cambiaObiettivo() { let n = prompt("Nuovo target:", myTarget); if (n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target', myTarget); location.reload(); } }
+    function esportaJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawData)); const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "backup.json"); dl.click(); }
 
     document.getElementById('xl-input').onchange = (e) => {
-        const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (ev) => {
-            if (file.name.endsWith('.json')) {
-                rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
-            } else {
+            if (e.target.files[0].name.endsWith('.json')) { rawData = JSON.parse(new TextDecoder().decode(ev.target.result)); } 
+            else {
                 const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
                 rawData = [];
-                wb.SheetNames.forEach(name => {
-                    const json = XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:""});
+                wb.SheetNames.forEach(n => {
+                    const json = XLSX.utils.sheet_to_json(wb.Sheets[n], {defval:""});
                     json.forEach(row => {
-                        let dRaw, dist, time;
+                        let dRaw, dist, time, media;
                         for (let k in row) {
-                            let key = k.toUpperCase();
-                            if (key.includes("DATA")) dRaw = row[k];
-                            if (key.includes("DISTANZA")) dist = row[k];
-                            if (key.includes("TEMPO")) time = row[k];
+                            let key = k.toUpperCase().trim();
+                            if (key.includes("DATA") || key.includes("DATE")) dRaw = row[k];
+                            if (key.includes("DIST") || key.includes("KM")) dist = row[k];
+                            if (key.includes("TEMPO") || key.includes("TIME")) time = row[k];
+                            if (key.includes("MEDIA") || key.includes("KM/H")) media = row[k];
                         }
                         let dObj = parseItalianDate(dRaw);
                         if (dObj && dist !== "") {
                             let dVal = parseFloat(dist.toString().replace(',','.')) || 0;
                             let tVal = tempoDecimale(time);
-                            rawData.push({
-                                id: Date.now() + Math.random(),
-                                data: dObj.toISOString(),
-                                distanza: dVal,
-                                tempo: tVal,
-                                media: dVal / (tVal || 1)
-                            });
+                            let mVal = parseFloat(media?.toString().replace(',','.')) || (dVal / (tVal || 1));
+                            rawData.push({ id: Math.random(), data: dObj.toISOString(), distanza: dVal, tempo: tVal, media: mVal });
                         }
                     });
                 });
             }
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            location.reload();
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload();
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(e.target.files[0]);
     };
 </script>
 </body>
