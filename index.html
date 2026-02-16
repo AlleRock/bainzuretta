@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V57</title>
+    <title>Bainzuretta V58</title>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -42,7 +42,7 @@
         <small>🎯 OBIETTIVO <span class="year-label"></span></small><br>
         <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
         <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
-            Target: <b id="val-target-tot">5000</b> KM | Proiezione: <b id="val-proiezione">0</b> KM
+            Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
         </div>
     </div>
     <div class="card"><div class="stats-grid"><div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div><div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div><div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div></div></div>
@@ -134,8 +134,15 @@
             }
         });
         document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
-        document.getElementById('km-mancanti').innerText = Math.max(0, myTarget - kY).toLocaleString('it-IT');
+        
+        const mancanti = Math.max(0, myTarget - kY);
+        document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
         document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * 365).toLocaleString('it-IT');
+        
+        // Calcolo KM Settimanali Chirurgico
+        const giorniRimanenti = Math.max(1, 365 - doyOggi);
+        const settRimanenti = giorniRimanenti / 7;
+        document.getElementById('val-week').innerText = Math.ceil(mancanti / settRimanenti);
     }
 
     function disegnaClassifica() {
@@ -143,12 +150,10 @@
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
         let p = {};
-        
         rawData.forEach(a => {
             let dt = new Date(a.data);
             let y = dt.getFullYear();
             if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0 };
-            
             let doyA = Math.floor((dt - new Date(y, 0, 0)) / 86400000);
             if(doyA <= doyOggi) {
                 let dist = parseFloat(a.distanza) || 0;
@@ -156,23 +161,19 @@
                 p[y].d += dist;
                 p[y].mSum += med;
                 p[y].c++;
-                // Per la ponderata: Tempo = Distanza / Media
                 p[y].tSum += (med > 0 ? dist / med : 0);
             }
         });
-
         let s = Object.keys(p).sort((a,b) => {
             if(m==='distanza') return p[b].d - p[a].d;
             if(m==='ponderata') return (p[b].d / (p[b].tSum || 1)) - (p[a].d / (p[a].tSum || 1));
             return (p[b].mSum / (p[b].c || 1)) - (p[a].mSum / (p[a].c || 1));
         });
-
         let maxVal = s.length ? Math.max(...s.map(y => {
             if(m==='distanza') return p[y].d;
             if(m==='ponderata') return (p[y].d / (p[y].tSum || 1));
             return (p[y].mSum / (p[y].c || 1));
         })) : 1;
-
         s.forEach((y, i) => {
             let val = m==='distanza' ? p[y].d : m==='ponderata' ? (p[y].d / (p[y].tSum || 1)) : (p[y].mSum / (p[y].c || 1));
             let unit = m==='distanza' ? " km" : " km/h";
