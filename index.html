@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta Perpetua</title>
+    <title>Bainzuretta V57</title>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -70,9 +70,9 @@
     <div class="card" style="text-align:center;">
         <h3 style="margin:0; font-size: 1em;">🏆 RANKING YTD</h3>
         <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
-            <option value="distanza">Distanza (KM)</option>
-            <option value="tempo">Tempo (GG:HH:MM:SS)</option>
-            <option value="media">Velocità Media (KM/H)</option>
+            <option value="distanza">Distanza Totale (KM)</option>
+            <option value="ponderata">Media Ponderata (KM Tot / Ore Tot)</option>
+            <option value="media">Media Semplice (KM/H)</option>
         </select>
     </div>
     <div id="lista-ranking"></div>
@@ -111,21 +111,13 @@
         return parseFloat(s) || 0;
     }
 
-    function formatFullTime(hrs) {
-        let ts = Math.round(hrs * 3600);
-        let d = Math.floor(ts / 86400), h = Math.floor((ts % 86400) / 3600), m = Math.floor((ts % 3600) / 60), s = ts % 60;
-        const p = (n) => n.toString().padStart(2, '0');
-        return d > 0 ? `${d}g ${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
-    }
-
     function aggiornaStats() {
         let totK = 0, kY = 0;
         let pAnni = {};
         rawData.forEach(a => {
             let dist = parseFloat(a.distanza) || 0;
             let med = parseFloat(a.media) || 0;
-            let dObj = new Date(a.data);
-            let y = dObj.getFullYear();
+            let y = new Date(a.data).getFullYear();
             totK += dist;
             if(y === currY) kY += dist;
             if(!pAnni[y]) pAnni[y] = { mSum: 0, count: 0 };
@@ -151,32 +143,40 @@
         const container = document.getElementById('lista-ranking');
         container.innerHTML = "";
         let p = {};
+        
         rawData.forEach(a => {
             let dt = new Date(a.data);
             let y = dt.getFullYear();
-            if(!p[y]) p[y] = { d:0, t:0, mSum:0, c:0 };
+            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0 };
+            
             let doyA = Math.floor((dt - new Date(y, 0, 0)) / 86400000);
             if(doyA <= doyOggi) {
-                p[y].d += (parseFloat(a.distanza) || 0);
-                p[y].t += (parseFloat(a.tempo) || 0);
-                p[y].mSum += (parseFloat(a.media) || 0);
+                let dist = parseFloat(a.distanza) || 0;
+                let med = parseFloat(a.media) || 0;
+                p[y].d += dist;
+                p[y].mSum += med;
                 p[y].c++;
+                // Per la ponderata: Tempo = Distanza / Media
+                p[y].tSum += (med > 0 ? dist / med : 0);
             }
         });
-        let s = Object.keys(p).sort((a,b) => (m==='distanza' ? p[b].d - p[a].d : (m==='media' ? (p[b].mSum/p[b].c)-(p[a].mSum/p[a].c) : p[b].t - p[a].t)));
-        let maxVal = s.length ? Math.max(...s.map(y => m==='distanza' ? p[y].d : m==='media' ? (p[y].mSum/p[y].c) : p[y].t)) : 1;
-        s.forEach((y, i) => {
-            let val = m==='distanza' ? p[y].d : m==='media' ? (p[y].mSum/p[y].c) : p[y].t;
-            let lbl = m==='distanza' ? val.toFixed(2)+" km" : m==='media' ? val.toFixed(2)+" km/h" : formatFullTime(val);
-            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${lbl}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(val/maxVal)*100}%"></div></div></div>`;
-        });
-    }
 
-    function disegnaDiario() {
-        const c = document.getElementById('lista-diario'); c.innerHTML = "";
-        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
-        lista.forEach(a => {
-            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>📅 ${new Date(a.data).toLocaleDateString()}</span><span style="color:var(--primary)">${parseFloat(a.distanza).toFixed(1)} km</span><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div>`;
+        let s = Object.keys(p).sort((a,b) => {
+            if(m==='distanza') return p[b].d - p[a].d;
+            if(m==='ponderata') return (p[b].d / (p[b].tSum || 1)) - (p[a].d / (p[a].tSum || 1));
+            return (p[b].mSum / (p[b].c || 1)) - (p[a].mSum / (p[a].c || 1));
+        });
+
+        let maxVal = s.length ? Math.max(...s.map(y => {
+            if(m==='distanza') return p[y].d;
+            if(m==='ponderata') return (p[y].d / (p[y].tSum || 1));
+            return (p[y].mSum / (p[y].c || 1));
+        })) : 1;
+
+        s.forEach((y, i) => {
+            let val = m==='distanza' ? p[y].d : m==='ponderata' ? (p[y].d / (p[y].tSum || 1)) : (p[y].mSum / (p[y].c || 1));
+            let unit = m==='distanza' ? " km" : " km/h";
+            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${val.toFixed(2)}${unit}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(val/maxVal)*100}%"></div></div></div>`;
         });
     }
 
@@ -184,7 +184,8 @@
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
         let t = tempoDecimale(document.getElementById('in-time').value);
-        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: t, media: parseFloat(document.getElementById('in-kmh').value) || (k/t) });
+        let med = parseFloat(document.getElementById('in-kmh').value) || (k/t);
+        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: t, media: med });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
     }
@@ -236,6 +237,13 @@
         document.getElementById('nav-'+id).classList.add('active');
         if(id === 'ranking') disegnaClassifica();
         if(id === 'diario') disegnaDiario();
+    }
+    function disegnaDiario() {
+        const c = document.getElementById('lista-diario'); c.innerHTML = "";
+        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
+        lista.forEach(a => {
+            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>📅 ${new Date(a.data).toLocaleDateString()}</span><span style="color:var(--primary)">${parseFloat(a.distanza).toFixed(1)} km</span><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div>`;
+        });
     }
     function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload(); } }
     function pulisciTutto() { if(confirm("CANCELLARE TUTTO?")) { localStorage.clear(); location.reload(); } }
