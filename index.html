@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V54</title>
+    <title>Bainzuretta Perpetua</title>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -35,11 +35,11 @@
 </head>
 <body>
 
-<header>BAINZURETTA 2026</header>
+<header id="main-header">BAINZURETTA</header>
 
 <div id="home" class="page active">
     <div class="card target-box" onclick="cambiaObiettivo()">
-        <small>🎯 OBIETTIVO 2026</small><br>
+        <small>🎯 OBIETTIVO <span class="year-label"></span></small><br>
         <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
         <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
             Target: <b id="val-target-tot">5000</b> KM | Proiezione: <b id="val-proiezione">0</b> KM
@@ -62,7 +62,7 @@
 </div>
 
 <div id="diario" class="page">
-    <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">📖 DIARIO</h3></div>
+    <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">📖 DIARIO <span class="year-label"></span></h3></div>
     <div id="lista-diario"></div>
 </div>
 
@@ -86,12 +86,14 @@
 
 <script>
     let rawData = [];
-    let myTarget = parseInt(localStorage.getItem('bainzuretta_target')) || 5000;
     const oggi = new Date();
     const currY = oggi.getFullYear();
+    let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
     const doyOggi = Math.floor((oggi - new Date(currY, 0, 0)) / 86400000);
 
     window.onload = () => {
+        document.getElementById('main-header').innerText = "BAINZURETTA " + currY;
+        document.querySelectorAll('.year-label').forEach(el => el.innerText = currY);
         const s = localStorage.getItem('bainzuretta_raw');
         if (s) { rawData = JSON.parse(s); aggiornaStats(); }
         document.getElementById('val-target-tot').innerText = myTarget;
@@ -118,13 +120,28 @@
 
     function aggiornaStats() {
         let totK = 0, kY = 0;
+        let pAnni = {};
         rawData.forEach(a => {
-            let d = parseFloat(a.distanza) || 0;
-            totK += d;
-            if(new Date(a.data).getFullYear() === currY) kY += d;
+            let dist = parseFloat(a.distanza) || 0;
+            let med = parseFloat(a.media) || 0;
+            let dObj = new Date(a.data);
+            let y = dObj.getFullYear();
+            totK += dist;
+            if(y === currY) kY += dist;
+            if(!pAnni[y]) pAnni[y] = { mSum: 0, count: 0 };
+            if(med > 0) { pAnni[y].mSum += med; pAnni[y].count++; }
         });
         document.getElementById('st-km').innerText = totK.toLocaleString('it-IT', {minimumFractionDigits:2}) + " KM";
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
+        
+        let maxAvg = 0, bestY = "-";
+        Object.keys(pAnni).forEach(y => {
+            if(pAnni[y].count > 0) {
+                let avg = pAnni[y].mSum / pAnni[y].count;
+                if(avg > maxAvg) { maxAvg = avg; bestY = y; }
+            }
+        });
+        document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
         document.getElementById('km-mancanti').innerText = Math.max(0, myTarget - kY).toLocaleString('it-IT');
         document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * 365).toLocaleString('it-IT');
     }
@@ -222,7 +239,7 @@
     }
     function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload(); } }
     function pulisciTutto() { if(confirm("CANCELLARE TUTTO?")) { localStorage.clear(); location.reload(); } }
-    function cambiaObiettivo() { let n = prompt("Target:", myTarget); if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target', n); location.reload(); } }
+    function cambiaObiettivo() { let n = prompt("Target per il " + currY + ":", myTarget); if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); location.reload(); } }
 </script>
 </body>
 </html>
