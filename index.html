@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V58</title>
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
+    <title>Bainzuretta V62</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <meta name="apple-mobile-web-app-title" content="Bainzuretta">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
+    
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Bainzuretta%22,%22short_name%22:%22Bainzuretta%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#000000%22,%22theme_color%22:%22#fb8c00%22,%22icons%22:[{%22src%22:%22https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
@@ -55,7 +59,7 @@
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
     <div class="card" style="text-align:center;">
-        <input type="file" id="xl-input" style="font-size: 11px; margin-bottom:10px; width: 100%;">
+        <input type="file" id="json-input" accept=".json" style="font-size: 11px; margin-bottom:10px; width: 100%;">
         <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📦 BACKUP JSON</button>
         <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">🗑️ RESET DATI</button>
     </div>
@@ -85,6 +89,11 @@
 </nav>
 
 <script>
+    // Service Worker Minimalista per Offline
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9PmUucmVzcG9uZFdpdGgoZmV0Y2goZS5yZXF1ZXN0KS5jYXRjaCgoKT0+Y2FjaGVzLm1hdGNoKGUucmVxdWVzdCkpKSk7');
+    }
+
     let rawData = [];
     const oggi = new Date();
     const currY = oggi.getFullYear();
@@ -102,7 +111,6 @@
 
     function tempoDecimale(v) {
         if(!v) return 0;
-        if(typeof v === 'number') return v * 24;
         let s = v.toString().replace(',','.').trim();
         if(s.includes(':')) {
             let p = s.split(':');
@@ -134,12 +142,9 @@
             }
         });
         document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
-        
         const mancanti = Math.max(0, myTarget - kY);
         document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
         document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * 365).toLocaleString('it-IT');
-        
-        // Calcolo KM Settimanali Chirurgico
         const giorniRimanenti = Math.max(1, 365 - doyOggi);
         const settRimanenti = giorniRimanenti / 7;
         document.getElementById('val-week').innerText = Math.ceil(mancanti / settRimanenti);
@@ -201,30 +206,10 @@
         downloadAnchorNode.remove();
     }
 
-    document.getElementById('xl-input').onchange = (e) => {
+    document.getElementById('json-input').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (ev) => {
-            if (e.target.files[0].name.endsWith('.json')) {
-                rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
-            } else {
-                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
-                let all = [];
-                wb.SheetNames.forEach(n => {
-                    const sheet = XLSX.utils.sheet_to_json(wb.Sheets[n]);
-                    sheet.forEach(r => {
-                        let d, k, t, m;
-                        for(let key in r) {
-                            let kUpper = key.toUpperCase();
-                            if(kUpper.includes("DATA")) d = r[key];
-                            if(kUpper.includes("DIST")) k = parseFloat(r[key]) || 0;
-                            if(kUpper.includes("TEMPO")) t = r[key];
-                            if(kUpper.includes("MEDIA")) m = parseFloat(r[key]) || 0;
-                        }
-                        if(d && k > 0) all.push({ id: Math.random(), data: new Date(d).toISOString(), distanza: k, tempo: tempoDecimale(t), media: m });
-                    });
-                });
-                rawData = all;
-            }
+            rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
             localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
             location.reload();
         };
