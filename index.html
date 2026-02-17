@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Bainzuretta%22,%22short_name%22:%22Bainzuretta%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#000000%22,%22theme_color%22:%22#fb8c00%22,%22icons%22:[{%22src%22:%22https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+    <link rel="manifest" href="manifest.json">
 
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
@@ -59,6 +59,7 @@
         <button class="btn-add" onclick="salvaManuale()">SALVA</button>
     </div>
     <div class="card" style="text-align:center;">
+        <p style="font-size: 10px; color: #888; margin-bottom: 10px;">GESTIONE DATI JSON</p>
         <input type="file" id="json-input" accept=".json" style="font-size: 11px; margin-bottom:10px; width: 100%;">
         <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📦 BACKUP JSON</button>
         <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">🗑️ RESET DATI</button>
@@ -89,9 +90,11 @@
 </nav>
 
 <script>
-    // Service Worker Minimalista per Offline
+    // Registrazione Service Worker Reale per Offline
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9PmUucmVzcG9uZFdpdGgoZmV0Y2goZS5yZXF1ZXN0KS5jYXRjaCgoKT0+Y2FjaGVzLm1hdGNoKGUucmVxdWVzdCkpKSk7');
+        navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log("Bainzuretta Offline Ready"))
+        .catch(err => console.log("SW Error:", err));
     }
 
     let rawData = [];
