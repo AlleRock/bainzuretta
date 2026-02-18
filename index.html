@@ -27,15 +27,15 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
         .stat-box b { font-size: 1.1em; color: var(--primary); }
-        .rank-item { padding: 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
-        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.85em; align-items: center; gap: 4px; }
+        .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
         .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 11px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
-        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 8px; border-radius: 8px; font-size: 10px; }
-        .btn-edit { background: #007aff; color: white; border: none; padding: 5px 8px; border-radius: 8px; font-size: 10px; }
+        .btn-del { background: #ff3b30; color: white; border: none; padding: 4px 6px; border-radius: 6px; font-size: 10px; }
+        .btn-edit { background: #007aff; color: white; border: none; padding: 4px 6px; border-radius: 6px; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -127,12 +127,6 @@
         let m = Math.floor((oreDec - h) * 60);
         let s = Math.round(((oreDec - h) * 60 - m) * 60);
         return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-    }
-
-    function formattaTempoBreve(oreDec) {
-        let h = Math.floor(oreDec);
-        let m = Math.floor((oreDec - h) * 60);
-        return `${h}h${m.toString().padStart(2,'0')}`;
     }
 
     function aggiornaStats() {
@@ -258,8 +252,8 @@
         const c = document.getElementById('lista-diario'); c.innerHTML = "";
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
         lista.forEach(a => {
-            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempoBreve(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${rigaDati}</span><div style="display:flex; gap:3px;"><button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
+            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km|<b>${formattaTempo(a.tempo)}</b>|<b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${rigaDati}</span><div style="display:flex; gap:2px;"><button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
     }
 
