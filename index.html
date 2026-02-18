@@ -122,6 +122,14 @@
         return parseFloat(s) || 0;
     }
 
+    // Funzione helper per trasformare decimale in HH:MM:SS
+    function formattaTempo(oreDec) {
+        let h = Math.floor(oreDec);
+        let m = Math.floor((oreDec - h) * 60);
+        let s = Math.round(((oreDec - h) * 60 - m) * 60);
+        return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }
+
     function aggiornaStats() {
         let totK = 0, kY = 0;
         let pAnni = {};
@@ -227,13 +235,16 @@
         if(id === 'ranking') disegnaClassifica();
         if(id === 'diario') disegnaDiario();
     }
+
     function disegnaDiario() {
         const c = document.getElementById('lista-diario'); c.innerHTML = "";
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
         lista.forEach(a => {
-            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>📅 ${new Date(a.data).toLocaleDateString()}</span><span style="color:var(--primary)">${parseFloat(a.distanza).toFixed(1)} km</span><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div>`;
+            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b> km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(2)}</b> km/h`;
+            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>📅 ${new Date(a.data).toLocaleDateString()}</span><span style="font-size: 0.8em; color:var(--primary); margin-left: 5px;">${rigaDati}</span><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div>`;
         });
     }
+
     function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload(); } }
     function pulisciTutto() { if(confirm("CANCELLARE TUTTO?")) { localStorage.clear(); location.reload(); } }
     function cambiaObiettivo() { let n = prompt("Target per il " + currY + ":", myTarget); if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); location.reload(); } }
