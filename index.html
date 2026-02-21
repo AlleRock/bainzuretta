@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V62</title>
+    <title>Bainzuretta V62.2</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -31,11 +31,19 @@
         .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
         .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
+        
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 11px; flex-direction: column; }
+        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 10px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
+
+        /* Grafico */
+        .chart-container { width: 100%; height: 260px; position: relative; margin-top: 10px; }
+        .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 15px; font-size: 10px; font-weight: bold; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -44,7 +52,7 @@
 
 <div id="home" class="page active">
     <div class="card target-box" onclick="cambiaObiettivo()">
-        <small>🎯 OBIETTIVO <span class="year-label"></span></small><br>
+        <small>🚀 OBIETTIVO <span class="year-label"></span></small><br>
         <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
         <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
             Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
@@ -84,15 +92,25 @@
     <div id="lista-ranking"></div>
 </div>
 
+<div id="grafici" class="page">
+    <div class="card" style="text-align:center;">
+        <h3 style="margin:0; font-size: 1em;">📈 TREND MEDIE PROGRESSIVE</h3>
+        <p style="font-size: 10px; color: #888; margin-bottom: 10px;">Media YTD: Top 3 Anni vs <span class="year-label"></span></p>
+        <div id="container-svg" class="chart-container"></div>
+        <div id="legenda-grafico" class="legend"></div>
+    </div>
+</div>
+
 <nav>
     <div id="nav-home" class="active" onclick="vaiA('home')">🏠<span>HOME</span></div>
     <div id="nav-diario" onclick="vaiA('diario')">📖<span>DIARIO</span></div>
-    <div id="nav-rank" onclick="vaiA('ranking')">🏆<span>RANKING</span></div>
+    <div id="nav-rank" onclick="vaiA('ranking')">🏆<span>RANK</span></div>
+    <div id="nav-grafici" onclick="vaiA('grafici')">📈<span>GRAFICI</span></div>
 </nav>
 
 <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+        navigator.serviceWorker.register('./sw.js').catch(err => {});
     }
 
     let rawData = [];
@@ -194,6 +212,84 @@
         });
     }
 
+    function disegnaGrafici() {
+        const container = document.getElementById('container-svg');
+        const legend = document.getElementById('legenda-grafico');
+        container.innerHTML = ""; legend.innerHTML = "";
+
+        let statsMap = {}; 
+        rawData.forEach(a => {
+            let dt = new Date(a.data);
+            let y = dt.getFullYear();
+            let m = dt.getMonth();
+            if(!statsMap[y]) statsMap[y] = Array(12).fill(null).map(() => ({dist:0, ore:0}));
+            let dist = parseFloat(a.distanza) || 0;
+            let med = parseFloat(a.media) || 0;
+            if(med > 0) {
+                statsMap[y][m].dist += dist;
+                statsMap[y][m].ore += (dist / med);
+            }
+        });
+
+        let yearStats = Object.keys(statsMap).filter(y => parseInt(y) !== currY).map(y => {
+            let dTot = statsMap[y].reduce((s, m) => s + m.dist, 0);
+            let oTot = statsMap[y].reduce((s, m) => s + m.ore, 0);
+            return {y, avg: oTot > 0 ? dTot / oTot : 0};
+        }).sort((a,b) => b.avg - a.avg).slice(0,3).map(obj => obj.y);
+
+        let yearsToShow = [...yearStats];
+        if(statsMap[currY]) yearsToShow.push(currY.toString());
+
+        const colors = ["#2ecc71", "#3498db", "#9b59b6", "#fb8c00"]; 
+        let minMed = 15, maxMed = 40; 
+        const W = container.clientWidth, H = 260, padding = 30;
+
+        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;">`;
+        for(let i=0; i<=5; i++) {
+            let yVal = maxMed - (i * (maxMed-minMed)/5);
+            let yPos = padding + (i * (H - 2*padding)/5);
+            svg += `<line x1="${padding}" y1="${yPos}" x2="${W-padding}" y2="${yPos}" stroke="#888" stroke-dasharray="2" opacity="0.3" />`;
+            svg += `<text x="5" y="${yPos+4}" font-size="10" fill="#888">${yVal}</text>`;
+        }
+
+        yearsToShow.forEach((year, idx) => {
+            let isCurr = (year == currY);
+            let color = isCurr ? colors[3] : colors[idx];
+            let points = [];
+            let cumDist = 0, cumOre = 0;
+
+            statsMap[year].forEach((m, i) => {
+                cumDist += m.dist;
+                cumOre += m.ore;
+
+                if(cumOre > 0) {
+                    if(isCurr && m.dist === 0 && m.ore === 0 && i > (new Date().getMonth())) return;
+
+                    let avgProgressiva = cumDist / cumOre;
+                    let x = padding + (i * (W - 2*padding)/11);
+                    let y = padding + (maxMed - avgProgressiva) * (H - 2*padding) / (maxMed - minMed);
+                    y = Math.max(padding, Math.min(H - padding, y));
+                    
+                    points.push(`${x},${y}`);
+                    svg += `<circle cx="${x}" cy="${y}" r="${isCurr ? 3.5 : 2}" fill="${color}" />`;
+                }
+            });
+
+            if(points.length > 1) {
+                let dash = (idx === 2 && !isCurr) ? 'stroke-dasharray="4 2"' : '';
+                svg += `<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="${isCurr ? 3.5 : 2}" ${dash} ${!isCurr ? 'opacity="0.75"' : ''} />`;
+            }
+            legend.innerHTML += `<div class="legend-item"><div class="dot" style="background:${color}; ${idx === 2 && !isCurr ? 'border-radius:2px;' : ''}"></div> ${year}</div>`;
+        });
+
+        ["G","F","M","A","M","G","L","A","S","O","N","D"].forEach((m, i) => {
+            let x = padding + (i * (W - 2*padding)/11);
+            svg += `<text x="${x-3}" y="${H-5}" font-size="10" fill="#888">${m}</text>`;
+        });
+        svg += `</svg>`;
+        container.innerHTML = svg;
+    }
+
     function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
@@ -244,6 +340,7 @@
         document.getElementById('nav-'+id).classList.add('active');
         if(id === 'ranking') disegnaClassifica();
         if(id === 'diario') disegnaDiario();
+        if(id === 'grafici') disegnaGrafici();
     }
 
     function disegnaDiario() {
