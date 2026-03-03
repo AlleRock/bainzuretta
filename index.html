@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V63.1</title>
+    <title>Bainzuretta V63.2</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,7 +37,7 @@
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
         
-        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.4; }
+        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -46,7 +46,7 @@
 
 <div id="home" class="page active">
     <div class="card target-box" onclick="cambiaObiettivo()">
-        <small>🚀 OBIETTIVO <span class="year-label"></span></small><br>
+        <small>🎯 OBIETTIVO <span class="year-label"></span></small><br>
         <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
         <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
             Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
@@ -108,7 +108,6 @@
     const currY = oggi.getFullYear();
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
     
-    // Calcolo preciso del giorno dell'anno (DOY)
     const getDOY = (date) => {
         const start = new Date(date.getFullYear(), 0, 0);
         const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
@@ -185,13 +184,12 @@
         const recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = "";
         
-        // Filtriamo le attività dell'anno scelto che hanno un DOY <= a oggi
         let filtrati = rawData.filter(a => {
             let d = new Date(a.data);
             return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi;
         }).sort((a,b) => new Date(b.data) - new Date(a.data));
 
-        let tKm = 0, tOre = 0;
+        let tKm = 0, tOre = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
             tKm += parseFloat(a.distanza);
             tOre += (parseFloat(a.distanza) / parseFloat(a.media));
@@ -203,7 +201,7 @@
         recapCont.innerHTML = `
             <div class="archive-recap">
                 Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br>
-                Percorsi <b>${tKm.toFixed(1)} KM</b><br>
+                <b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attività</b><br>
                 Media Ponderata: <b>${medPond} km/h</b>
             </div>`;
     }
