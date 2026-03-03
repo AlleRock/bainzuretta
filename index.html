@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V62.2</title>
+    <title>Bainzuretta V63.1</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     
-    <link rel="manifest" href="manifest.json">
-
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
@@ -38,12 +36,8 @@
         
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
-
-        /* Grafico */
-        .chart-container { width: 100%; height: 260px; position: relative; margin-top: 10px; }
-        .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 15px; font-size: 10px; font-weight: bold; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+        
+        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -68,9 +62,9 @@
         <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
     </div>
     <div class="card" style="text-align:center;">
-        <p style="font-size: 10px; color: #888; margin-bottom: 10px;">GESTIONE DATI JSON</p>
-        <input type="file" id="json-input" accept=".json" style="font-size: 11px; margin-bottom:10px; width: 100%;">
         <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📦 BACKUP JSON</button>
+        <input type="file" id="json-input" accept=".json" style="display:none;">
+        <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📥 IMPORTA JSON</button>
         <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">🗑️ RESET DATI</button>
     </div>
 </div>
@@ -78,6 +72,15 @@
 <div id="diario" class="page">
     <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">📖 DIARIO <span class="year-label"></span></h3></div>
     <div id="lista-diario"></div>
+</div>
+
+<div id="archivio" class="page">
+    <div class="card" style="text-align:center;">
+        <h3 style="margin:0; font-size: 1em; margin-bottom:10px;">📂 ARCHIVIO STORICO YTD</h3>
+        <select id="sel-anno-archivio" onchange="disegnaArchivio()"></select>
+    </div>
+    <div id="recap-archivio"></div>
+    <div id="lista-archivio"></div>
 </div>
 
 <div id="ranking" class="page">
@@ -92,51 +95,39 @@
     <div id="lista-ranking"></div>
 </div>
 
-<div id="grafici" class="page">
-    <div class="card" style="text-align:center;">
-        <h3 style="margin:0; font-size: 1em;">📈 TREND MEDIE PROGRESSIVE</h3>
-        <p style="font-size: 10px; color: #888; margin-bottom: 10px;">Media YTD: Top 3 Anni vs <span class="year-label"></span></p>
-        <div id="container-svg" class="chart-container"></div>
-        <div id="legenda-grafico" class="legend"></div>
-    </div>
-</div>
-
 <nav>
     <div id="nav-home" class="active" onclick="vaiA('home')">🏠<span>HOME</span></div>
     <div id="nav-diario" onclick="vaiA('diario')">📖<span>DIARIO</span></div>
+    <div id="nav-archivio" onclick="vaiA('archivio')">📂<span>ARCHIVIO</span></div>
     <div id="nav-rank" onclick="vaiA('ranking')">🏆<span>RANK</span></div>
-    <div id="nav-grafici" onclick="vaiA('grafici')">📈<span>GRAFICI</span></div>
 </nav>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(err => {});
-    }
-
     let rawData = [];
     const oggi = new Date();
     const currY = oggi.getFullYear();
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
-    const doyOggi = Math.floor((oggi - new Date(currY, 0, 0)) / 86400000);
+    
+    // Calcolo preciso del giorno dell'anno (DOY)
+    const getDOY = (date) => {
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+    };
+    const doyOggi = getDOY(oggi);
 
     window.onload = () => {
         document.getElementById('main-header').innerText = "BAINZURETTA " + currY;
         document.querySelectorAll('.year-label').forEach(el => el.innerText = currY);
         const s = localStorage.getItem('bainzuretta_raw');
-        if (s) { rawData = JSON.parse(s); aggiornaStats(); }
+        if (s) { 
+            rawData = JSON.parse(s); 
+            aggiornaStats(); 
+            popolaAnniArchivio();
+        }
         document.getElementById('val-target-tot').innerText = myTarget;
         document.getElementById('in-date').valueAsDate = oggi;
     };
-
-    function tempoDecimale(v) {
-        if(!v) return 0;
-        let s = v.toString().replace(',','.').trim();
-        if(s.includes(':')) {
-            let p = s.split(':');
-            return parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0);
-        }
-        return parseFloat(s) || 0;
-    }
 
     function formattaTempo(oreDec) {
         let h = Math.floor(oreDec);
@@ -168,12 +159,53 @@
             }
         });
         document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
+        
         const mancanti = Math.max(0, myTarget - kY);
         document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
         document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * 365).toLocaleString('it-IT');
         const giorniRimanenti = Math.max(1, 365 - doyOggi);
-        const settRimanenti = giorniRimanenti / 7;
-        document.getElementById('val-week').innerText = Math.ceil(mancanti / settRimanenti);
+        document.getElementById('val-week').innerText = Math.ceil(mancanti / (giorniRimanenti / 7));
+    }
+
+    function popolaAnniArchivio() {
+        const sel = document.getElementById('sel-anno-archivio');
+        const anni = [...new Set(rawData.map(a => new Date(a.data).getFullYear()))].sort((a,b) => b-a);
+        if(anni.length > 0) {
+            sel.innerHTML = anni.map(y => `<option value="${y}">${y}</option>`).join('');
+            disegnaArchivio();
+        } else {
+            sel.innerHTML = "<option>Nessun dato</option>";
+        }
+    }
+
+    function disegnaArchivio() {
+        const annoScelto = parseInt(document.getElementById('sel-anno-archivio').value);
+        if(isNaN(annoScelto)) return;
+        const listaCont = document.getElementById('lista-archivio');
+        const recapCont = document.getElementById('recap-archivio');
+        listaCont.innerHTML = "";
+        
+        // Filtriamo le attività dell'anno scelto che hanno un DOY <= a oggi
+        let filtrati = rawData.filter(a => {
+            let d = new Date(a.data);
+            return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi;
+        }).sort((a,b) => new Date(b.data) - new Date(a.data));
+
+        let tKm = 0, tOre = 0;
+        filtrati.forEach(a => {
+            tKm += parseFloat(a.distanza);
+            tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            listaCont.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${riga}</span></div></div>`;
+        });
+
+        let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : "0.00";
+        recapCont.innerHTML = `
+            <div class="archive-recap">
+                Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br>
+                Percorsi <b>${tKm.toFixed(1)} KM</b><br>
+                Media Ponderata: <b>${medPond} km/h</b>
+            </div>`;
     }
 
     function disegnaClassifica() {
@@ -185,8 +217,7 @@
             let dt = new Date(a.data);
             let y = dt.getFullYear();
             if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0 };
-            let doyA = Math.floor((dt - new Date(y, 0, 0)) / 86400000);
-            if(doyA <= doyOggi) {
+            if(getDOY(dt) <= doyOggi) {
                 let dist = parseFloat(a.distanza) || 0;
                 let med = parseFloat(a.media) || 0;
                 p[y].d += dist;
@@ -212,90 +243,17 @@
         });
     }
 
-    function disegnaGrafici() {
-        const container = document.getElementById('container-svg');
-        const legend = document.getElementById('legenda-grafico');
-        container.innerHTML = ""; legend.innerHTML = "";
-
-        let statsMap = {}; 
-        rawData.forEach(a => {
-            let dt = new Date(a.data);
-            let y = dt.getFullYear();
-            let m = dt.getMonth();
-            if(!statsMap[y]) statsMap[y] = Array(12).fill(null).map(() => ({dist:0, ore:0}));
-            let dist = parseFloat(a.distanza) || 0;
-            let med = parseFloat(a.media) || 0;
-            if(med > 0) {
-                statsMap[y][m].dist += dist;
-                statsMap[y][m].ore += (dist / med);
-            }
-        });
-
-        let yearStats = Object.keys(statsMap).filter(y => parseInt(y) !== currY).map(y => {
-            let dTot = statsMap[y].reduce((s, m) => s + m.dist, 0);
-            let oTot = statsMap[y].reduce((s, m) => s + m.ore, 0);
-            return {y, avg: oTot > 0 ? dTot / oTot : 0};
-        }).sort((a,b) => b.avg - a.avg).slice(0,3).map(obj => obj.y);
-
-        let yearsToShow = [...yearStats];
-        if(statsMap[currY]) yearsToShow.push(currY.toString());
-
-        const colors = ["#2ecc71", "#3498db", "#9b59b6", "#fb8c00"]; 
-        let minMed = 15, maxMed = 40; 
-        const W = container.clientWidth, H = 260, padding = 30;
-
-        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;">`;
-        for(let i=0; i<=5; i++) {
-            let yVal = maxMed - (i * (maxMed-minMed)/5);
-            let yPos = padding + (i * (H - 2*padding)/5);
-            svg += `<line x1="${padding}" y1="${yPos}" x2="${W-padding}" y2="${yPos}" stroke="#888" stroke-dasharray="2" opacity="0.3" />`;
-            svg += `<text x="5" y="${yPos+4}" font-size="10" fill="#888">${yVal}</text>`;
-        }
-
-        yearsToShow.forEach((year, idx) => {
-            let isCurr = (year == currY);
-            let color = isCurr ? colors[3] : colors[idx];
-            let points = [];
-            let cumDist = 0, cumOre = 0;
-
-            statsMap[year].forEach((m, i) => {
-                cumDist += m.dist;
-                cumOre += m.ore;
-
-                if(cumOre > 0) {
-                    if(isCurr && m.dist === 0 && m.ore === 0 && i > (new Date().getMonth())) return;
-
-                    let avgProgressiva = cumDist / cumOre;
-                    let x = padding + (i * (W - 2*padding)/11);
-                    let y = padding + (maxMed - avgProgressiva) * (H - 2*padding) / (maxMed - minMed);
-                    y = Math.max(padding, Math.min(H - padding, y));
-                    
-                    points.push(`${x},${y}`);
-                    svg += `<circle cx="${x}" cy="${y}" r="${isCurr ? 3.5 : 2}" fill="${color}" />`;
-                }
-            });
-
-            if(points.length > 1) {
-                let dash = (idx === 2 && !isCurr) ? 'stroke-dasharray="4 2"' : '';
-                svg += `<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="${isCurr ? 3.5 : 2}" ${dash} ${!isCurr ? 'opacity="0.75"' : ''} />`;
-            }
-            legend.innerHTML += `<div class="legend-item"><div class="dot" style="background:${color}; ${idx === 2 && !isCurr ? 'border-radius:2px;' : ''}"></div> ${year}</div>`;
-        });
-
-        ["G","F","M","A","M","G","L","A","S","O","N","D"].forEach((m, i) => {
-            let x = padding + (i * (W - 2*padding)/11);
-            svg += `<text x="${x-3}" y="${H-5}" font-size="10" fill="#888">${m}</text>`;
-        });
-        svg += `</svg>`;
-        container.innerHTML = svg;
-    }
-
     function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
-        let t = tempoDecimale(document.getElementById('in-time').value);
-        let med = parseFloat(document.getElementById('in-kmh').value) || (k/t);
-        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: t, media: med });
+        let tInput = document.getElementById('in-time').value;
+        let tDec = 0;
+        if(tInput.includes(':')) {
+            let p = tInput.split(':');
+            tDec = parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0);
+        } else { tDec = parseFloat(tInput) || 0; }
+        let med = parseFloat(document.getElementById('in-kmh').value) || (k/tDec);
+        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
     }
@@ -315,12 +273,7 @@
 
     function esportaJSON() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawData));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "bainzuretta_backup.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        const a = document.createElement('a'); a.href = dataStr; a.download = "bainzuretta.json"; a.click();
     }
 
     document.getElementById('json-input').onchange = (e) => {
@@ -340,15 +293,14 @@
         document.getElementById('nav-'+id).classList.add('active');
         if(id === 'ranking') disegnaClassifica();
         if(id === 'diario') disegnaDiario();
-        if(id === 'grafici') disegnaGrafici();
+        if(id === 'archivio') disegnaArchivio();
     }
 
     function disegnaDiario() {
         const c = document.getElementById('lista-diario'); c.innerHTML = "";
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
         lista.forEach(a => {
-            let sep = `<span style="color:var(--text); opacity:0.4; margin:0 2px;">|</span>`;
-            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km${sep}<b>${formattaTempo(a.tempo)}</b>${sep}<b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${rigaDati}</span><div style="display:flex; gap:2px;"><button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
     }
