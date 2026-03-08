@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta V63.2</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fb8c00">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
@@ -148,9 +151,10 @@
     };
 
     function formattaTempo(oreDec) {
-        let h = Math.floor(oreDec);
-        let m = Math.floor((oreDec - h) * 60);
-        let s = Math.round(((oreDec - h) * 60 - m) * 60);
+        let totalSec = Math.round(oreDec * 3600);
+        let h = Math.floor(totalSec / 3600);
+        let m = Math.floor((totalSec % 3600) / 60);
+        let s = totalSec % 60;
         return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
@@ -180,8 +184,9 @@
         
         const mancanti = Math.max(0, myTarget - kY);
         document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
-        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * 365).toLocaleString('it-IT');
-        const giorniRimanenti = Math.max(1, 365 - doyOggi);
+        const giorniAnno = (currY % 4 === 0 && (currY % 100 !== 0 || currY % 400 === 0)) ? 366 : 365;
+        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * giorniAnno).toLocaleString('it-IT');
+        const giorniRimanenti = Math.max(1, giorniAnno - doyOggi);
         document.getElementById('val-week').innerText = Math.ceil(mancanti / (giorniRimanenti / 7));
     }
 
@@ -337,6 +342,10 @@
     function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload(); } }
     function pulisciTutto() { if(confirm("CANCELLARE TUTTO?")) { localStorage.clear(); location.reload(); } }
     function cambiaObiettivo() { let n = prompt("Target per il " + currY + ":", myTarget); if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); location.reload(); } }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
 </script>
 </body>
 </html>
