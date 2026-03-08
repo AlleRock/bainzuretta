@@ -38,6 +38,10 @@
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
         
         .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
+
+        .page-sticky-header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: 12px 12px 0 12px; }
+        #diario, #archivio { padding: 0; }
+        .page-scroll-body { padding: 0 12px 12px 12px; }
     </style>
 </head>
 <body>
@@ -45,41 +49,50 @@
 <header id="main-header">BAINZURETTA</header>
 
 <div id="home" class="page active">
-    <div class="card target-box" onclick="cambiaObiettivo()">
-        <small>🎯 OBIETTIVO <span class="year-label"></span></small><br>
-        <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
-        <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
-            Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
+    <div class="page-sticky-header">
+        <div class="card target-box" onclick="cambiaObiettivo()">
+            <small>🎯 OBIETTIVO <span class="year-label"></span></small><br>
+            <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
+            <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
+                Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
+            </div>
         </div>
+        <div class="card"><div class="stats-grid"><div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div><div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div><div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div></div></div>
     </div>
-    <div class="card"><div class="stats-grid"><div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div><div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div><div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div></div></div>
-    <div class="card">
-        <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
-        <input type="date" id="in-date" style="margin-bottom:10px;">
-        <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
-        <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
-        <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
-    </div>
-    <div class="card" style="text-align:center;">
-        <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📦 BACKUP JSON</button>
-        <input type="file" id="json-input" accept=".json" style="display:none;">
-        <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📥 IMPORTA JSON</button>
-        <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">🗑️ RESET DATI</button>
+    <div class="page-scroll-body">
+        <div class="card">
+            <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
+            <input type="date" id="in-date" style="margin-bottom:10px;">
+            <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
+            <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
+            <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
+        </div>
+        <div class="card" style="text-align:center;">
+            <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📦 BACKUP JSON</button>
+            <input type="file" id="json-input" accept=".json" style="display:none;">
+            <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📥 IMPORTA JSON</button>
+            <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">🗑️ RESET DATI</button>
+        </div>
     </div>
 </div>
 
 <div id="diario" class="page">
-    <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">📖 DIARIO <span class="year-label"></span></h3></div>
-    <div id="lista-diario"></div>
+    <div class="page-sticky-header">
+        <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">📖 DIARIO <span class="year-label"></span></h3></div>
+        <div id="recap-diario"></div>
+    </div>
+    <div class="page-scroll-body"><div id="lista-diario"></div></div>
 </div>
 
 <div id="archivio" class="page">
-    <div class="card" style="text-align:center;">
-        <h3 style="margin:0; font-size: 1em; margin-bottom:10px;">📂 ARCHIVIO STORICO YTD</h3>
-        <select id="sel-anno-archivio" onchange="disegnaArchivio()"></select>
+    <div class="page-sticky-header">
+        <div class="card" style="text-align:center;">
+            <h3 style="margin:0; font-size: 1em; margin-bottom:10px;">📂 ARCHIVIO STORICO YTD</h3>
+            <select id="sel-anno-archivio" onchange="disegnaArchivio()"></select>
+        </div>
+        <div id="recap-archivio"></div>
     </div>
-    <div id="recap-archivio"></div>
-    <div id="lista-archivio"></div>
+    <div class="page-scroll-body"><div id="lista-archivio"></div></div>
 </div>
 
 <div id="ranking" class="page">
@@ -301,7 +314,7 @@
         let tKmD = 0, tOreD = 0;
         lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); });
         let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : "0.00";
-        c.innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attività</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
+        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attività</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
         lista.forEach(a => {
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${rigaDati}</span><div style="display:flex; gap:2px;"><button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
