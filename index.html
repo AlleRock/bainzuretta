@@ -133,6 +133,10 @@
     const oggi = new Date();
     const currY = oggi.getFullYear();
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
+
+    // Carica subito i dati così sono disponibili in qualsiasi momento
+    const _s = localStorage.getItem('bainzuretta_raw');
+    if (_s) { rawData = JSON.parse(_s); }
     
     const getDOY = (date) => {
         const start = new Date(date.getFullYear(), 0, 0);
@@ -149,6 +153,7 @@
             rawData = JSON.parse(s); 
             aggiornaStats(); 
             popolaAnniArchivio();
+            disegnaClassifica();
         }
         document.getElementById('val-target-tot').innerText = myTarget;
         document.getElementById('in-date').valueAsDate = oggi;
