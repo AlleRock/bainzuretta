@@ -57,8 +57,7 @@
         <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
         <input type="date" id="in-date" style="margin-bottom:10px;">
         <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
-        <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:10px;">
-        <input type="number" step="0.01" id="in-kmh" placeholder="KM/H" style="margin-bottom:15px;">
+        <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
         <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
     </div>
     <div class="card" style="text-align:center;">
@@ -168,7 +167,7 @@
 
     function popolaAnniArchivio() {
         const sel = document.getElementById('sel-anno-archivio');
-        const anni = [...new Set(rawData.map(a => new Date(a.data).getFullYear()))].sort((a,b) => b-a);
+        const anni = [...new Set(rawData.map(a => new Date(a.data).getFullYear()))].filter(y => y !== currY).sort((a,b) => b-a);
         if(anni.length > 0) {
             sel.innerHTML = anni.map(y => `<option value="${y}">${y}</option>`).join('');
             disegnaArchivio();
@@ -237,7 +236,10 @@
         s.forEach((y, i) => {
             let val = m==='distanza' ? p[y].d : m==='ponderata' ? (p[y].d / (p[y].tSum || 1)) : (p[y].mSum / (p[y].c || 1));
             let unit = m==='distanza' ? " km" : " km/h";
-            container.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${i+1}. ${y}</span><span style="color:var(--primary)">${val.toFixed(2)}${unit}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(val/maxVal)*100}%"></div></div></div>`;
+            let isCurrentYear = parseInt(y) === currY;
+            let linkStyle = !isCurrentYear ? 'cursor:pointer;' : '';
+            let linkHint = !isCurrentYear ? ` onclick="apriArchivioAnno(${y})" title="Apri in Archivio"` : '';
+            container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">↗</small>' : ''}</span><span style="color:var(--primary)">${val.toFixed(2)}${unit}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(val/maxVal)*100}%"></div></div></div>`;
         });
     }
 
@@ -250,7 +252,7 @@
             let p = tInput.split(':');
             tDec = parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0);
         } else { tDec = parseFloat(tInput) || 0; }
-        let med = parseFloat(document.getElementById('in-kmh').value) || (k/tDec);
+        let med = tDec > 0 ? (k / tDec) : 0;
         rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
         location.reload();
@@ -265,7 +267,6 @@
         document.getElementById('in-date').value = a.data.split('T')[0];
         document.getElementById('in-dist').value = a.distanza;
         document.getElementById('in-time').value = formattaTempo(a.tempo);
-        document.getElementById('in-kmh').value = a.media;
         rawData = rawData.filter(x => x.id !== id);
     }
 
@@ -297,10 +298,20 @@
     function disegnaDiario() {
         const c = document.getElementById('lista-diario'); c.innerHTML = "";
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
+        let tKmD = 0, tOreD = 0;
+        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); });
+        let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : "0.00";
+        c.innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attività</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
         lista.forEach(a => {
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${rigaDati}</span><div style="display:flex; gap:2px;"><button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
+    }
+
+    function apriArchivioAnno(anno) {
+        const sel = document.getElementById('sel-anno-archivio');
+        sel.value = anno;
+        vaiA('archivio');
     }
 
     function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload(); } }
