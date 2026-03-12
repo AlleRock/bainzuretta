@@ -1,7 +1,0 @@
-name = "bainzuretta"
-compatibility_date = "2024-01-01"
-pages_build_output_dir = "."
-
-[[kv_namespaces]]
-binding = "BAINZURETTA_DATA"
-id = "ca08ebf4174641a48e782e45ac7bd022"
