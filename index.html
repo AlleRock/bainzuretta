@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V63.3</title>
-
+    <title>Bainzuretta V64</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
-
+    
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
@@ -31,14 +32,16 @@
         .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
         .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
+        
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 10px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; }
+        
         .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
 
-        /* Diario e Archivio: header fisso, lista scrolla */
         #home.active, #diario.active, #archivio.active {
             display: grid;
             grid-template-rows: auto 1fr;
@@ -48,10 +51,30 @@
         }
         .page-fixed-top { padding: 12px 12px 0 12px; }
         .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
+
+        /* Strava button */
+        .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
+        .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
+        
+        .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
+        .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
+        .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
+
+        /* Toast notifica */
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
+        
+        /* Loading spinner */
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Badge strava sulle attività */
+        .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<div id="toast"></div>
 <header id="main-header">BAINZURETTA</header>
 
 <div id="home" class="page active">
@@ -67,13 +90,16 @@
     </div>
     <div class="page-scroll-list">
         <div class="card">
-            <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ</h3>
+            <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">➕ AGGIUNGI ATTIVITÀ MANUALE</h3>
             <input type="date" id="in-date" style="margin-bottom:10px;">
             <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
             <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
             <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
         </div>
         <div class="card" style="text-align:center;">
+            <div id="strava-section">
+                <!-- Contenuto dinamico: login o sync -->
+            </div>
             <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📦 BACKUP JSON</button>
             <input type="file" id="json-input" accept=".json" style="display:none;">
             <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">📥 IMPORTA JSON</button>
@@ -117,7 +143,7 @@
     <div id="nav-home" class="active" onclick="vaiA('home')">🏠<span>HOME</span></div>
     <div id="nav-diario" onclick="vaiA('diario')">📖<span>DIARIO</span></div>
     <div id="nav-archivio" onclick="vaiA('archivio')">📂<span>ARCHIVIO</span></div>
-    <div id="nav-rank" onclick="vaiA('ranking')">🏆<span>RANK</span></div>
+    <div id="nav-ranking" onclick="vaiA('ranking')">🏆<span>RANK</span></div>
 </nav>
 
 <script>
@@ -125,6 +151,9 @@
     const oggi = new Date();
     const currY = oggi.getFullYear();
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
+    let isAuthenticated = false;
+
+    const API_BASE = "/functions";
 
     const getDOY = (date) => {
         const start = new Date(date.getFullYear(), 0, 0);
@@ -133,18 +162,138 @@
     };
     const doyOggi = getDOY(oggi);
 
-    window.onload = () => {
+    function showToast(msg, duration = 3000) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', duration);
+    }
+
+    window.onload = async () => {
         document.getElementById('main-header').innerText = "BAINZURETTA " + currY;
         document.querySelectorAll('.year-label').forEach(el => el.innerText = currY);
-        const s = localStorage.getItem('bainzuretta_raw');
-        if (s) { 
-            rawData = JSON.parse(s); 
-            aggiornaStats(); 
-            popolaAnniArchivio();
-        }
         document.getElementById('val-target-tot').innerText = myTarget;
         document.getElementById('in-date').valueAsDate = oggi;
+
+        // Controlla se siamo tornati da Strava OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+            showToast('✅ Strava collegato! Sincronizzazione in corso...');
+            history.replaceState({}, '', '/');
+            await caricaDati();
+            await sincronizzaStrava(true);
+        } else if (urlParams.get('auth') === 'error') {
+            showToast('❌ Errore collegamento Strava');
+            history.replaceState({}, '', '/');
+            await caricaDati();
+        } else {
+            await caricaDati();
+            // Auto-sync se autenticato
+            if (isAuthenticated) {
+                sincronizzaStrava(false);
+            }
+        }
     };
+
+    async function caricaDati() {
+        try {
+            const res = await fetch(`${API_BASE}/data`);
+            const json = await res.json();
+            rawData = json.activities || [];
+            isAuthenticated = json.authenticated || false;
+            aggiornaStravaSection(json.athlete_name);
+            aggiornaStats();
+            popolaAnniArchivio();
+        } catch(e) {
+            // Fallback localStorage per sviluppo locale
+            const s = localStorage.getItem('bainzuretta_raw');
+            if (s) { rawData = JSON.parse(s); aggiornaStats(); popolaAnniArchivio(); }
+            aggiornaStravaSection(null);
+        }
+    }
+
+    async function salvaDati() {
+        try {
+            await fetch(`${API_BASE}/data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ activities: rawData })
+            });
+        } catch(e) {
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        }
+    }
+
+    function aggiornaStravaSection(athleteName) {
+        const section = document.getElementById('strava-section');
+        if (isAuthenticated) {
+            section.innerHTML = `
+                <div class="strava-status ok">🔗 Connesso a Strava${athleteName ? ' come <b>' + athleteName + '</b>' : ''}</div>
+                <button class="btn-sync" id="btn-sync-strava" onclick="sincronizzaStrava(true)">🔄 SINCRONIZZA STRAVA</button>
+                <button onclick="disconnettiStrava()" style="background:transparent; color:#aaa; border:none; font-size:10px; cursor:pointer; margin-bottom:8px;">Disconnetti</button>
+            `;
+        } else {
+            section.innerHTML = `
+                <div class="strava-status ko">⚠️ Strava non collegato</div>
+                <button class="btn-strava" onclick="collegaStrava()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+                    CONNETTI CON STRAVA
+                </button>
+            `;
+        }
+    }
+
+    function collegaStrava() {
+        window.location.href = `${API_BASE}/auth`;
+    }
+
+    async function disconnettiStrava() {
+        if (!confirm("Disconnettere Strava? I dati già importati rimarranno.")) return;
+        // Rimuoviamo solo i token lato server, i dati restano
+        await fetch(`${API_BASE}/data`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activities: rawData, disconnect: true })
+        });
+        showToast('Disconnesso da Strava');
+        isAuthenticated = false;
+        aggiornaStravaSection(null);
+    }
+
+    async function sincronizzaStrava(mostraFeedback = true) {
+        const btn = document.getElementById('btn-sync-strava');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> SINCRONIZZAZIONE...';
+        }
+        try {
+            const res = await fetch(`${API_BASE}/sync`);
+            const json = await res.json();
+            if (json.error === 'not_authenticated') {
+                showToast('❌ Riconnetti Strava');
+                isAuthenticated = false;
+                aggiornaStravaSection(null);
+                return;
+            }
+            rawData = json.activities || [];
+            aggiornaStats();
+            popolaAnniArchivio();
+            if (mostraFeedback) {
+                if (json.nuove > 0) {
+                    showToast(`✅ ${json.nuove} nuove attività importate!`, 4000);
+                } else {
+                    showToast('✅ Già aggiornato, nessuna novità');
+                }
+            }
+        } catch(e) {
+            if (mostraFeedback) showToast('❌ Errore sincronizzazione');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 SINCRONIZZA STRAVA';
+            }
+        }
+    }
 
     function formattaTempo(oreDec) {
         let totalSec = Math.round(oreDec * 3600);
@@ -168,7 +317,7 @@
         });
         document.getElementById('st-km').innerText = totK.toLocaleString('it-IT', {minimumFractionDigits:2}) + " KM";
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
-
+        
         let maxAvg = 0, bestY = "-";
         Object.keys(pAnni).forEach(y => {
             if(pAnni[y].count > 0) {
@@ -177,7 +326,7 @@
             }
         });
         document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
-
+        
         const mancanti = Math.max(0, myTarget - kY);
         document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
         const giorniAnno = (currY % 4 === 0 && (currY % 100 !== 0 || currY % 400 === 0)) ? 366 : 365;
@@ -203,7 +352,7 @@
         const listaCont = document.getElementById('lista-archivio');
         const recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = "";
-
+        
         let filtrati = rawData.filter(a => {
             let d = new Date(a.data);
             return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi;
@@ -213,8 +362,9 @@
         filtrati.forEach(a => {
             tKm += parseFloat(a.distanza);
             tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            listaCont.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${riga}</span></div></div>`;
+            listaCont.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga}</span></div></div>`;
         });
 
         let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : "0.00";
@@ -264,7 +414,7 @@
         });
     }
 
-    function salvaManuale() {
+    async function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
         let tInput = document.getElementById('in-time').value;
@@ -275,8 +425,15 @@
         } else { tDec = parseFloat(tInput) || 0; }
         let med = tDec > 0 ? (k / tDec) : 0;
         rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med });
-        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-        location.reload();
+        await salvaDati();
+        showToast('✅ Attività salvata!');
+        aggiornaStats();
+        popolaAnniArchivio();
+        document.getElementById('in-dist').value = '';
+        document.getElementById('in-time').value = '';
+        document.getElementById('in-date').valueAsDate = oggi;
+        document.getElementById('form-title').innerText = "➕ AGGIUNGI ATTIVITÀ MANUALE";
+        document.getElementById('btn-save').innerText = "SALVA";
     }
 
     function preparaModifica(id) {
@@ -296,12 +453,14 @@
         const a = document.createElement('a'); a.href = dataStr; a.download = "bainzuretta.json"; a.click();
     }
 
-    document.getElementById('json-input').onchange = (e) => {
+    document.getElementById('json-input').onchange = async (e) => {
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
             rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            location.reload();
+            await salvaDati();
+            aggiornaStats();
+            popolaAnniArchivio();
+            showToast('✅ Dati importati!');
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     };
@@ -324,8 +483,10 @@
         let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : "0.00";
         document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attività</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
         lista.forEach(a => {
+            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+            let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button>` : '';
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${rigaDati}</span><div style="display:flex; gap:2px;"><button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button><button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
+            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati}</span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
     }
 
@@ -335,14 +496,37 @@
         vaiA('archivio');
     }
 
-    function eliminaAttivita(id) { if(confirm("Elimina?")) { rawData = rawData.filter(a => a.id !== id); localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData)); location.reload(); } }
-    function pulisciTutto() { if(confirm("CANCELLARE TUTTO?")) { localStorage.clear(); location.reload(); } }
-    function cambiaObiettivo() { let n = prompt("Target per il " + currY + ":", myTarget); if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); location.reload(); } }
+    async function eliminaAttivita(id) {
+        if(confirm("Elimina?")) {
+            rawData = rawData.filter(a => a.id !== id);
+            await salvaDati();
+            disegnaDiario();
+            aggiornaStats();
+        }
+    }
+
+    async function pulisciTutto() {
+        if(confirm("CANCELLARE TUTTO?")) {
+            rawData = [];
+            await salvaDati();
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    function cambiaObiettivo() {
+        let n = prompt("Target per il " + currY + ":", myTarget);
+        if(n) {
+            myTarget = parseInt(n);
+            localStorage.setItem('bainzuretta_target_' + currY, n);
+            document.getElementById('val-target-tot').innerText = myTarget;
+            aggiornaStats();
+        }
+    }
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');
     }
 </script>
-
 </body>
 </html>
