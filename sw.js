@@ -1,15 +1,13 @@
-const CACHE_NAME = 'bainzuretta-v63.3';
+const CACHE_NAME = 'bainzuretta-v64';
 const assets = [
     './',
     './index.html',
     'https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png'
 ];
-
 self.addEventListener('install', e => {
     e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assets)));
     self.skipWaiting();
 });
-
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys().then(keys =>
@@ -18,7 +16,10 @@ self.addEventListener('activate', e => {
     );
     self.clients.claim();
 });
-
 self.addEventListener('fetch', e => {
+    // Non intercettare le chiamate alle Functions di Cloudflare
+    if (e.request.url.includes('/functions/')) {
+        return;
+    }
     e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
 });
