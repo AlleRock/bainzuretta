@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bainzuretta-v64';
+const CACHE_NAME = 'bainzuretta-v65';
 const assets = [
     './',
     './index.html',
@@ -17,9 +17,5 @@ self.addEventListener('activate', e => {
     self.clients.claim();
 });
 self.addEventListener('fetch', e => {
-    // Non intercettare le chiamate alle Functions di Cloudflare
-    if (e.request.url.includes('/functions/')) {
-        return;
-    }
     e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
 });
