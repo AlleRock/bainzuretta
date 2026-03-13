@@ -153,7 +153,7 @@
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
     let isAuthenticated = false;
 
-    const API_BASE = "/functions";
+    const API_BASE = "https://bainzuretta-api.m8online.workers.dev";
 
     const getDOY = (date) => {
         const start = new Date(date.getFullYear(), 0, 0);
