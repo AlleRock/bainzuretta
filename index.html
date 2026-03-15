@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V64</title>
+    <title>Bainzuretta V65</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
@@ -33,7 +33,7 @@
         .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
         nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 10px; flex-direction: column; }
+        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
@@ -51,6 +51,7 @@
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+        .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -124,11 +125,19 @@
     <div id="lista-ranking"></div>
 </div>
 
+<div id="records" class="page">
+    <div class="card" style="text-align:center;">
+        <h3 style="margin:0; font-size: 1em;">RECORD STORICI</h3>
+    </div>
+    <div id="lista-records"></div>
+</div>
+
 <nav>
     <div id="nav-home" class="active" onclick="vaiA('home')">&#127968;<span>HOME</span></div>
     <div id="nav-diario" onclick="vaiA('diario')">&#128214;<span>DIARIO</span></div>
     <div id="nav-archivio" onclick="vaiA('archivio')">&#128194;<span>ARCHIVIO</span></div>
     <div id="nav-ranking" onclick="vaiA('ranking')">&#127942;<span>RANK</span></div>
+    <div id="nav-records" onclick="vaiA('records')">&#128081;<span>RECORD</span></div>
 </nav>
 
 <script>
@@ -267,15 +276,21 @@
                     const distKm = act.distance / 1000;
                     const oreDec = act.moving_time / 3600;
                     const media = oreDec > 0 ? distKm / oreDec : 0;
-                    nuove.push({ id: act.id, strava_id: act.id, data: act.start_date_local, distanza: parseFloat(distKm.toFixed(2)), tempo: parseFloat(oreDec.toFixed(4)), media: parseFloat(media.toFixed(2)), nome: act.name || '' });
+                    nuove.push({
+                        id: act.id, strava_id: act.id, data: act.start_date_local,
+                        distanza: parseFloat(distKm.toFixed(2)),
+                        tempo: parseFloat(oreDec.toFixed(4)),
+                        media: parseFloat(media.toFixed(2)),
+                        nome: act.name || '',
+                        dislivello: act.total_elevation_gain || 0
+                    });
                 }
                 if (activities.length < 100) break;
                 page++;
             }
             rawData = [...rawData, ...nuove].sort((a, b) => new Date(b.data) - new Date(a.data));
             localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats();
-            popolaAnniArchivio();
+            aggiornaStats(); popolaAnniArchivio();
             if (mostraFeedback) showToast(nuove.length > 0 ? `${nuove.length} nuove attivita' importate!` : 'Gia\' aggiornato!', 4000);
         } catch(e) {
             if (mostraFeedback) showToast('Errore sincronizzazione');
@@ -306,9 +321,7 @@
 
     function disconnettiStrava() {
         if (!confirm('Disconnettere Strava? I dati gia\' importati rimarranno.')) return;
-        clearStravaToken();
-        aggiornaStravaSection();
-        showToast('Disconnesso da Strava');
+        clearStravaToken(); aggiornaStravaSection(); showToast('Disconnesso da Strava');
     }
 
     window.onload = async () => {
@@ -321,14 +334,9 @@
         const savedSecret = localStorage.getItem('bainzuretta_strava_secret');
         if (savedSecret) window._stravaSecret = savedSecret;
         stravaToken = loadStravaToken();
-        aggiornaStravaSection();
-        aggiornaStats();
-        popolaAnniArchivio();
-        if (window.location.search.includes('code=')) {
-            await handleStravaCallback();
-        } else if (stravaToken) {
-            sincronizzaStrava(false);
-        }
+        aggiornaStravaSection(); aggiornaStats(); popolaAnniArchivio();
+        if (window.location.search.includes('code=')) { await handleStravaCallback(); }
+        else if (stravaToken) { sincronizzaStrava(false); }
     };
 
     function formattaTempo(oreDec) {
@@ -340,23 +348,18 @@
     }
 
     function aggiornaStats() {
-        let totK = 0, kY = 0;
-        let pAnni = {};
+        let totK = 0, kY = 0, pAnni = {};
         rawData.forEach(a => {
-            let dist = parseFloat(a.distanza) || 0;
-            let med = parseFloat(a.media) || 0;
+            let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
             let y = new Date(a.data).getFullYear();
-            totK += dist;
-            if(y === currY) kY += dist;
+            totK += dist; if(y === currY) kY += dist;
             if(!pAnni[y]) pAnni[y] = { mSum: 0, count: 0 };
             if(med > 0) { pAnni[y].mSum += med; pAnni[y].count++; }
         });
         document.getElementById('st-km').innerText = totK.toLocaleString('it-IT', {minimumFractionDigits:2}) + ' KM';
         document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
         let maxAvg = 0, bestY = '-';
-        Object.keys(pAnni).forEach(y => {
-            if(pAnni[y].count > 0) { let avg = pAnni[y].mSum / pAnni[y].count; if(avg > maxAvg) { maxAvg = avg; bestY = y; } }
-        });
+        Object.keys(pAnni).forEach(y => { if(pAnni[y].count > 0) { let avg = pAnni[y].mSum / pAnni[y].count; if(avg > maxAvg) { maxAvg = avg; bestY = y; } } });
         document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
         const mancanti = Math.max(0, myTarget - kY);
         document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
@@ -376,8 +379,7 @@
     function disegnaArchivio() {
         const annoScelto = parseInt(document.getElementById('sel-anno-archivio').value);
         if(isNaN(annoScelto)) return;
-        const listaCont = document.getElementById('lista-archivio');
-        const recapCont = document.getElementById('recap-archivio');
+        const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
         let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
         let tKm = 0, tOre = 0, nAtt = filtrati.length;
@@ -397,10 +399,10 @@
         container.innerHTML = '';
         let p = {};
         rawData.forEach(a => {
-            let dt = new Date(a.data); let y = dt.getFullYear();
+            let dt = new Date(a.data), y = dt.getFullYear();
             if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0 };
             if(getDOY(dt) <= doyOggi) {
-                let dist = parseFloat(a.distanza) || 0; let med = parseFloat(a.media) || 0;
+                let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
                 p[y].d += dist; p[y].mSum += med; p[y].c++; p[y].tSum += (med > 0 ? dist / med : 0);
             }
         });
@@ -420,11 +422,89 @@
         });
     }
 
+    function disegnaRecords() {
+        const c = document.getElementById('lista-records');
+        c.innerHTML = '';
+        if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
+
+        function recordRow(emoji, titolo, attivita, valore) {
+            if (!attivita) return '';
+            const data = new Date(attivita.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+            const nome = attivita.nome ? ` — ${attivita.nome}` : '';
+            return `<div class="rank-item"><div class="rank-info"><span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span><span style="color:var(--primary);">${valore}</span></div></div>`;
+        }
+
+        const maxDist = rawData.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
+        const minDist = rawData.reduce((a,b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
+        const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
+        const minMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) < parseFloat(b.media) ? a : b);
+        const maxTempo = rawData.reduce((a,b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
+        const conDislivello = rawData.filter(a => a.dislivello && a.dislivello > 0);
+        const maxDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello > b.dislivello ? a : b) : null;
+        const minDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello < b.dislivello ? a : b) : null;
+
+        let pAnni = {}, pMesi = {};
+        rawData.forEach(a => {
+            const y = new Date(a.data).getFullYear();
+            if (!pAnni[y]) pAnni[y] = { km: 0, dislivello: 0, count: 0 };
+            pAnni[y].km += parseFloat(a.distanza) || 0;
+            pAnni[y].dislivello += a.dislivello || 0;
+            pAnni[y].count++;
+            const d = new Date(a.data);
+            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0 };
+            pMesi[k].km += parseFloat(a.distanza) || 0;
+            pMesi[k].dislivello += a.dislivello || 0;
+        });
+
+        const annoBestKm = Object.keys(pAnni).reduce((a,b) => pAnni[a].km > pAnni[b].km ? a : b);
+        const annoMaxUscite = Object.keys(pAnni).reduce((a,b) => pAnni[a].count > pAnni[b].count ? a : b);
+        const meseBestKm = Object.keys(pMesi).reduce((a,b) => pMesi[a].km > pMesi[b].km ? a : b);
+        const [mBY, mBM] = meseBestKm.split('-');
+        const nomeMeseBestKm = new Date(parseInt(mBY), parseInt(mBM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
+        const anniConDislivello = Object.keys(pAnni).filter(y => pAnni[y].dislivello > 0);
+        const annoMaxDislivello = anniConDislivello.length ? anniConDislivello.reduce((a,b) => pAnni[a].dislivello > pAnni[b].dislivello ? a : b) : null;
+        const mesiConDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
+        const meseMaxDislivello = mesiConDislivello.length ? mesiConDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
+
+        let html = '';
+        html += '<div class="card"><div class="record-section-title">DISTANZA</div>';
+        html += recordRow('&#127942;', 'Giro piu\' lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`);
+        html += recordRow('&#128138;', 'Giro piu\' corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`);
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">VELOCITA\'</div>';
+        html += recordRow('&#9889;', 'Media piu\' alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`);
+        html += recordRow('&#128034;', 'Media piu\' bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`);
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
+        html += recordRow('&#9201;', 'Uscita piu\' lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)));
+        html += '</div>';
+        if (maxDislivello) {
+            html += '<div class="card"><div class="record-section-title">DISLIVELLO</div>';
+            html += recordRow('&#127956;', 'Piu\' dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`);
+            html += recordRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`);
+            html += '</div>';
+        }
+        html += '<div class="card"><div class="record-section-title">STATISTICHE ANNI</div>';
+        html += `<div class="rank-item"><div class="rank-info"><span>&#127942; Anno con piu\' km</span><span style="color:var(--primary);">${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128336; Anno con piu\' uscite</span><span style="color:var(--primary);">${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite</span></div></div>`;
+        if (annoMaxDislivello) html += `<div class="rank-item"><div class="rank-info"><span>&#127956; Anno con piu\' dislivello</span><span style="color:var(--primary);">${annoMaxDislivello} — ${pAnni[annoMaxDislivello].dislivello.toFixed(0)} m</span></div></div>`;
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">STATISTICHE MESI</div>';
+        html += `<div class="rank-item"><div class="rank-info"><span>&#127942; Mese con piu\' km</span><span style="color:var(--primary);">${nomeMeseBestKm} — ${pMesi[meseBestKm].km.toFixed(0)} km</span></div></div>`;
+        if (meseMaxDislivello) {
+            const [mDY, mDM] = meseMaxDislivello.split('-');
+            const nomeMeseDislivello = new Date(parseInt(mDY), parseInt(mDM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
+            html += `<div class="rank-item"><div class="rank-info"><span>&#127956; Mese con piu\' dislivello</span><span style="color:var(--primary);">${nomeMeseDislivello} — ${pMesi[meseMaxDislivello].dislivello.toFixed(0)} m</span></div></div>`;
+        }
+        html += '</div>';
+        c.innerHTML = html;
+    }
+
     async function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
-        let tInput = document.getElementById('in-time').value;
-        let tDec = 0;
+        let tInput = document.getElementById('in-time').value, tDec = 0;
         if(tInput.includes(':')) { let p = tInput.split(':'); tDec = parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0); }
         else { tDec = parseFloat(tInput) || 0; }
         let med = tDec > 0 ? (k / tDec) : 0;
@@ -460,8 +540,7 @@
         reader.onload = (ev) => {
             rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
             localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats(); popolaAnniArchivio();
-            showToast('Dati importati!');
+            aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     };
@@ -474,6 +553,7 @@
         if(id === 'ranking') disegnaClassifica();
         if(id === 'diario') disegnaDiario();
         if(id === 'archivio') disegnaArchivio();
+        if(id === 'records') disegnaRecords();
     }
 
     function disegnaDiario() {
@@ -485,7 +565,7 @@
         document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
         lista.forEach(a => {
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
-            let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">✏️</button>` : '';
+            let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati}</span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
