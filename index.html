@@ -522,19 +522,19 @@
             if (!attivita) return '';
             const data = fmt(attivita.data);
             const nome = attivita.nome ? ` — ${attivita.nome}` : '';
-            return `<div class="rank-item" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}" data-top5="${top5tipo}">
-                <div class="rank-info">
+            return `<div class="rank-item">
+                <div class="rank-info" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}">
                     <span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span>
-                    <span style="color:var(--primary);">${valore} <small style="font-size:9px;color:#bbb;">&#9432;</small></span>
+                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
                 </div>
             </div>`;
         }
 
         function statRow(emoji, titolo, valore, statTipo) {
-            return `<div class="rank-item" style="cursor:pointer;" data-stat="${statTipo}" data-titolo="${titolo}">
-                <div class="rank-info">
+            return `<div class="rank-item">
+                <div class="rank-info" style="cursor:pointer;" data-stat="${statTipo}" data-titolo="${titolo}">
                     <span>${emoji} ${titolo}</span>
-                    <span style="color:var(--primary);">${valore} <small style="font-size:9px;color:#bbb;">TOP5</small></span>
+                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-stat="${statTipo}" data-titolo="${titolo}">TOP 5</button></span>
                 </div>
             </div>`;
         }
@@ -586,41 +586,42 @@
 
         c.innerHTML = html;
 
-        // Event listener unico per tutti i click
+        // Event listener per dettaglio attività (click su riga)
         c.querySelectorAll('[data-act]').forEach(el => {
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return; // ignora click sul bottone TOP5
                 const attivita = rawData.find(a => String(a.id) === el.dataset.act);
-                const top5tipo = el.dataset.top5;
-                const titolo = el.dataset.titolo;
                 if (!attivita) return;
-
-                // Primo click: dettaglio. Secondo click (entro 2 sec): top5
-                if (el._lastClick && Date.now() - el._lastClick < 2000) {
-                    // Top5
-                    let righe = '';
-                    if (top5tipo === 'dist_max') righe = [...rawData].sort((a,b) => b.distanza - a.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
-                    else if (top5tipo === 'dist_min') righe = [...rawData].sort((a,b) => a.distanza - b.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
-                    else if (top5tipo === 'media_max') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
-                    else if (top5tipo === 'media_min') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => a.media - b.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
-                    else if (top5tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
-                    else if (top5tipo === 'disliv_max') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
-                    else if (top5tipo === 'disliv_min') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
-                    alert(`TOP 5 — ${titolo}\n\n${righe}`);
-                    el._lastClick = null;
-                } else {
-                    // Dettaglio attivita
-                    const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
-                    const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
-                    alert(`${titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}\n\n(tocca di nuovo per Top 5)`);
-                    el._lastClick = Date.now();
-                }
+                const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
+                const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
+                alert(`${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`);
             });
         });
 
-        c.querySelectorAll('[data-stat]').forEach(el => {
-            el.addEventListener('click', () => {
-                const statTipo = el.dataset.stat;
-                const titolo = el.dataset.titolo;
+        // Event listener per TOP5 bottoni su attività
+        c.querySelectorAll('button[data-top5]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tipo = btn.dataset.top5;
+                const titolo = btn.dataset.titolo;
+                let righe = '';
+                if (tipo === 'dist_max') righe = [...rawData].sort((a,b) => b.distanza - a.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
+                else if (tipo === 'dist_min') righe = [...rawData].sort((a,b) => a.distanza - b.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
+                else if (tipo === 'media_max') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
+                else if (tipo === 'media_min') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => a.media - b.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
+                else if (tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
+                else if (tipo === 'disliv_max') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                else if (tipo === 'disliv_min') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                alert(`TOP 5 — ${titolo}\n\n${righe}`);
+            });
+        });
+
+        // Event listener per TOP5 su statistiche
+        c.querySelectorAll('button[data-stat]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const statTipo = btn.dataset.stat;
+                const titolo = btn.dataset.titolo;
                 let righe = '';
                 if (statTipo === 'anni_km') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].km - pAnni[a].km).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].km.toFixed(0)} km`).join('\n');
                 else if (statTipo === 'anni_uscite') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].count - pAnni[a].count).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].count} uscite`).join('\n');
