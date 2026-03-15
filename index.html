@@ -1,61 +1,57 @@
 <!DOCTYPE html>
-
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta V64</title>
-
-```
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#fb8c00">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bainzuretta">
-<link rel="apple-touch-icon" href="icona.png">
-
-<style>
-    :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
-    header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
-    .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
-    .page.active { display: block; }
-    .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
-    .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
-    input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
-    .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
-    .stat-box b { font-size: 1.1em; color: var(--primary); }
-    .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
-    .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
-    .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
-    .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
-    nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-    nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
-    nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
-    .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-    .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-    .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
-    #home.active, #diario.active, #archivio.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
-    .page-fixed-top { padding: 12px 12px 0 12px; }
-    .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
-    .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
-    .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
-    .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
-    .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
-    .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
-    #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
-</style>
-```
-
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fb8c00">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bainzuretta">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
+    
+    <style>
+        :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
+        .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
+        .page.active { display: block; }
+        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
+        input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
+        .stat-box b { font-size: 1.1em; color: var(--primary); }
+        .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
+        .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+        .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
+        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 10px; flex-direction: column; }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
+        #home.active, #diario.active, #archivio.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
+        .page-fixed-top { padding: 12px 12px 0 12px; }
+        .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
+        .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
+        .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
+        .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
+        .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
+        .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+    </style>
 </head>
 <body>
 
@@ -128,24 +124,16 @@
     <div id="lista-ranking"></div>
 </div>
 
-<div id="records" class="page">
-    <div class="card" style="text-align:center;">
-        <h3 style="margin:0; font-size: 1em;">RECORD STORICI</h3>
-    </div>
-    <div id="lista-records"></div>
-</div>
-
 <nav>
     <div id="nav-home" class="active" onclick="vaiA('home')">&#127968;<span>HOME</span></div>
     <div id="nav-diario" onclick="vaiA('diario')">&#128214;<span>DIARIO</span></div>
     <div id="nav-archivio" onclick="vaiA('archivio')">&#128194;<span>ARCHIVIO</span></div>
     <div id="nav-ranking" onclick="vaiA('ranking')">&#127942;<span>RANK</span></div>
-    <div id="nav-records" onclick="vaiA('records')">&#128081;<span>RECORD</span></div>
 </nav>
 
 <script>
     const STRAVA_CLIENT_ID = '210700';
-    const STRAVA_REDIRECT_URI = 'https://allerock.github.io/';
+    const STRAVA_REDIRECT_URI = 'https://allerock.github.io/bainzuretta/';
     const STRAVA_SCOPE = 'activity:read_all';
 
     let rawData = [];
@@ -279,7 +267,7 @@
                     const distKm = act.distance / 1000;
                     const oreDec = act.moving_time / 3600;
                     const media = oreDec > 0 ? distKm / oreDec : 0;
-                    nuove.push({ id: act.id, strava_id: act.id, data: act.start_date_local, distanza: parseFloat(distKm.toFixed(2)), tempo: parseFloat(oreDec.toFixed(4)), media: parseFloat(media.toFixed(2)), nome: act.name || '', dislivello: act.total_elevation_gain || 0 });
+                    nuove.push({ id: act.id, strava_id: act.id, data: act.start_date_local, distanza: parseFloat(distKm.toFixed(2)), tempo: parseFloat(oreDec.toFixed(4)), media: parseFloat(media.toFixed(2)), nome: act.name || '' });
                 }
                 if (activities.length < 100) break;
                 page++;
@@ -486,7 +474,6 @@
         if(id === 'ranking') disegnaClassifica();
         if(id === 'diario') disegnaDiario();
         if(id === 'archivio') disegnaArchivio();
-        if(id === 'records') disegnaRecords();
     }
 
     function disegnaDiario() {
@@ -502,109 +489,6 @@
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati}</span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
-    }
-
-    function disegnaRecords() {
-        const c = document.getElementById('lista-records');
-        c.innerHTML = '';
-        if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
-
-        function recordCard(emoji, titolo, attivita, valore) {
-            if (!attivita) return '';
-            const data = new Date(attivita.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-            const nome = attivita.nome || '';
-            return `<div class="rank-item">
-                <div style="font-size:0.75em; color:#888; font-weight:700; margin-bottom:4px;">${emoji} ${titolo}</div>
-                <div class="rank-info">
-                    <span>${data}${nome ? ' — ' + nome : ''}</span>
-                    <span style="color:var(--primary);">${valore}</span>
-                </div>
-            </div>`;
-        }
-
-        // Record distanza
-        const maxDist = rawData.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
-        const minDist = rawData.reduce((a,b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
-
-        // Record media
-        const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
-        const minMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) < parseFloat(b.media) ? a : b);
-
-        // Record tempo
-        const maxTempo = rawData.reduce((a,b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
-
-        // Record dislivello
-        const conDislivello = rawData.filter(a => a.dislivello && a.dislivello > 0);
-        const maxDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello > b.dislivello ? a : b) : null;
-        const minDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello < b.dislivello ? a : b) : null;
-
-        // Stats per anno
-        let pAnni = {};
-        rawData.forEach(a => {
-            const y = new Date(a.data).getFullYear();
-            if (!pAnni[y]) pAnni[y] = { km: 0, dislivello: 0, count: 0 };
-            pAnni[y].km += parseFloat(a.distanza) || 0;
-            pAnni[y].dislivello += a.dislivello || 0;
-            pAnni[y].count++;
-        });
-        const annoBestKm = Object.keys(pAnni).reduce((a,b) => pAnni[a].km > pAnni[b].km ? a : b);
-        const annoBestDislivello = Object.keys(pAnni).filter(y => pAnni[y].dislivello > 0);
-        const annoMaxDislivello = annoBestDislivello.length ? annoBestDislivello.reduce((a,b) => pAnni[a].dislivello > pAnni[b].dislivello ? a : b) : null;
-        const annoMaxUscite = Object.keys(pAnni).reduce((a,b) => pAnni[a].count > pAnni[b].count ? a : b);
-
-        // Stats per mese
-        let pMesi = {};
-        rawData.forEach(a => {
-            const d = new Date(a.data);
-            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0 };
-            pMesi[k].km += parseFloat(a.distanza) || 0;
-            pMesi[k].dislivello += a.dislivello || 0;
-        });
-        const meseBestKm = Object.keys(pMesi).reduce((a,b) => pMesi[a].km > pMesi[b].km ? a : b);
-        const meseBestDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
-        const meseMaxDislivello = meseBestDislivello.length ? meseBestDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
-
-        const [mBestY, mBestM] = meseBestKm.split('-');
-        const nomeMeseBestKm = new Date(parseInt(mBestY), parseInt(mBestM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
-
-        let html = '<div class="card"><h4 style="color:var(--primary); font-size:0.8em; margin-bottom:10px;">DISTANZA</h4>';
-        html += recordCard('🏆', 'Giro piu\' lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`);
-        html += recordCard('🐌', 'Giro piu\' corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`);
-        html += '</div>';
-
-        html += '<div class="card"><h4 style="color:var(--primary); font-size:0.8em; margin-bottom:10px;">VELOCITA\'</h4>';
-        html += recordCard('⚡', 'Media piu\' alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`);
-        html += recordCard('🐢', 'Media piu\' bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`);
-        html += '</div>';
-
-        html += '<div class="card"><h4 style="color:var(--primary); font-size:0.8em; margin-bottom:10px;">TEMPO IN SELLA</h4>';
-        html += recordCard('⏱️', 'Uscita piu\' lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)));
-        html += '</div>';
-
-        if (maxDislivello) {
-            html += '<div class="card"><h4 style="color:var(--primary); font-size:0.8em; margin-bottom:10px;">DISLIVELLO</h4>';
-            html += recordCard('🏔️', 'Piu\' dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`);
-            html += recordCard('🏖️', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`);
-            html += '</div>';
-        }
-
-        html += '<div class="card"><h4 style="color:var(--primary); font-size:0.8em; margin-bottom:10px;">STATISTICHE ANNI</h4>';
-        html += `<div class="rank-item"><div class="rank-info"><span>&#127942; Anno con piu\' km</span><span style="color:var(--primary);">${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km</span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128336; Anno con piu\' uscite</span><span style="color:var(--primary);">${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite</span></div></div>`;
-        if (annoMaxDislivello) html += `<div class="rank-item"><div class="rank-info"><span>&#127956; Anno con piu\' dislivello</span><span style="color:var(--primary);">${annoMaxDislivello} — ${pAnni[annoMaxDislivello].dislivello.toFixed(0)} m</span></div></div>`;
-        html += '</div>';
-
-        html += '<div class="card"><h4 style="color:var(--primary); font-size:0.8em; margin-bottom:10px;">STATISTICHE MESI</h4>';
-        html += `<div class="rank-item"><div class="rank-info"><span>&#127942; Mese con piu\' km</span><span style="color:var(--primary);">${nomeMeseBestKm} — ${pMesi[meseBestKm].km.toFixed(0)} km</span></div></div>`;
-        if (meseMaxDislivello) {
-            const [mDY, mDM] = meseMaxDislivello.split('-');
-            const nomeMeseDislivello = new Date(parseInt(mDY), parseInt(mDM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
-            html += `<div class="rank-item"><div class="rank-info"><span>&#127956; Mese con piu\' dislivello</span><span style="color:var(--primary);">${nomeMeseDislivello} — ${pMesi[meseMaxDislivello].dislivello.toFixed(0)} m</span></div></div>`;
-        }
-        html += '</div>';
-
-        c.innerHTML = html;
     }
 
     function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
@@ -628,6 +512,5 @@
         navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
     }
 </script>
-
 </body>
 </html>
