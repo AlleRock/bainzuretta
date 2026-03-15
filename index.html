@@ -427,13 +427,11 @@
         c.innerHTML = '';
         if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
 
-        function recordRow(emoji, titolo, attivita, valore) {
-            if (!attivita) return '';
-            const data = new Date(attivita.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-            const nome = attivita.nome ? ` — ${attivita.nome}` : '';
-            return `<div class="rank-item"><div class="rank-info"><span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span><span style="color:var(--primary);">${valore}</span></div></div>`;
-        }
+        const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
+        const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
+        // Calcoli
         const maxDist = rawData.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
         const minDist = rawData.reduce((a,b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
         const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
@@ -452,9 +450,10 @@
             pAnni[y].count++;
             const d = new Date(a.data);
             const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0 };
+            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0, count: 0 };
             pMesi[k].km += parseFloat(a.distanza) || 0;
             pMesi[k].dislivello += a.dislivello || 0;
+            pMesi[k].count++;
         });
 
         const annoBestKm = Object.keys(pAnni).reduce((a,b) => pAnni[a].km > pAnni[b].km ? a : b);
@@ -467,39 +466,175 @@
         const mesiConDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
         const meseMaxDislivello = mesiConDislivello.length ? mesiConDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
 
+        // Settimane
+        let pSett = {};
+        rawData.forEach(a => {
+            const d = new Date(a.data);
+            const startOfYear = new Date(d.getFullYear(), 0, 1);
+            const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+            const k = `${d.getFullYear()}-W${String(weekNum).padStart(2,'0')}`;
+            if (!pSett[k]) pSett[k] = { km: 0, count: 0, year: d.getFullYear(), week: weekNum };
+            pSett[k].km += parseFloat(a.distanza) || 0;
+            pSett[k].count++;
+        });
+        const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
+        const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
+
+        // Striscia con date
+        const getAbsWeek = (dateStr) => {
+            const d = new Date(dateStr);
+            const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
+            const monday = new Date(d);
+            monday.setDate(d.getDate() - day);
+            monday.setHours(0,0,0,0);
+            return Math.floor(monday.getTime() / (7 * 24 * 60 * 60 * 1000));
+        };
+        const getMondayFromAbs = (absWeek) => new Date(absWeek * 7 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const getSundayFromAbs = (absWeek) => new Date((absWeek * 7 + 6) * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+        const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
+        let maxStriscia = 1, striscia = 1;
+        let strisciaStart = settimaneAssolute[0], maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
+        for (let i = 1; i < settimaneAssolute.length; i++) {
+            if (settimaneAssolute[i] === settimaneAssolute[i-1] + 1) {
+                striscia++;
+                if (striscia > maxStriscia) { maxStriscia = striscia; maxStart = strisciaStart; maxEnd = settimaneAssolute[i]; }
+            } else { striscia = 1; strisciaStart = settimaneAssolute[i]; }
+        }
+
+        // Curiosita
+        const giorni = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
+        let pGiorni = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+        rawData.forEach(a => { pGiorni[new Date(a.data).getDay()]++; });
+        const giornoCampione = Object.keys(pGiorni).reduce((a,b) => pGiorni[a] > pGiorni[b] ? a : b);
+        let pMesiAnno = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0};
+        rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
+        const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
+
+        // Medie
+        const totUscite = rawData.length;
+        const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
+        const mediaKmUscita = totUscite > 0 ? (totKmGen / totUscite) : 0;
+        const mediaUsciteMese = Object.keys(pMesi).length > 0 ? (totUscite / Object.keys(pMesi).length) : 0;
+
+        // Helper righe
+        function actRow(emoji, titolo, attivita, valore, top5tipo) {
+            if (!attivita) return '';
+            const data = fmt(attivita.data);
+            const nome = attivita.nome ? ` — ${attivita.nome}` : '';
+            return `<div class="rank-item" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}" data-top5="${top5tipo}">
+                <div class="rank-info">
+                    <span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span>
+                    <span style="color:var(--primary);">${valore} <small style="font-size:9px;color:#bbb;">&#9432;</small></span>
+                </div>
+            </div>`;
+        }
+
+        function statRow(emoji, titolo, valore, statTipo) {
+            return `<div class="rank-item" style="cursor:pointer;" data-stat="${statTipo}" data-titolo="${titolo}">
+                <div class="rank-info">
+                    <span>${emoji} ${titolo}</span>
+                    <span style="color:var(--primary);">${valore} <small style="font-size:9px;color:#bbb;">TOP5</small></span>
+                </div>
+            </div>`;
+        }
+
         let html = '';
         html += '<div class="card"><div class="record-section-title">DISTANZA</div>';
-        html += recordRow('&#127942;', 'Giro piu\' lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`);
-        html += recordRow('&#128138;', 'Giro piu\' corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`);
+        html += actRow('&#127942;', 'Giro piu lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`, 'dist_max');
+        html += actRow('&#128138;', 'Giro piu corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`, 'dist_min');
         html += '</div>';
-        html += '<div class="card"><div class="record-section-title">VELOCITA\'</div>';
-        html += recordRow('&#9889;', 'Media piu\' alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`);
-        html += recordRow('&#128034;', 'Media piu\' bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`);
+        html += '<div class="card"><div class="record-section-title">VELOCITA</div>';
+        html += actRow('&#9889;', 'Media piu alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`, 'media_max');
+        html += actRow('&#128034;', 'Media piu bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`, 'media_min');
         html += '</div>';
         html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
-        html += recordRow('&#9201;', 'Uscita piu\' lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)));
+        html += actRow('&#9201;', 'Uscita piu lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)), 'tempo_max');
         html += '</div>';
         if (maxDislivello) {
             html += '<div class="card"><div class="record-section-title">DISLIVELLO</div>';
-            html += recordRow('&#127956;', 'Piu\' dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`);
-            html += recordRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`);
+            html += actRow('&#127956;', 'Piu dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`, 'disliv_max');
+            html += actRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`, 'disliv_min');
             html += '</div>';
         }
         html += '<div class="card"><div class="record-section-title">STATISTICHE ANNI</div>';
-        html += `<div class="rank-item"><div class="rank-info"><span>&#127942; Anno con piu\' km</span><span style="color:var(--primary);">${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km</span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128336; Anno con piu\' uscite</span><span style="color:var(--primary);">${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite</span></div></div>`;
-        if (annoMaxDislivello) html += `<div class="rank-item"><div class="rank-info"><span>&#127956; Anno con piu\' dislivello</span><span style="color:var(--primary);">${annoMaxDislivello} — ${pAnni[annoMaxDislivello].dislivello.toFixed(0)} m</span></div></div>`;
+        html += statRow('&#127942;', 'Anno con piu km', `${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km`, 'anni_km');
+        html += statRow('&#128336;', 'Anno con piu uscite', `${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite`, 'anni_uscite');
+        if (annoMaxDislivello) html += statRow('&#127956;', 'Anno con piu dislivello', `${annoMaxDislivello} — ${pAnni[annoMaxDislivello].dislivello.toFixed(0)} m`, 'anni_dislivello');
         html += '</div>';
         html += '<div class="card"><div class="record-section-title">STATISTICHE MESI</div>';
-        html += `<div class="rank-item"><div class="rank-info"><span>&#127942; Mese con piu\' km</span><span style="color:var(--primary);">${nomeMeseBestKm} — ${pMesi[meseBestKm].km.toFixed(0)} km</span></div></div>`;
+        html += statRow('&#127942;', 'Mese con piu km', `${nomeMeseBestKm} — ${pMesi[meseBestKm].km.toFixed(0)} km`, 'mesi_km');
         if (meseMaxDislivello) {
             const [mDY, mDM] = meseMaxDislivello.split('-');
             const nomeMeseDislivello = new Date(parseInt(mDY), parseInt(mDM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
-            html += `<div class="rank-item"><div class="rank-info"><span>&#127956; Mese con piu\' dislivello</span><span style="color:var(--primary);">${nomeMeseDislivello} — ${pMesi[meseMaxDislivello].dislivello.toFixed(0)} m</span></div></div>`;
+            html += statRow('&#127956;', 'Mese con piu dislivello', `${nomeMeseDislivello} — ${pMesi[meseMaxDislivello].dislivello.toFixed(0)} m`, 'mesi_dislivello');
         }
         html += '</div>';
+        html += '<div class="card"><div class="record-section-title">STATISTICHE SETTIMANE</div>';
+        html += statRow('&#127942;', 'Settimana con piu km', `Sett. ${pSett[settBestKm].week} del ${pSett[settBestKm].year} — ${pSett[settBestKm].km.toFixed(0)} km`, 'sett_km');
+        html += statRow('&#128336;', 'Settimana con piu uscite', `Sett. ${pSett[settMaxUscite].week} del ${pSett[settMaxUscite].year} — ${pSett[settMaxUscite].count} uscite`, 'sett_uscite');
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">MEDIE GENERALI</div>';
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128200; Media km per uscita</span><span style="color:var(--primary);">${mediaKmUscita.toFixed(1)} km</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Media uscite al mese</span><span style="color:var(--primary);">${mediaUsciteMese.toFixed(1)} uscite</span></div></div>`;
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary);">${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span></div></div>`;
+        html += '</div>';
+
         c.innerHTML = html;
+
+        // Event listener unico per tutti i click
+        c.querySelectorAll('[data-act]').forEach(el => {
+            el.addEventListener('click', () => {
+                const attivita = rawData.find(a => String(a.id) === el.dataset.act);
+                const top5tipo = el.dataset.top5;
+                const titolo = el.dataset.titolo;
+                if (!attivita) return;
+
+                // Primo click: dettaglio. Secondo click (entro 2 sec): top5
+                if (el._lastClick && Date.now() - el._lastClick < 2000) {
+                    // Top5
+                    let righe = '';
+                    if (top5tipo === 'dist_max') righe = [...rawData].sort((a,b) => b.distanza - a.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
+                    else if (top5tipo === 'dist_min') righe = [...rawData].sort((a,b) => a.distanza - b.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
+                    else if (top5tipo === 'media_max') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
+                    else if (top5tipo === 'media_min') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => a.media - b.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
+                    else if (top5tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
+                    else if (top5tipo === 'disliv_max') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                    else if (top5tipo === 'disliv_min') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                    alert(`TOP 5 — ${titolo}\n\n${righe}`);
+                    el._lastClick = null;
+                } else {
+                    // Dettaglio attivita
+                    const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
+                    const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
+                    alert(`${titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}\n\n(tocca di nuovo per Top 5)`);
+                    el._lastClick = Date.now();
+                }
+            });
+        });
+
+        c.querySelectorAll('[data-stat]').forEach(el => {
+            el.addEventListener('click', () => {
+                const statTipo = el.dataset.stat;
+                const titolo = el.dataset.titolo;
+                let righe = '';
+                if (statTipo === 'anni_km') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].km - pAnni[a].km).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].km.toFixed(0)} km`).join('\n');
+                else if (statTipo === 'anni_uscite') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].count - pAnni[a].count).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].count} uscite`).join('\n');
+                else if (statTipo === 'anni_dislivello') righe = Object.keys(pAnni).filter(k => pAnni[k].dislivello > 0).sort((a,b) => pAnni[b].dislivello - pAnni[a].dislivello).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].dislivello.toFixed(0)} m`).join('\n');
+                else if (statTipo === 'mesi_km') righe = Object.keys(pMesi).sort((a,b) => pMesi[b].km - pMesi[a].km).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].km.toFixed(0)} km`; }).join('\n');
+                else if (statTipo === 'mesi_dislivello') righe = Object.keys(pMesi).filter(k => pMesi[k].dislivello > 0).sort((a,b) => pMesi[b].dislivello - pMesi[a].dislivello).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].dislivello.toFixed(0)} m`; }).join('\n');
+                else if (statTipo === 'sett_km') righe = Object.keys(pSett).sort((a,b) => pSett[b].km - pSett[a].km).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].km.toFixed(0)} km`).join('\n');
+                else if (statTipo === 'sett_uscite') righe = Object.keys(pSett).sort((a,b) => pSett[b].count - pSett[a].count).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].count} uscite`).join('\n');
+                alert(`TOP 5 — ${titolo}\n\n${righe}`);
+            });
+        });
     }
+
+
 
     async function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
