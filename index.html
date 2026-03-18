@@ -62,6 +62,9 @@
 <div id="home" class="page active">
     <div class="page-fixed-top">
         <div class="card target-box" onclick="cambiaObiettivo()" id="target-box">
+            <div style="position:relative;">
+                <button onclick="event.stopPropagation(); mostraInfoObiettivo()" style="position:absolute; top:-5px; right:-5px; background:rgba(255,255,255,0.3); border:none; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; font-weight:900; cursor:pointer; line-height:22px; text-align:center; padding:0;">i</button>
+            </div>
             <small>&#127919; OBIETTIVO <span class="year-label"></span></small><br>
             <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
             <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
@@ -484,7 +487,7 @@
         if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
 
         const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
+        const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
         // Calcoli
@@ -808,6 +811,19 @@
         a.download = `Bainzuretta_${anno}.html`;
         a.click();
         showToast('Apri il file scaricato e stampa come PDF!', 4000);
+    }
+
+    function mostraInfoObiettivo() {
+        alert(
+            'LEGENDA COLORI\n\n' +
+            '🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n' +
+            '🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n' +
+            '🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\n' +
+            'CALCOLI\n\n' +
+            'Proiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\n' +
+            'Km/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\n' +
+            'Arrivo previsto: calcolato sulla media km/settimana attuale'
+        );
     }
 
     function esportaJSON() {
