@@ -879,7 +879,7 @@
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            c.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati}</span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="eliminaAttivita(${a.id})">X</button></div></div></div>`;
+            c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
         });
     }
 
