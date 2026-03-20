@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V65</title>
+    <title>Bainzuretta V69</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
@@ -446,7 +446,7 @@
             tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            listaCont.innerHTML += `<div class="rank-item"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga}</span></div></div>`;
+            listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
         });
         let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
         recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b></div>`;
@@ -824,6 +824,22 @@
             'Km/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\n' +
             'Arrivo previsto: calcolato sulla media km/settimana attuale'
         );
+    }
+
+    function apriAttivita(id) {
+        const a = rawData.find(x => x.id == id);
+        if (!a) return;
+        const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const nome = a.nome ? '\n"' + a.nome + '"' : '';
+        const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
+        const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
+        if (a.strava_id) {
+            if (confirm(msg + '\n\nVuoi aprire su Strava?')) {
+                window.open('https://www.strava.com/activities/' + a.strava_id, '_blank');
+            }
+        } else {
+            alert(msg);
+        }
     }
 
     function esportaJSON() {
