@@ -496,7 +496,7 @@
         const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
         const minMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) < parseFloat(b.media) ? a : b);
         const maxTempo = rawData.reduce((a,b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
-        const conDislivello = rawData.filter(a => a.dislivello && a.dislivello > 0);
+        const conDislivello = rawData.filter(a => a.dislivello && a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019);
         const maxDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello > b.dislivello ? a : b) : null;
         const minDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello < b.dislivello ? a : b) : null;
 
@@ -640,7 +640,7 @@
 
         // RECORD PER FASCIA DISTANZA E DISLIVELLO
         function recordFascia(titolo, minKm, maxKm) {
-            const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined);
+            const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined && new Date(a.data).getFullYear() >= 2019);
             if (!fascia.length) return '';
 
             const pianura = fascia.filter(a => (a.dislivello || 0) < 1000);
