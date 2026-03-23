@@ -592,20 +592,25 @@
         const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
 
         // Record 4 giorni consecutivi
-        const sortedByDate = [...rawData].sort((a,b) => new Date(a.data) - new Date(b.data));
-        let max4giorni = 0, max4start = null;
-        for (let i = 0; i < sortedByDate.length; i++) {
-            const dataI = new Date(sortedByDate[i].data);
-            let kmFinestra = 0;
-            for (let j = i; j < sortedByDate.length; j++) {
-                const dataJ = new Date(sortedByDate[j].data);
-                const diffGiorni = (dataJ - dataI) / (1000 * 60 * 60 * 24);
-                if (diffGiorni > 3) break;
-                kmFinestra += parseFloat(sortedByDate[j].distanza) || 0;
+        let max4giorni = 0, max4start = null, max4end = null;
+        try {
+            const sortedByDate = [...rawData].sort((a,b) => new Date(a.data) - new Date(b.data));
+            for (let i = 0; i < sortedByDate.length; i++) {
+                const dataI = new Date(sortedByDate[i].data);
+                let kmFinestra = 0;
+                for (let j = i; j < sortedByDate.length; j++) {
+                    const dataJ = new Date(sortedByDate[j].data);
+                    const diffGiorni = (dataJ - dataI) / (1000 * 60 * 60 * 24);
+                    if (diffGiorni > 3) break;
+                    kmFinestra += parseFloat(sortedByDate[j].distanza) || 0;
+                }
+                if (kmFinestra > max4giorni) {
+                    max4giorni = kmFinestra;
+                    max4start = dataI;
+                    max4end = new Date(dataI.getTime() + 3 * 24 * 60 * 60 * 1000);
+                }
             }
-            if (kmFinestra > max4giorni) { max4giorni = kmFinestra; max4start = dataI; }
-        }
-        const max4end = max4start ? new Date(max4start.getTime() + 3 * 24 * 60 * 60 * 1000) : null;
+        } catch(e) { max4giorni = 0; }
 
         // Medie
         const totUscite = rawData.length;
