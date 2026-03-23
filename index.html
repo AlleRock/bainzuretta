@@ -51,7 +51,16 @@
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
-        .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
+        .target-box.obiettivo-raggiunto {
+            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
+            background-size: 200% 200% !important;
+            animation: shimmer 2s ease infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
     </style>
 </head>
 <body>
@@ -410,19 +419,30 @@
             // Previsione data arrivo
             const kmSettimana = kY / (doyOggi / 7);
             let arrivoStr = '';
-            if (kmSettimana > 0 && mancanti > 0) {
-                const settimaneMancanti = mancanti / kmSettimana;
-                const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
-                arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
-            } else if (mancanti <= 0) {
-                arrivoStr = '&#127881; Obiettivo raggiunto!';
+            if (mancanti <= 0) {
+                arrivoStr = '&#11088; HAI RAGGIUNTO L\'OBIETTIVO! &#11088;';
+                targetBox.style.background = '';
+                targetBox.classList.add('obiettivo-raggiunto');
+                paceBar.style.borderTop = '1px solid rgba(0,0,0,0.15)';
+                paceLabel.style.color = '#5d3a00';
+                arrivalLabel.style.color = '#5d3a00';
+            } else {
+                targetBox.classList.remove('obiettivo-raggiunto');
+                targetBox.style.background = boxColor;
+                paceBar.style.borderTop = '1px solid rgba(255,255,255,0.3)';
+                paceLabel.style.color = '';
+                arrivalLabel.style.color = '';
+                if (kmSettimana > 0) {
+                    const settimaneMancanti = mancanti / kmSettimana;
+                    const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
+                    arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
+                }
             }
-
-            targetBox.style.background = boxColor;
             paceBar.style.display = 'block';
-            paceLabel.innerHTML = `${paceEmoji} ${paceMsg}`;
+            paceLabel.innerHTML = mancanti <= 0 ? `&#127942; ${kY.toFixed(0)} km su ${myTarget} km` : `${paceEmoji} ${paceMsg}`;
             arrivalLabel.innerHTML = arrivoStr;
         } else {
+            targetBox.classList.remove('obiettivo-raggiunto');
             targetBox.style.background = 'linear-gradient(135deg, #fb8c00, #f57c00)';
             paceBar.style.display = 'none';
         }
@@ -441,15 +461,16 @@
         const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
         let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKm = 0, tOre = 0, nAtt = filtrati.length;
+        let tKm = 0, tOre = 0, tDisliv = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
             tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            tDisliv += parseFloat(a.dislivello) || 0;
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
         });
         let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
-        recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b></div>`;
+        recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b><br>Dislivello: <b>${tDisliv.toFixed(0)} m</b></div>`;
     }
 
     function disegnaClassifica() {
@@ -570,6 +591,22 @@
         rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
         const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
 
+        // Record 4 giorni consecutivi
+        const sortedByDate = [...rawData].sort((a,b) => new Date(a.data) - new Date(b.data));
+        let max4giorni = 0, max4start = null;
+        for (let i = 0; i < sortedByDate.length; i++) {
+            const dataI = new Date(sortedByDate[i].data);
+            let kmFinestra = 0;
+            for (let j = i; j < sortedByDate.length; j++) {
+                const dataJ = new Date(sortedByDate[j].data);
+                const diffGiorni = (dataJ - dataI) / (1000 * 60 * 60 * 24);
+                if (diffGiorni > 3) break;
+                kmFinestra += parseFloat(sortedByDate[j].distanza) || 0;
+            }
+            if (kmFinestra > max4giorni) { max4giorni = kmFinestra; max4start = dataI; }
+        }
+        const max4end = max4start ? new Date(max4start.getTime() + 3 * 24 * 60 * 60 * 1000) : null;
+
         // Medie
         const totUscite = rawData.length;
         const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
@@ -607,6 +644,8 @@
         html += actRow('&#9889;', 'Media piu alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`, 'media_max');
         html += actRow('&#128034;', 'Media piu bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`, 'media_min');
         html += '</div>';
+        html += recordFascia('50-60 KM', 50, 60);
+        html += recordFascia('100-110 KM', 100, 110);
         html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
         html += actRow('&#9201;', 'Uscita piu lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)), 'tempo_max');
         html += '</div>';
@@ -641,7 +680,7 @@
         // RECORD PER FASCIA DISTANZA E DISLIVELLO
         window._fasce = {};
 
-        function top5Fascia(key) {
+        window.top5Fascia = function(key) {
             const arr = window._fasce[key];
             if (!arr || !arr.length) return;
             const top = [...arr].sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
@@ -679,13 +718,11 @@
             return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
         }
 
-        html += recordFascia('50-60 KM', 50, 60);
-        html += recordFascia('100-110 KM', 100, 110);
-
         html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary);">${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span></div></div>`;
+        if (max4start) html += `<div class="rank-item"><div class="rank-info"><span>&#128170; Record 4 giorni</span><span style="color:var(--primary);">${max4giorni.toFixed(0)} km<br><small style="color:#888;font-weight:400;">${max4start.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})} — ${max4end.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}</small></span></div></div>`;
         html += '</div>';
 
         c.innerHTML = html;
@@ -698,7 +735,12 @@
                 if (!attivita) return;
                 const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
                 const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
-                alert(`${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`);
+                const msg = `${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`;
+                if (attivita.strava_id && confirm(msg + '\n\nVuoi aprire su Strava?')) {
+                    window.open('https://www.strava.com/activities/' + attivita.strava_id, '_blank');
+                } else if (!attivita.strava_id) {
+                    alert(msg);
+                }
             });
         });
 
@@ -916,10 +958,10 @@
     function disegnaDiario() {
         const c = document.getElementById('lista-diario'); c.innerHTML = '';
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKmD = 0, tOreD = 0;
-        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); });
+        let tKmD = 0, tOreD = 0, tDislivD = 0;
+        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); tDislivD += parseFloat(a.dislivello) || 0; });
         let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
-        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
+        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b><br>Dislivello: <b>${tDislivD.toFixed(0)} m</b></div>`;
         lista.forEach(a => {
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
