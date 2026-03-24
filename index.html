@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta Pro - Master Edition</title>
+    <title>Bainzuretta V69</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
@@ -13,567 +13,970 @@
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
     <style>
-        :root { 
-            --primary: #fb8c00; 
-            --primary-light: #ffb74d;
-            --bg: #f8f9fa; 
-            --card: #ffffff; 
-            --text: #1a1a1b; 
-            --border: #d1d5db; 
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1);
-            --glass: rgba(255, 255, 255, 0.8);
+        :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
+        .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
+        .page.active { display: block; }
+        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
+        input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
+        .stat-box b { font-size: 1.1em; color: var(--primary); }
+        .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
+        .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+        .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
+        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
+        #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
+        .page-fixed-top { padding: 12px 12px 0 12px; }
+        .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
+        .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
+        .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
+        .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
+        .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
+        .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+        .target-box.obiettivo-raggiunto {
+            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
+            background-size: 200% 200% !important;
+            animation: shimmer 2s ease infinite;
         }
-
-        @media (prefers-color-scheme: dark) { 
-            :root { 
-                --bg: #000000; 
-                --card: #1c1c1e; 
-                --text: #ffffff; 
-                --border: #3a3a3c; 
-                --glass: rgba(28, 28, 30, 0.8);
-            } 
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-
-        /* Reset e Tipografia Rigorosa */
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            line-height: 1.5;
-            user-select: none;
-            overflow-x: hidden;
-            transition: background 0.3s ease;
-        }
-
-        /* Header con Effetto Glassmorphism */
-        header { 
-            position: sticky; 
-            top: 0; 
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-        }
-
-        h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--primary); }
-
-        /* Container Principale con Indentazione Perfetta */
-        .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            padding: 20px; 
-            padding-bottom: 100px; 
-        }
-
-        .screen { display: none; animation: fadeIn 0.4s ease-out; }
-        .screen.active { display: block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Card Stilizzate con Precisione Chirurgica */
-        .card { 
-            background: var(--card); 
-            padding: 20px; 
-            border-radius: 18px; 
-            margin-bottom: 20px; 
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .card:active { transform: scale(0.98); }
-
-        .stat-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            margin-top: 15px;
-        }
-
-        .stat-box { 
-            background: var(--bg); 
-            padding: 15px; 
-            border-radius: 14px; 
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-
-        .stat-val { font-size: 20px; font-weight: 700; color: var(--primary); display: block; }
-        .stat-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
-
-        /* Form e Input */
-        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; opacity: 0.8; }
-        input, select { 
-            width: 100%; 
-            padding: 14px; 
-            margin-bottom: 15px; 
-            border: 1px solid var(--border); 
-            border-radius: 12px; 
-            background: var(--bg); 
-            color: var(--text);
-            font-family: inherit;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        input:focus { border-color: var(--primary); }
-
-        /* Pulsanti d'Autore */
-        .btn { 
-            width: 100%; 
-            padding: 16px; 
-            border: none; 
-            border-radius: 14px; 
-            background: var(--primary); 
-            color: white; 
-            font-weight: 700; 
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(251, 140, 0, 0.3);
-            transition: all 0.3s;
-        }
-        .btn:hover { filter: brightness(1.1); }
-        .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); box-shadow: none; margin-top: 10px; }
-        .btn-del { background: #ff3b30; color: white; padding: 5px 12px; border-radius: 8px; font-size: 12px; border: none; }
-
-        /* Navigazione Inferiore Professionale */
-        nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            background: var(--glass); 
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            display: flex; 
-            justify-content: space-around; 
-            padding: 12px 0 25px 0; 
-            border-top: 1px solid var(--border);
-            z-index: 100;
-        }
-
-        .nav-item { 
-            text-align: center; 
-            font-size: 10px; 
-            color: #888; 
-            text-decoration: none;
-            font-weight: 600;
-            flex: 1;
-            transition: color 0.3s;
-        }
-        .nav-item.active { color: var(--primary); }
-        .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
-
-        /* Diario e Liste */
-        .rank-item { 
-            background: var(--card); 
-            padding: 15px; 
-            border-bottom: 1px solid var(--border); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        .rank-item:last-child { border-bottom: none; }
-        .rank-info { flex-grow: 1; }
-        .rank-info span { display: block; }
-
-        .progress-container { 
-            width: 100%; 
-            background: #eee; 
-            height: 10px; 
-            border-radius: 5px; 
-            margin: 10px 0; 
-            overflow: hidden; 
-        }
-        .progress-bar { 
-            height: 100%; 
-            background: var(--primary); 
-            width: 0%; 
-            transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-
-        /* Grafico */
-        #chartContainer { width: 100%; height: 250px; margin-top: 20px; }
     </style>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <header>
-        <h1 onclick="vaiA('home')" style="cursor:pointer">Bainzuretta <span style="font-weight:300">V69+</span></h1>
-        <div id="target-header" style="font-size:12px; font-weight:600; opacity:0.7"></div>
-    </header>
+<div id="toast"></div>
+<header id="main-header">BAINZURETTA</header>
 
-    <div class="container">
-        
-        <section id="home" class="screen active">
-            <div class="card">
-                <h3 id="anno-titolo">Target 2026</h3>
-                <div class="progress-container">
-                    <div id="prog-bar" class="progress-bar"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600;">
-                    <span id="tot-km-year">0 km</span>
-                    <span id="target-val">Obiettivo: 0 km</span>
-                </div>
-                <button class="btn btn-outline" style="padding:8px; font-size:12px;" onclick="cambiaObiettivo()">Modifica Obiettivo</button>
+<div id="home" class="page active">
+    <div class="page-fixed-top">
+        <div class="card target-box" onclick="cambiaObiettivo()" id="target-box">
+            <div style="position:relative;">
+                <button onclick="event.stopPropagation(); mostraInfoObiettivo()" style="position:absolute; top:-5px; right:-5px; background:rgba(255,255,255,0.3); border:none; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; font-weight:900; cursor:pointer; line-height:22px; text-align:center; padding:0;">i</button>
             </div>
-
-            <div class="stat-grid">
-                <div class="stat-box">
-                    <span class="stat-label">Dislivello</span>
-                    <span id="tot-disl" class="stat-val">0</span>
-                    <small>m</small>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Calorie</span>
-                    <span id="tot-cal" class="stat-val">0</span>
-                    <small>kcal</small>
-                </div>
+            <small>&#127919; OBIETTIVO <span class="year-label"></span></small><br>
+            <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
+            <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
+                Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
             </div>
-
-            <div class="card" style="margin-top:20px;">
-                <canvas id="mainChart"></canvas>
+            <div id="pace-bar" style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em; display:none;">
+                <div id="pace-label"></div>
+                <div id="arrival-label" style="margin-top:3px;"></div>
             </div>
-        </section>
-
-        <section id="diario" class="screen">
-            <h2 style="margin-bottom:15px">Cronologia Attività</h2>
-            <div id="lista-diario" class="card" style="padding:0; overflow:hidden;"></div>
-        </section>
-
-        <section id="aggiungi" class="screen">
-            <div class="card">
-                <h2 style="margin-bottom:20px">Nuova Attività</h2>
-                <input type="hidden" id="edit-id">
-                
-                <label>Data</label>
-                <input type="date" id="in-data">
-                
-                <label>Tipo Attività</label>
-                <select id="in-tipo">
-                    <option value="Bici">Bici da Corsa</option>
-                    <option value="MTB">MTB</option>
-                    <option value="Corsa">Corsa</option>
-                    <option value="Camminata">Camminata</option>
-                    <option value="Altro">Altro</option>
-                </select>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div>
-                        <label>Km</label>
-                        <input type="number" step="0.1" id="in-km" placeholder="0.0">
-                    </div>
-                    <div>
-                        <label>D+ (m)</label>
-                        <input type="number" id="in-disl" placeholder="0">
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div>
-                        <label>Durata (min)</label>
-                        <input type="number" id="in-min" placeholder="0">
-                    </div>
-                    <div>
-                        <label>Calorie</label>
-                        <input type="number" id="in-cal" placeholder="0">
-                    </div>
-                </div>
-
-                <button class="btn" onclick="salvaAttivita()">Salva Capolavoro</button>
-                <button class="btn btn-outline" onclick="vaiA('home')">Annulla</button>
+        </div>
+        <div class="card">
+            <div class="stats-grid">
+                <div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div>
+                <div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div>
+                <div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div>
             </div>
-        </section>
-
-        <section id="archivio" class="screen">
-            <div class="card">
-                <h2>Archivio Storico</h2>
-                <select id="sel-anno-archivio" onchange="aggiornaStats()" style="margin-top:15px;"></select>
-                <div id="stats-archivio"></div>
-            </div>
-            <button class="btn btn-outline" style="border-color:#ff3b30; color:#ff3b30;" onclick="pulisciTutto()">Reset Totale Sistema</button>
-        </section>
-
-        <section id="dettaglio" class="screen">
-            <div id="cont-dettaglio"></div>
-            <button class="btn btn-outline" onclick="vaiA('diario')">Torna al Diario</button>
-        </section>
+        </div>
 
     </div>
+    <div class="page-scroll-list">
+        <div class="card">
+            <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">+ AGGIUNGI ATTIVITA' MANUALE</h3>
+            <input type="date" id="in-date" style="margin-bottom:10px;">
+            <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
+            <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
+            <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div id="strava-section"></div>
+            <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">BACKUP JSON</button>
+            <input type="file" id="json-input" accept=".json" style="display:none;">
+            <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
+            <button onclick="esportaPDF()" style="background:#1a1a2e; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">&#128196; PDF RIEPILOGO ANNO</button>
+            <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">RESET DATI</button>
+        </div>
+    </div>
+</div>
 
-    <nav>
-        <a href="javascript:void(0)" class="nav-item active" id="nav-home" onclick="vaiA('home')">
-            <span class="nav-icon">🏠</span>Home
-        </a>
-        <a href="javascript:void(0)" class="nav-item" id="nav-diario" onclick="vaiA('diario')">
-            <span class="nav-icon">📅</span>Diario
-        </a>
-        <a href="javascript:void(0)" class="nav-item" id="nav-aggiungi" onclick="vaiA('aggiungi')">
-            <span class="nav-icon" style="font-size:30px; color:var(--primary);">⊕</span>Plus
-        </a>
-        <a href="javascript:void(0)" class="nav-item" id="nav-archivio" onclick="vaiA('archivio')">
-            <span class="nav-icon">📂</span>Archivio
-        </a>
-    </nav>
+<div id="diario" class="page">
+    <div class="page-fixed-top">
+        <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">DIARIO <span class="year-label"></span></h3></div>
+        <div id="recap-diario"></div>
+    </div>
+    <div class="page-scroll-list"><div id="lista-diario"></div></div>
+</div>
 
-    <script>
-        /**
-         * LOGICA DI SISTEMA - MASTER ARCHITECT EDITION
-         * 1986-2026: L'esperienza si vede nella gestione dei dati.
-         */
+<div id="archivio" class="page">
+    <div class="page-fixed-top">
+        <div class="card" style="text-align:center;">
+            <h3 style="margin:0; font-size: 1em; margin-bottom:10px;">ARCHIVIO STORICO YTD</h3>
+            <select id="sel-anno-archivio" onchange="disegnaArchivio()"></select>
+        </div>
+        <div id="recap-archivio"></div>
+    </div>
+    <div class="page-scroll-list"><div id="lista-archivio"></div></div>
+</div>
 
-        let rawData = [];
-        const currY = new Date().getFullYear();
-        let myTarget = 5000;
-        let mainChart = null;
+<div id="ranking" class="page">
+    <div class="page-fixed-top">
+        <div class="card" style="text-align:center;">
+            <h3 style="margin:0; font-size: 1em;">&#127942; RANKING YTD</h3>
+            <select id="metrica" onchange="disegnaClassifica()" style="margin-top:10px;">
+                <option value="distanza">Distanza Totale (KM)</option>
+                <option value="ponderata">Media Ponderata (KM Tot / Ore Tot)</option>
+                <option value="media">Media Semplice (KM/H)</option>
+            </select>
+        </div>
+    </div>
+    <div class="page-scroll-list"><div id="lista-ranking"></div></div>
+</div>
 
-        // Inizializzazione con Error Handling (Evita corruzione dati)
-        function init() {
-            try {
-                const stored = localStorage.getItem('bainzuretta_raw');
-                rawData = stored ? JSON.parse(stored) : [];
-                
-                const storedTarget = localStorage.getItem('bainzuretta_target_' + currY);
-                if(storedTarget) myTarget = parseInt(storedTarget);
-                
-                popolaAnni();
-                aggiornaStats();
-                vaiA('home');
-            } catch (e) {
-                console.error("ERRORE CORROMPENTE RILEVATO: Resetting corrupted data structure.", e);
-                rawData = [];
+<div id="records" class="page">
+    <div class="page-fixed-top">
+        <div class="card" style="text-align:center;">
+            <h3 style="margin:0; font-size: 1em;">&#128081; RECORD STORICI</h3>
+        </div>
+    </div>
+    <div class="page-scroll-list"><div id="lista-records"></div></div>
+</div>
+
+<nav>
+    <div id="nav-home" class="active" onclick="vaiA('home')">&#127968;<span>HOME</span></div>
+    <div id="nav-diario" onclick="vaiA('diario')">&#128214;<span>DIARIO</span></div>
+    <div id="nav-archivio" onclick="vaiA('archivio')">&#128194;<span>ARCHIVIO</span></div>
+    <div id="nav-ranking" onclick="vaiA('ranking')">&#127942;<span>RANK</span></div>
+    <div id="nav-records" onclick="vaiA('records')">&#128081;<span>RECORD</span></div>
+</nav>
+
+<script>
+    const STRAVA_CLIENT_ID = '210700';
+    const STRAVA_REDIRECT_URI = 'https://allerock.github.io/bainzuretta/';
+    const STRAVA_SCOPE = 'activity:read_all';
+
+    let rawData = [];
+    const oggi = new Date();
+    const currY = oggi.getFullYear();
+    let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
+    let stravaToken = null;
+
+    const getDOY = (date) => {
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = (date - start) + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000);
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+    };
+    const doyOggi = getDOY(oggi);
+
+    function showToast(msg, duration = 3000) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', duration);
+    }
+
+    function loadStravaToken() {
+        try { const raw = localStorage.getItem('bainzuretta_strava'); return raw ? JSON.parse(raw) : null; } catch { return null; }
+    }
+    function saveStravaToken(t) { localStorage.setItem('bainzuretta_strava', JSON.stringify(t)); }
+    function clearStravaToken() { localStorage.removeItem('bainzuretta_strava'); stravaToken = null; }
+
+    function stravaLogin() {
+        localStorage.setItem('bainzuretta_strava_pending', '1');
+        const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&approval_prompt=auto&scope=${STRAVA_SCOPE}`;
+        window.location.href = url;
+    }
+
+    async function stravaExchangeCode(code) {
+        try {
+            const secret = window._stravaSecret || localStorage.getItem('bainzuretta_strava_secret') || '';
+            const resp = await fetch('https://www.strava.com/oauth/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'authorization_code', code })
+            });
+            if (!resp.ok) return null;
+            return await resp.json();
+        } catch { return null; }
+    }
+
+    function showStravaSecretPrompt(code) {
+        const secret = prompt('Bainzuretta e\' un\'app personale.\n\nPer completare la connessione Strava inserisci il tuo Client Secret\n(lo trovi su strava.com/settings/api).\n\nViene salvato solo sul tuo dispositivo, mai inviato a terzi.');
+        if (!secret) { showToast('Connessione annullata'); return; }
+        window._stravaSecret = secret;
+        localStorage.setItem('bainzuretta_strava_secret', secret);
+        stravaExchangeCode(code).then(tokenData => {
+            if (tokenData && tokenData.access_token) {
+                saveStravaToken(tokenData); stravaToken = tokenData;
+                aggiornaStravaSection(); sincronizzaStrava(true);
+                showToast('Connesso a Strava!');
+            } else { showToast('Errore - controlla il Client Secret'); }
+        });
+    }
+
+    async function handleStravaCallback() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const error = params.get('error');
+        window.history.replaceState({}, '', window.location.pathname);
+        if (error || !code) return;
+        localStorage.removeItem('bainzuretta_strava_pending');
+        showToast('Connessione a Strava in corso...');
+        const tokenData = await stravaExchangeCode(code);
+        if (tokenData && tokenData.access_token) {
+            saveStravaToken(tokenData); stravaToken = tokenData;
+            aggiornaStravaSection(); await sincronizzaStrava(true);
+            showToast('Connesso a Strava!');
+        } else {
+            showStravaSecretPrompt(code);
+        }
+    }
+
+    async function refreshStravaToken() {
+        const secret = window._stravaSecret || localStorage.getItem('bainzuretta_strava_secret') || '';
+        try {
+            const resp = await fetch('https://www.strava.com/oauth/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'refresh_token', refresh_token: stravaToken.refresh_token })
+            });
+            if (!resp.ok) return false;
+            const data = await resp.json();
+            stravaToken = { ...stravaToken, access_token: data.access_token, refresh_token: data.refresh_token, expires_at: data.expires_at };
+            saveStravaToken(stravaToken);
+            return true;
+        } catch { return false; }
+    }
+
+    async function getValidToken() {
+        if (!stravaToken) return null;
+        if (stravaToken.expires_at && Date.now() / 1000 > stravaToken.expires_at - 300) {
+            const ok = await refreshStravaToken();
+            if (!ok) { clearStravaToken(); aggiornaStravaSection(); return null; }
+        }
+        return stravaToken.access_token;
+    }
+
+    async function sincronizzaStrava(mostraFeedback = true) {
+        const btn = document.getElementById('btn-sync-strava');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> SINCRONIZZAZIONE...'; }
+        const token = await getValidToken();
+        if (!token) {
+            if (mostraFeedback) showToast('Riconnetti Strava');
+            if (btn) { btn.disabled = false; btn.innerHTML = 'SINCRONIZZA STRAVA'; }
+            return;
+        }
+        try {
+            const existingStravaIds = new Set(rawData.filter(a => a.strava_id).map(a => String(a.strava_id)));
+            let afterTimestamp = 0;
+            const stravaActs = rawData.filter(a => a.strava_id).sort((a, b) => new Date(b.data) - new Date(a.data));
+            if (stravaActs.length > 0) afterTimestamp = Math.floor(new Date(stravaActs[0].data).getTime() / 1000);
+            let nuove = [];
+            let page = 1;
+            while (true) {
+                let apiUrl = `https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`;
+                if (afterTimestamp > 0) apiUrl += `&after=${afterTimestamp}`;
+                const res = await fetch(apiUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) break;
+                const activities = await res.json();
+                if (!activities.length) break;
+                for (const act of activities) {
+                    if (!['Ride', 'VirtualRide', 'EBikeRide', 'MountainBikeRide'].includes(act.type)) continue;
+                    if (existingStravaIds.has(String(act.id))) continue;
+                    const distKm = act.distance / 1000;
+                    const oreDec = act.moving_time / 3600;
+                    const media = oreDec > 0 ? distKm / oreDec : 0;
+                    nuove.push({
+                        id: act.id, strava_id: act.id, data: act.start_date_local,
+                        distanza: parseFloat(distKm.toFixed(2)),
+                        tempo: parseFloat(oreDec.toFixed(4)),
+                        media: parseFloat(media.toFixed(2)),
+                        nome: act.name || '',
+                        dislivello: act.total_elevation_gain || 0
+                    });
+                }
+                if (activities.length < 100) break;
+                page++;
             }
-        }
-
-        function vaiA(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            const navActive = document.getElementById('nav-' + screenId);
-            if(navActive) navActive.classList.add('active');
-
-            if(screenId === 'home') aggiornaStats();
-            if(screenId === 'diario') disegnaDiario();
-            if(screenId === 'aggiungi') pulisciForm();
-        }
-
-        function pulisciForm() {
-            document.getElementById('edit-id').value = '';
-            document.getElementById('in-data').value = new Date().toISOString().split('T')[0];
-            document.getElementById('in-km').value = '';
-            document.getElementById('in-disl').value = '';
-            document.getElementById('in-min').value = '';
-            document.getElementById('in-cal').value = '';
-        }
-
-        function salvaAttivita() {
-            const id = document.getElementById('edit-id').value;
-            
-            // CORREZIONE: Usiamo parseFloat per non perdere i decimali dei KM (Errore corrompente risolto)
-            const d = {
-                id: id ? parseInt(id) : Date.now(),
-                data: document.getElementById('in-data').value,
-                tipo: document.getElementById('in-tipo').value,
-                km: parseFloat(document.getElementById('in-km').value) || 0,
-                disl: parseInt(document.getElementById('in-disl').value) || 0,
-                min: parseInt(document.getElementById('in-min').value) || 0,
-                cal: parseInt(document.getElementById('in-cal').value) || 0
-            };
-
-            if(id) {
-                // REGOLA DEL MAI TOGLIERE: Aggiorniamo l'esistente senza distruggere la cronologia
-                rawData = rawData.map(a => a.id === d.id ? d : a);
-            } else {
-                rawData.push(d);
-            }
-
+            rawData = [...rawData, ...nuove].sort((a, b) => new Date(b.data) - new Date(a.data));
             localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats();
-            vaiA('home');
+            aggiornaStats(); popolaAnniArchivio();
+            if (mostraFeedback) showToast(nuove.length > 0 ? `${nuove.length} nuove attivita' importate!` : 'Gia\' aggiornato!', 4000);
+        } catch(e) {
+            if (mostraFeedback) showToast('Errore sincronizzazione');
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = 'SINCRONIZZA STRAVA'; }
         }
+    }
 
-        function aggiornaStats() {
-            const annoSel = document.getElementById('sel-anno-archivio')?.value || currY;
-            const filtrati = rawData.filter(a => new Date(a.data).getFullYear() == annoSel);
-            
-            const totKm = filtrati.reduce((s, a) => s + a.km, 0);
-            const totDisl = filtrati.reduce((s, a) => s + a.disl, 0);
-            const totCal = filtrati.reduce((s, a) => s + a.cal, 0);
-
-            // Aggiornamento UI Dashboard
-            if(annoSel == currY) {
-                document.getElementById('anno-titolo').innerText = `Target ${currY}`;
-                document.getElementById('tot-km-year').innerText = totKm.toFixed(1) + ' km';
-                document.getElementById('target-val').innerText = `Obiettivo: ${myTarget} km`;
-                document.getElementById('tot-disl').innerText = totDisl.toLocaleString();
-                document.getElementById('tot-cal').innerText = totCal.toLocaleString();
-                
-                const perc = Math.min((totKm / myTarget) * 100, 100);
-                document.getElementById('prog-bar').style.width = perc + '%';
-                document.getElementById('target-header').innerText = perc.toFixed(1) + '% Target';
-            }
-
-            disegnaGrafico(filtrati);
-        }
-
-        function disegnaDiario() {
-            const c = document.getElementById('lista-diario');
-            c.innerHTML = '';
-            
-            // Ordiniamo per data decrescente (le più recenti in alto)
-            const ordinati = [...rawData].sort((a,b) => new Date(b.data) - new Date(a.data));
-
-            ordinati.forEach(a => {
-                const item = document.createElement('div');
-                item.className = 'rank-item';
-                item.onclick = () => apriDettaglio(a.id);
-                
-                const speed = a.min > 0 ? (a.km / (a.min / 60)).toFixed(1) : 0;
-                
-                item.innerHTML = `
-                    <div class="rank-info">
-                        <span style="font-size:12px; opacity:0.6">${new Date(a.data).toLocaleDateString('it-IT')}</span>
-                        <span style="font-weight:700">${a.tipo}: <span style="color:var(--primary)">${a.km} km</span></span>
-                        <span style="font-size:11px; opacity:0.8">${a.disl}m D+ | ${speed} km/h</span>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <button class="btn-del" onclick="event.stopPropagation(); eliminaAttivita(${a.id})">X</button>
-                    </div>
-                `;
-                c.appendChild(item);
-            });
-        }
-
-        function apriDettaglio(id) {
-            const a = rawData.find(x => x.id === id);
-            if(!a) return;
-
-            const cont = document.getElementById('cont-dettaglio');
-            cont.innerHTML = `
-                <div class="card">
-                    <h2 style="color:var(--primary)">${a.tipo}</h2>
-                    <p style="margin-bottom:20px;">${new Date(a.data).toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
-                    <div class="stat-grid">
-                        <div class="stat-box"><span class="stat-label">Distanza</span><span class="stat-val">${a.km}</span>km</div>
-                        <div class="stat-box"><span class="stat-label">Dislivello</span><span class="stat-val">${a.disl}</span>m</div>
-                        <div class="stat-box"><span class="stat-label">Tempo</span><span class="stat-val">${a.min}</span>min</div>
-                        <div class="stat-box"><span class="stat-label">Calorie</span><span class="stat-val">${a.cal}</span>kcal</div>
-                    </div>
-                    <button class="btn" style="margin-top:20px;" onclick="modificaAttivita(${a.id})">Modifica Dati</button>
-                </div>
+    function aggiornaStravaSection() {
+        const section = document.getElementById('strava-section');
+        if (stravaToken) {
+            const name = stravaToken.athlete ? stravaToken.athlete.firstname : '';
+            section.innerHTML = `
+                <div class="strava-status ok">Connesso a Strava${name ? ' come <b>' + name + '</b>' : ''}</div>
+                <button class="btn-sync" id="btn-sync-strava" onclick="sincronizzaStrava(true)">SINCRONIZZA STRAVA</button>
+                <button onclick="disconnettiStrava()" style="background:transparent; color:#aaa; border:none; font-size:10px; cursor:pointer; margin-bottom:8px;">Disconnetti</button>
             `;
-            vaiA('dettaglio');
+        } else {
+            section.innerHTML = `
+                <div class="strava-status ko">Strava non collegato</div>
+                <button class="btn-strava" onclick="stravaLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+                    CONNETTI CON STRAVA
+                </button>
+            `;
         }
+    }
 
-        function modificaAttivita(id) {
-            const a = rawData.find(x => x.id === id);
-            if(!a) return;
-            
-            vaiA('aggiungi');
-            document.getElementById('edit-id').value = a.id;
-            document.getElementById('in-data').value = a.data;
-            document.getElementById('in-tipo').value = a.tipo;
-            document.getElementById('in-km').value = a.km;
-            document.getElementById('in-disl').value = a.disl;
-            document.getElementById('in-min').value = a.min;
-            document.getElementById('in-cal').value = a.cal;
-        }
+    function disconnettiStrava() {
+        if (!confirm('Disconnettere Strava? I dati gia\' importati rimarranno.')) return;
+        clearStravaToken(); aggiornaStravaSection(); showToast('Disconnesso da Strava');
+    }
 
-        function eliminaAttivita(id) {
-            if(confirm('Questa azione è irreversibile. Eliminare l\'attività?')) {
-                rawData = rawData.filter(a => a.id !== id);
-                localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-                disegnaDiario();
-                aggiornaStats();
+    window.onload = async () => {
+        document.getElementById('main-header').innerText = 'BAINZURETTA ' + currY;
+        document.querySelectorAll('.year-label').forEach(el => el.innerText = currY);
+        document.getElementById('val-target-tot').innerText = myTarget;
+        document.getElementById('in-date').valueAsDate = oggi;
+        const s = localStorage.getItem('bainzuretta_raw');
+        if (s) rawData = JSON.parse(s);
+        const savedSecret = localStorage.getItem('bainzuretta_strava_secret');
+        if (savedSecret) window._stravaSecret = savedSecret;
+        stravaToken = loadStravaToken();
+        aggiornaStravaSection(); aggiornaStats(); popolaAnniArchivio();
+        if (window.location.search.includes('code=')) { await handleStravaCallback(); }
+        else if (stravaToken) { sincronizzaStrava(false); }
+    };
+
+    function formattaTempo(oreDec) {
+        let totalSec = Math.round(oreDec * 3600);
+        let h = Math.floor(totalSec / 3600);
+        let m = Math.floor((totalSec % 3600) / 60);
+        let s = totalSec % 60;
+        return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }
+
+    function aggiornaStats() {
+        let totK = 0, kY = 0, pAnni = {};
+        rawData.forEach(a => {
+            let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
+            let y = new Date(a.data).getFullYear();
+            totK += dist; if(y === currY) kY += dist;
+            if(!pAnni[y]) pAnni[y] = { mSum: 0, count: 0 };
+            if(med > 0) { pAnni[y].mSum += med; pAnni[y].count++; }
+        });
+        document.getElementById('st-km').innerText = totK.toLocaleString('it-IT', {minimumFractionDigits:2}) + ' KM';
+        document.getElementById('st-world').innerText = (totK / 40075).toFixed(2);
+        let maxAvg = 0, bestY = '-';
+        Object.keys(pAnni).forEach(y => { if(pAnni[y].count > 0) { let avg = pAnni[y].mSum / pAnni[y].count; if(avg > maxAvg) { maxAvg = avg; bestY = y; } } });
+        document.getElementById('st-speed').innerHTML = maxAvg.toFixed(2) + ` <small>km/h (${bestY})</small>`;
+        const mancanti = Math.max(0, myTarget - kY);
+        document.getElementById('km-mancanti').innerText = mancanti.toLocaleString('it-IT');
+        const giorniAnno = (currY % 4 === 0 && (currY % 100 !== 0 || currY % 400 === 0)) ? 366 : 365;
+        document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * giorniAnno).toLocaleString('it-IT');
+        const giorniRimanenti = Math.max(1, giorniAnno - doyOggi);
+        document.getElementById('val-week').innerText = Math.ceil(mancanti / (giorniRimanenti / 7));
+
+        // Notifica visiva passo obiettivo + previsione arrivo
+        const paceBar = document.getElementById('pace-bar');
+        const paceLabel = document.getElementById('pace-label');
+        const arrivalLabel = document.getElementById('arrival-label');
+        const targetBox = document.getElementById('target-box');
+
+        if (kY > 0 && myTarget > 0) {
+            const kmAttesi = (myTarget / giorniAnno) * doyOggi;
+            const diff = kY - kmAttesi;
+            const percDiff = diff / kmAttesi;
+
+            let paceEmoji, paceMsg, boxColor;
+            if (percDiff >= 0) {
+                paceEmoji = '&#9989;';
+                paceMsg = `In anticipo di ${Math.abs(diff).toFixed(0)} km`;
+                boxColor = 'linear-gradient(135deg, #2e7d32, #388e3c)';
+            } else if (percDiff >= -0.1) {
+                paceEmoji = '&#9888;&#65039;';
+                paceMsg = `In ritardo di ${Math.abs(diff).toFixed(0)} km`;
+                boxColor = 'linear-gradient(135deg, #f57f17, #f9a825)';
+            } else {
+                paceEmoji = '&#128308;';
+                paceMsg = `In ritardo di ${Math.abs(diff).toFixed(0)} km`;
+                boxColor = 'linear-gradient(135deg, #c62828, #d32f2f)';
             }
-        }
 
-        function cambiaObiettivo() {
-            let n = prompt('Nuovo Target Km per il ' + currY + ':', myTarget);
-            if(n) {
-                myTarget = parseInt(n);
-                localStorage.setItem('bainzuretta_target_' + currY, n);
-                aggiornaStats();
+            // Previsione data arrivo
+            const kmSettimana = kY / (doyOggi / 7);
+            let arrivoStr = '';
+            if (mancanti <= 0) {
+                arrivoStr = '&#11088; HAI RAGGIUNTO L\'OBIETTIVO! &#11088;';
+                targetBox.style.background = '';
+                targetBox.classList.add('obiettivo-raggiunto');
+                if (paceBar) paceBar.style.borderTop = '1px solid rgba(0,0,0,0.15)';
+                if (paceLabel) paceLabel.style.color = '#5d3a00';
+                if (arrivalLabel) arrivalLabel.style.color = '#5d3a00';
+            } else {
+                targetBox.classList.remove('obiettivo-raggiunto');
+                targetBox.style.background = boxColor;
+                if (paceBar) paceBar.style.borderTop = '1px solid rgba(255,255,255,0.3)';
+                if (paceLabel) paceLabel.style.color = '';
+                if (arrivalLabel) arrivalLabel.style.color = '';
+                if (kmSettimana > 0) {
+                    const settimaneMancanti = mancanti / kmSettimana;
+                    const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
+                    arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
+                }
             }
+            paceBar.style.display = 'block';
+            paceLabel.innerHTML = mancanti <= 0 ? `&#127942; ${kY.toFixed(0)} km su ${myTarget} km` : `${paceEmoji} ${paceMsg}`;
+            arrivalLabel.innerHTML = arrivoStr;
+        } else {
+            targetBox.classList.remove('obiettivo-raggiunto');
+            targetBox.style.background = 'linear-gradient(135deg, #fb8c00, #f57c00)';
+            paceBar.style.display = 'none';
+        }
+    }
+
+    function popolaAnniArchivio() {
+        const sel = document.getElementById('sel-anno-archivio');
+        const anni = [...new Set(rawData.map(a => new Date(a.data).getFullYear()))].filter(y => y !== currY).sort((a,b) => b-a);
+        if(anni.length > 0) { sel.innerHTML = anni.map(y => `<option value="${y}">${y}</option>`).join(''); disegnaArchivio(); }
+        else { sel.innerHTML = '<option>Nessun dato</option>'; }
+    }
+
+    function disegnaArchivio() {
+        const annoScelto = parseInt(document.getElementById('sel-anno-archivio').value);
+        if(isNaN(annoScelto)) return;
+        const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
+        listaCont.innerHTML = '';
+        let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
+        let tKm = 0, tOre = 0, tDisliv = 0, nAtt = filtrati.length;
+        filtrati.forEach(a => {
+            tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            tDisliv += parseFloat(a.dislivello) || 0;
+            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+            let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
+        });
+        let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
+        recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b><br>Dislivello: <b>${tDisliv.toFixed(0)} m</b></div>`;
+    }
+
+    function disegnaClassifica() {
+        const m = document.getElementById('metrica').value;
+        const container = document.getElementById('lista-ranking');
+        container.innerHTML = '';
+        let p = {};
+        rawData.forEach(a => {
+            let dt = new Date(a.data), y = dt.getFullYear();
+            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0 };
+            if(getDOY(dt) <= doyOggi) {
+                let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
+                p[y].d += dist; p[y].mSum += med; p[y].c++; p[y].tSum += (med > 0 ? dist / med : 0);
+            }
+        });
+        let s = Object.keys(p).sort((a,b) => {
+            if(m==='distanza') return p[b].d - p[a].d;
+            if(m==='ponderata') return (p[b].d / (p[b].tSum || 1)) - (p[a].d / (p[a].tSum || 1));
+            return (p[b].mSum / (p[b].c || 1)) - (p[a].mSum / (p[a].c || 1));
+        });
+        let maxVal = s.length ? Math.max(...s.map(y => { if(m==='distanza') return p[y].d; if(m==='ponderata') return (p[y].d / (p[y].tSum || 1)); return (p[y].mSum / (p[y].c || 1)); })) : 1;
+        s.forEach((y, i) => {
+            let val = m==='distanza' ? p[y].d : m==='ponderata' ? (p[y].d / (p[y].tSum || 1)) : (p[y].mSum / (p[y].c || 1));
+            let unit = m==='distanza' ? ' km' : ' km/h';
+            let isCurrentYear = parseInt(y) === currY;
+            let linkStyle = !isCurrentYear ? 'cursor:pointer;' : '';
+            let linkHint = !isCurrentYear ? ` onclick="apriArchivioAnno(${y})" title="Apri in Archivio"` : '';
+            container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${val.toFixed(2)}${unit}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(val/maxVal)*100}%"></div></div></div>`;
+        });
+    }
+
+    function disegnaRecords() {
+        const c = document.getElementById('lista-records');
+        c.innerHTML = '';
+        if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
+
+        const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+        // Calcoli
+        const maxDist = rawData.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
+        const minDist = rawData.reduce((a,b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
+        const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
+        const minMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) < parseFloat(b.media) ? a : b);
+        const maxTempo = rawData.reduce((a,b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
+        const conDislivello = rawData.filter(a => a.dislivello && a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019);
+        const maxDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello > b.dislivello ? a : b) : null;
+        const minDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello < b.dislivello ? a : b) : null;
+
+        let pAnni = {}, pMesi = {};
+        rawData.forEach(a => {
+            const y = new Date(a.data).getFullYear();
+            if (!pAnni[y]) pAnni[y] = { km: 0, dislivello: 0, count: 0 };
+            pAnni[y].km += parseFloat(a.distanza) || 0;
+            pAnni[y].dislivello += a.dislivello || 0;
+            pAnni[y].count++;
+            const d = new Date(a.data);
+            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0, count: 0 };
+            pMesi[k].km += parseFloat(a.distanza) || 0;
+            pMesi[k].dislivello += a.dislivello || 0;
+            pMesi[k].count++;
+        });
+
+        const annoBestKm = Object.keys(pAnni).reduce((a,b) => pAnni[a].km > pAnni[b].km ? a : b);
+        const annoMaxUscite = Object.keys(pAnni).reduce((a,b) => pAnni[a].count > pAnni[b].count ? a : b);
+        const meseBestKm = Object.keys(pMesi).reduce((a,b) => pMesi[a].km > pMesi[b].km ? a : b);
+        const [mBY, mBM] = meseBestKm.split('-');
+        const nomeMeseBestKm = new Date(parseInt(mBY), parseInt(mBM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
+        const anniConDislivello = Object.keys(pAnni).filter(y => pAnni[y].dislivello > 0);
+        const annoMaxDislivello = anniConDislivello.length ? anniConDislivello.reduce((a,b) => pAnni[a].dislivello > pAnni[b].dislivello ? a : b) : null;
+        const mesiConDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
+        const meseMaxDislivello = mesiConDislivello.length ? mesiConDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
+
+        // Settimane
+        let pSett = {};
+        rawData.forEach(a => {
+            const d = new Date(a.data);
+            const startOfYear = new Date(d.getFullYear(), 0, 1);
+            const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+            const k = `${d.getFullYear()}-W${String(weekNum).padStart(2,'0')}`;
+            if (!pSett[k]) pSett[k] = { km: 0, count: 0, year: d.getFullYear(), week: weekNum };
+            pSett[k].km += parseFloat(a.distanza) || 0;
+            pSett[k].count++;
+        });
+        const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
+        const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
+
+        // Striscia con date
+        const getAbsWeek = (dateStr) => {
+            const d = new Date(dateStr);
+            const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
+            const monday = new Date(d);
+            monday.setDate(d.getDate() - day);
+            monday.setHours(0,0,0,0);
+            return Math.floor(monday.getTime() / (7 * 24 * 60 * 60 * 1000));
+        };
+        const getMondayFromAbs = (absWeek) => new Date(absWeek * 7 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const getSundayFromAbs = (absWeek) => new Date((absWeek * 7 + 6) * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+        const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
+        let maxStriscia = 1, striscia = 1;
+        let strisciaStart = settimaneAssolute[0], maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
+        for (let i = 1; i < settimaneAssolute.length; i++) {
+            if (settimaneAssolute[i] === settimaneAssolute[i-1] + 1) {
+                striscia++;
+                if (striscia > maxStriscia) { maxStriscia = striscia; maxStart = strisciaStart; maxEnd = settimaneAssolute[i]; }
+            } else { striscia = 1; strisciaStart = settimaneAssolute[i]; }
         }
 
-        function popolaAnni() {
-            const sel = document.getElementById('sel-anno-archivio');
-            const anni = [...new Set(rawData.map(a => new Date(a.data).getFullYear()))];
-            if(!anni.includes(currY)) anni.push(currY);
-            anni.sort((a,b) => b - a);
-            
-            sel.innerHTML = anni.map(y => `<option value="${y}">${y}</option>`).join('');
+        // Curiosita
+        const giorni = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
+        let pGiorni = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+        rawData.forEach(a => { pGiorni[new Date(a.data).getDay()]++; });
+        const giornoCampione = Object.keys(pGiorni).reduce((a,b) => pGiorni[a] > pGiorni[b] ? a : b);
+        let pMesiAnno = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0};
+        rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
+        const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
+
+        // Record 4 giorni - disabilitato temporaneamente
+        const max4giorni = 0, max4start = null, max4end = null;
+
+        // Medie
+        const totUscite = rawData.length;
+        const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
+        const mediaKmUscita = totUscite > 0 ? (totKmGen / totUscite) : 0;
+        const mediaUsciteMese = Object.keys(pMesi).length > 0 ? (totUscite / Object.keys(pMesi).length) : 0;
+
+        // Helper righe
+        function actRow(emoji, titolo, attivita, valore, top5tipo) {
+            if (!attivita) return '';
+            const data = fmt(attivita.data);
+            const nome = attivita.nome ? ` — ${attivita.nome}` : '';
+            return `<div class="rank-item">
+                <div class="rank-info" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}">
+                    <span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span>
+                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
+                </div>
+            </div>`;
         }
 
-        function disegnaGrafico(dati) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-            const kmMese = new Array(12).fill(0);
+        function statRow(emoji, titolo, valore, statTipo) {
+            return `<div class="rank-item">
+                <div class="rank-info" style="cursor:pointer;" data-stat="${statTipo}" data-titolo="${titolo}">
+                    <span>${emoji} ${titolo}</span>
+                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-stat="${statTipo}" data-titolo="${titolo}">TOP 5</button></span>
+                </div>
+            </div>`;
+        }
 
-            dati.forEach(a => {
-                const m = new Date(a.data).getMonth();
-                kmMese[m] += a.km;
-            });
+        let html = '';
+        html += '<div class="card"><div class="record-section-title">DISTANZA</div>';
+        html += actRow('&#127942;', 'Giro piu lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`, 'dist_max');
+        html += actRow('&#128138;', 'Giro piu corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`, 'dist_min');
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">VELOCITA</div>';
+        html += actRow('&#9889;', 'Media piu alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`, 'media_max');
+        html += actRow('&#128034;', 'Media piu bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`, 'media_min');
+        html += '</div>';
+        html += recordFascia('50-60 KM', 50, 60);
+        html += recordFascia('100-110 KM', 100, 110);
+        html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
+        html += actRow('&#9201;', 'Uscita piu lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)), 'tempo_max');
+        html += '</div>';
+        if (maxDislivello) {
+            html += '<div class="card"><div class="record-section-title">DISLIVELLO</div>';
+            html += actRow('&#127956;', 'Piu dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`, 'disliv_max');
+            html += actRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`, 'disliv_min');
+            html += '</div>';
+        }
+        html += '<div class="card"><div class="record-section-title">STATISTICHE ANNI</div>';
+        html += statRow('&#127942;', 'Anno con piu km', `${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km`, 'anni_km');
+        html += statRow('&#128336;', 'Anno con piu uscite', `${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite`, 'anni_uscite');
+        if (annoMaxDislivello) html += statRow('&#127956;', 'Anno con piu dislivello', `${annoMaxDislivello} — ${pAnni[annoMaxDislivello].dislivello.toFixed(0)} m`, 'anni_dislivello');
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">STATISTICHE MESI</div>';
+        html += statRow('&#127942;', 'Mese con piu km', `${nomeMeseBestKm} — ${pMesi[meseBestKm].km.toFixed(0)} km`, 'mesi_km');
+        if (meseMaxDislivello) {
+            const [mDY, mDM] = meseMaxDislivello.split('-');
+            const nomeMeseDislivello = new Date(parseInt(mDY), parseInt(mDM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
+            html += statRow('&#127956;', 'Mese con piu dislivello', `${nomeMeseDislivello} — ${pMesi[meseMaxDislivello].dislivello.toFixed(0)} m`, 'mesi_dislivello');
+        }
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">STATISTICHE SETTIMANE</div>';
+        html += statRow('&#127942;', 'Settimana con piu km', `Sett. ${pSett[settBestKm].week} del ${pSett[settBestKm].year} — ${pSett[settBestKm].km.toFixed(0)} km`, 'sett_km');
+        html += statRow('&#128336;', 'Settimana con piu uscite', `Sett. ${pSett[settMaxUscite].week} del ${pSett[settMaxUscite].year} — ${pSett[settMaxUscite].count} uscite`, 'sett_uscite');
+        html += '</div>';
+        html += '<div class="card"><div class="record-section-title">MEDIE GENERALI</div>';
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128200; Media km per uscita</span><span style="color:var(--primary);">${mediaKmUscita.toFixed(1)} km</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Media uscite al mese</span><span style="color:var(--primary);">${mediaUsciteMese.toFixed(1)} uscite</span></div></div>`;
+        html += '</div>';
 
-            if(mainChart) mainChart.destroy();
+        // RECORD PER FASCIA DISTANZA E DISLIVELLO
+        window._fasce = {};
 
-            mainChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: mesi,
-                    datasets: [{
-                        label: 'Km Mensili',
-                        data: kmMese,
-                        backgroundColor: '#fb8c00',
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    }
+        window.top5Fascia = function(key) {
+            const arr = window._fasce[key];
+            if (!arr || !arr.length) return;
+            const top = [...arr].sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
+            const righe = top.map((a,i) => (i+1) + '. ' + new Date(a.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}) + ': ' + formattaTempo(parseFloat(a.tempo)) + ' (' + parseFloat(a.distanza).toFixed(1) + 'km | ' + (a.dislivello||0).toFixed(0) + 'm)').join('\n');
+            alert('TOP 5\n\n' + righe);
+        }
+
+        function recordFascia(titolo, minKm, maxKm) {
+            const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined && new Date(a.data).getFullYear() >= 2019);
+            if (!fascia.length) return '';
+
+            const pianura = fascia.filter(a => (a.dislivello || 0) < 1000);
+            const collina = fascia.filter(a => (a.dislivello || 0) >= 1000 && (a.dislivello || 0) < 2000);
+            const montagna = fascia.filter(a => (a.dislivello || 0) >= 2000);
+
+            const key = titolo.replace(/\s/g,'').replace(/-/g,'');
+            window._fasce[key+'P'] = pianura;
+            window._fasce[key+'C'] = collina;
+            window._fasce[key+'M'] = montagna;
+
+            const bestTempo = (arr) => arr.length ? arr.reduce((a,b) => parseFloat(a.tempo) < parseFloat(b.tempo) ? a : b) : null;
+            const bP = bestTempo(pianura);
+            const bC = bestTempo(collina);
+            const bM = bestTempo(montagna);
+
+            if (!bP && !bC && !bM) return '';
+
+            const btn = (fkey, arr) => arr.length > 1 ? `<button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();top5Fascia('${fkey}')">TOP 5</button>` : '';
+
+            let rows = '';
+            if (bP) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bP.id})"><div class="rank-info"><span>&#127963; Pianura <small style="color:#888;">&lt;1000m</small><br><small style="color:#888;font-weight:400;">${new Date(bP.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bP.nome?' — '+bP.nome:''}</small></span><span style="color:var(--primary);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${formattaTempo(parseFloat(bP.tempo))} <small>${parseFloat(bP.distanza).toFixed(1)}km|${(bP.dislivello||0).toFixed(0)}m</small>${btn(key+'P', pianura)}</span></div></div>`;
+            if (bC) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bC.id})"><div class="rank-info"><span>&#9968; Collinare <small style="color:#888;">1000-2000m</small><br><small style="color:#888;font-weight:400;">${new Date(bC.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bC.nome?' — '+bC.nome:''}</small></span><span style="color:var(--primary);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${formattaTempo(parseFloat(bC.tempo))} <small>${parseFloat(bC.distanza).toFixed(1)}km|${(bC.dislivello||0).toFixed(0)}m</small>${btn(key+'C', collina)}</span></div></div>`;
+            if (bM) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bM.id})"><div class="rank-info"><span>&#127956; Montagna <small style="color:#888;">&gt;2000m</small><br><small style="color:#888;font-weight:400;">${new Date(bM.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bM.nome?' — '+bM.nome:''}</small></span><span style="color:var(--primary);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${formattaTempo(parseFloat(bM.tempo))} <small>${parseFloat(bM.distanza).toFixed(1)}km|${(bM.dislivello||0).toFixed(0)}m</small>${btn(key+'M', montagna)}</span></div></div>`;
+
+            return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
+        }
+
+        html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary);">${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span></div></div>`;
+        if (max4start) html += `<div class="rank-item"><div class="rank-info"><span>&#128170; Record 4 giorni</span><span style="color:var(--primary);">${max4giorni.toFixed(0)} km<br><small style="color:#888;font-weight:400;">${max4start.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})} — ${max4end.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}</small></span></div></div>`;
+        html += '</div>';
+
+        c.innerHTML = html;
+
+        // Event listener per dettaglio attività (click su riga)
+        c.querySelectorAll('[data-act]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return; // ignora click sul bottone TOP5
+                const attivita = rawData.find(a => String(a.id) === el.dataset.act);
+                if (!attivita) return;
+                const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
+                const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
+                const msg = `${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`;
+                if (attivita.strava_id && confirm(msg + '\n\nVuoi aprire su Strava?')) {
+                    window.open('https://www.strava.com/activities/' + attivita.strava_id, '_blank');
+                } else if (!attivita.strava_id) {
+                    alert(msg);
                 }
             });
-        }
+        });
 
-        function pulisciTutto() {
-            if(confirm('ATTENZIONE: Stai per cancellare l\'intero archivio storico. Confermi?')) {
-                localStorage.clear();
-                location.reload();
+        // Event listener per TOP5 bottoni su attività
+        c.querySelectorAll('button[data-top5]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tipo = btn.dataset.top5;
+                const titolo = btn.dataset.titolo;
+                let righe = '';
+                if (tipo === 'dist_max') righe = [...rawData].sort((a,b) => b.distanza - a.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
+                else if (tipo === 'dist_min') righe = [...rawData].sort((a,b) => a.distanza - b.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
+                else if (tipo === 'media_max') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
+                else if (tipo === 'media_min') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => a.media - b.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
+                else if (tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
+                else if (tipo === 'disliv_max') righe = [...rawData].filter(a => a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                else if (tipo === 'disliv_min') righe = [...rawData].filter(a => a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                alert(`TOP 5 — ${titolo}\n\n${righe}`);
+            });
+        });
+
+        // Event listener per TOP5 su statistiche
+        c.querySelectorAll('button[data-stat]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const statTipo = btn.dataset.stat;
+                const titolo = btn.dataset.titolo;
+                let righe = '';
+                if (statTipo === 'anni_km') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].km - pAnni[a].km).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].km.toFixed(0)} km`).join('\n');
+                else if (statTipo === 'anni_uscite') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].count - pAnni[a].count).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].count} uscite`).join('\n');
+                else if (statTipo === 'anni_dislivello') righe = Object.keys(pAnni).filter(k => pAnni[k].dislivello > 0).sort((a,b) => pAnni[b].dislivello - pAnni[a].dislivello).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].dislivello.toFixed(0)} m`).join('\n');
+                else if (statTipo === 'mesi_km') righe = Object.keys(pMesi).sort((a,b) => pMesi[b].km - pMesi[a].km).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].km.toFixed(0)} km`; }).join('\n');
+                else if (statTipo === 'mesi_dislivello') righe = Object.keys(pMesi).filter(k => pMesi[k].dislivello > 0).sort((a,b) => pMesi[b].dislivello - pMesi[a].dislivello).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].dislivello.toFixed(0)} m`; }).join('\n');
+                else if (statTipo === 'sett_km') righe = Object.keys(pSett).sort((a,b) => pSett[b].km - pSett[a].km).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].km.toFixed(0)} km`).join('\n');
+                else if (statTipo === 'sett_uscite') righe = Object.keys(pSett).sort((a,b) => pSett[b].count - pSett[a].count).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].count} uscite`).join('\n');
+                alert(`TOP 5 — ${titolo}\n\n${righe}`);
+            });
+        });
+    }
+
+
+
+    async function salvaManuale() {
+        const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
+        if(!d || isNaN(k)) return;
+        let tInput = document.getElementById('in-time').value, tDec = 0;
+        if(tInput.includes(':')) { let p = tInput.split(':'); tDec = parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0); }
+        else { tDec = parseFloat(tInput) || 0; }
+        let med = tDec > 0 ? (k / tDec) : 0;
+        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med });
+        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        showToast('Attivita\' salvata!');
+        aggiornaStats(); popolaAnniArchivio();
+        document.getElementById('in-dist').value = '';
+        document.getElementById('in-time').value = '';
+        document.getElementById('in-date').valueAsDate = oggi;
+        document.getElementById('form-title').innerText = '+ AGGIUNGI ATTIVITA\' MANUALE';
+        document.getElementById('btn-save').innerText = 'SALVA';
+    }
+
+    function preparaModifica(id) {
+        const a = rawData.find(x => x.id === id); if(!a) return;
+        vaiA('home');
+        document.getElementById('form-title').innerText = 'MODIFICA ATTIVITA\'';
+        document.getElementById('btn-save').innerText = 'AGGIORNA';
+        document.getElementById('in-date').value = a.data.split('T')[0];
+        document.getElementById('in-dist').value = a.distanza;
+        document.getElementById('in-time').value = formattaTempo(a.tempo);
+        rawData = rawData.filter(x => x.id !== id);
+    }
+
+    function esportaPDF() {
+        const anno = currY;
+        const datiAnno = rawData.filter(a => new Date(a.data).getFullYear() === anno);
+        if (!datiAnno.length) { showToast('Nessun dato per ' + anno); return; }
+
+        const totKm = datiAnno.reduce((s,a) => s + parseFloat(a.distanza), 0);
+        const totOre = datiAnno.reduce((s,a) => s + parseFloat(a.tempo), 0);
+        const medPond = totOre > 0 ? (totKm / totOre) : 0;
+        const nUscite = datiAnno.length;
+
+        // Statistiche mensili
+        const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+        let pMesi = {};
+        datiAnno.forEach(a => {
+            const m = new Date(a.data).getMonth();
+            if (!pMesi[m]) pMesi[m] = { km: 0, count: 0 };
+            pMesi[m].km += parseFloat(a.distanza);
+            pMesi[m].count++;
+        });
+
+        // Top 5 distanza
+        const top5Dist = [...datiAnno].sort((a,b) => b.distanza - a.distanza).slice(0,5);
+        // Top 5 velocità
+        const top5Media = [...datiAnno].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5);
+
+        const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+        const contenuto = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #111; }
+    h1 { color: #fb8c00; border-bottom: 3px solid #fb8c00; padding-bottom: 10px; }
+    h2 { color: #fb8c00; margin-top: 30px; font-size: 1em; text-transform: uppercase; letter-spacing: 1px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+    .stat-box { background: #fff8f0; border: 1px solid #fb8c00; border-radius: 10px; padding: 15px; text-align: center; }
+    .stat-box .val { font-size: 1.8em; font-weight: 900; color: #fb8c00; }
+    .stat-box .lab { font-size: 0.75em; color: #888; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th { background: #fb8c00; color: white; padding: 8px; text-align: left; font-size: 0.85em; }
+    td { padding: 7px 8px; border-bottom: 1px solid #eee; font-size: 0.85em; }
+    tr:nth-child(even) { background: #fff8f0; }
+    .footer { margin-top: 40px; text-align: center; color: #aaa; font-size: 0.75em; border-top: 1px solid #eee; padding-top: 15px; }
+</style>
+</head>
+<body>
+<h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1>
+
+<div class="stats-grid">
+    <div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT', {minimumFractionDigits:1, maximumFractionDigits:1})}</div><div class="lab">km totali</div></div>
+    <div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div>
+    <div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div>
+    <div class="stat-box"><div class="val">${(totKm / nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div>
+    <div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre % 1) * 60)}m</div><div class="lab">ore in sella</div></div>
+    <div class="stat-box"><div class="val">${(totKm / 40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div>
+</div>
+
+<h2>Top 5 Uscite per Distanza</h2>
+<table>
+    <tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>
+    ${top5Dist.map((a,i) => `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome || '—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}
+</table>
+
+<h2>Top 5 Uscite per Velocita</h2>
+<table>
+    <tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>
+    ${top5Media.map((a,i) => `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome || '—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}
+</table>
+
+<h2>Statistiche Mensili</h2>
+<table>
+    <tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>
+    ${mesiNomi.map((nome, i) => pMesi[i] ? `<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km / pMesi[i].count).toFixed(1)}</td></tr>` : '').join('')}
+</table>
+
+<div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div>
+</body>
+</html>`;
+
+        const a = document.createElement('a');
+        a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
+        a.download = `Bainzuretta_${anno}.html`;
+        a.click();
+        showToast('Apri il file scaricato e stampa come PDF!', 4000);
+    }
+
+    function mostraInfoObiettivo() {
+        alert(
+            'LEGENDA COLORI\n\n' +
+            '🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n' +
+            '🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n' +
+            '🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\n' +
+            'CALCOLI\n\n' +
+            'Proiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\n' +
+            'Km/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\n' +
+            'Arrivo previsto: calcolato sulla media km/settimana attuale'
+        );
+    }
+
+    function apriAttivita(id) {
+        const a = rawData.find(x => x.id == id);
+        if (!a) return;
+        const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const nome = a.nome ? '\n"' + a.nome + '"' : '';
+        const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
+        const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
+        if (a.strava_id) {
+            if (confirm(msg + '\n\nVuoi aprire su Strava?')) {
+                window.open('https://www.strava.com/activities/' + a.strava_id, '_blank');
             }
+        } else {
+            alert(msg);
         }
+    }
 
-        // Avvio del sistema
-        window.onload = init;
+    function esportaJSON() {
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
+        const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
+    }
 
-    </script>
+    document.getElementById('json-input').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    };
+
+    function vaiA(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
+        document.getElementById('nav-'+id).classList.add('active');
+        if(id === 'ranking') disegnaClassifica();
+        if(id === 'diario') disegnaDiario();
+        if(id === 'archivio') disegnaArchivio();
+        if(id === 'records') disegnaRecords();
+    }
+
+    function disegnaDiario() {
+        const c = document.getElementById('lista-diario'); c.innerHTML = '';
+        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
+        let tKmD = 0, tOreD = 0, tDislivD = 0;
+        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); tDislivD += parseFloat(a.dislivello) || 0; });
+        let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
+        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b><br>Dislivello: <b>${tDislivD.toFixed(0)} m</b></div>`;
+        lista.forEach(a => {
+            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+            let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
+            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
+        });
+    }
+
+    function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
+
+    function eliminaAttivita(id) {
+        if(confirm('Elimina?')) {
+            rawData = rawData.filter(a => a.id !== id);
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            disegnaDiario(); aggiornaStats();
+        }
+    }
+
+    function pulisciTutto() { if(confirm('CANCELLARE TUTTO?')) { localStorage.clear(); location.reload(); } }
+
+    function cambiaObiettivo() {
+        let n = prompt('Target per il ' + currY + ':', myTarget);
+        if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); document.getElementById('val-target-tot').innerText = myTarget; aggiornaStats(); }
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
+    }
+</script>
 </body>
 </html>
