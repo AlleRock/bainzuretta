@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bainzuretta-v69';
+const CACHE_NAME = 'bainzuretta-v72';
 const assets = [
     './',
     './index.html',
