@@ -423,15 +423,15 @@
                 arrivoStr = '&#11088; HAI RAGGIUNTO L\'OBIETTIVO! &#11088;';
                 targetBox.style.background = '';
                 targetBox.classList.add('obiettivo-raggiunto');
-                paceBar.style.borderTop = '1px solid rgba(0,0,0,0.15)';
-                paceLabel.style.color = '#5d3a00';
-                arrivalLabel.style.color = '#5d3a00';
+                if (paceBar) paceBar.style.borderTop = '1px solid rgba(0,0,0,0.15)';
+                if (paceLabel) paceLabel.style.color = '#5d3a00';
+                if (arrivalLabel) arrivalLabel.style.color = '#5d3a00';
             } else {
                 targetBox.classList.remove('obiettivo-raggiunto');
                 targetBox.style.background = boxColor;
-                paceBar.style.borderTop = '1px solid rgba(255,255,255,0.3)';
-                paceLabel.style.color = '';
-                arrivalLabel.style.color = '';
+                if (paceBar) paceBar.style.borderTop = '1px solid rgba(255,255,255,0.3)';
+                if (paceLabel) paceLabel.style.color = '';
+                if (arrivalLabel) arrivalLabel.style.color = '';
                 if (kmSettimana > 0) {
                     const settimaneMancanti = mancanti / kmSettimana;
                     const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
