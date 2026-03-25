@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V73</title>
+    <title>Bainzuretta V70</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
@@ -604,12 +604,26 @@
         const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
         let maxStriscia = 1, striscia = 1;
         let strisciaStart = settimaneAssolute[0], maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
+        // top5 strisce
+        let tutteStrisce = [];
+        let curStart = settimaneAssolute[0], curLen = 1;
         for (let i = 1; i < settimaneAssolute.length; i++) {
             if (settimaneAssolute[i] === settimaneAssolute[i-1] + 1) {
-                striscia++;
-                if (striscia > maxStriscia) { maxStriscia = striscia; maxStart = strisciaStart; maxEnd = settimaneAssolute[i]; }
-            } else { striscia = 1; strisciaStart = settimaneAssolute[i]; }
+                curLen++;
+                if (curLen > maxStriscia) { maxStriscia = curLen; maxStart = curStart; maxEnd = settimaneAssolute[i]; }
+            } else {
+                tutteStrisce.push({ len: curLen, start: curStart, end: settimaneAssolute[i-1] });
+                curLen = 1; curStart = settimaneAssolute[i];
+            }
         }
+        tutteStrisce.push({ len: curLen, start: curStart, end: settimaneAssolute[settimaneAssolute.length-1] });
+        tutteStrisce.sort((a,b) => b.len - a.len);
+        window._top5_strisce = tutteStrisce.slice(0, 5);
+        // striscia attuale: quante settimane consecutive fino ad oggi
+        const settOggi = getAbsWeek(oggi.toISOString());
+        let strisciaAttuale = 0, sw = settOggi;
+        const setSet = new Set(settimaneAssolute);
+        while (setSet.has(sw)) { strisciaAttuale++; sw--; }
 
         // Curiosita
         const giorni = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
@@ -765,7 +779,8 @@
         html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary);">${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span>${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-strisce">TOP 5</button></span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia attuale</span><span style="color:var(--primary);">${strisciaAttuale > 0 ? strisciaAttuale + ' sett.' : '—'}</span></div></div>`;
         if (max4gg > 0) {
             window._top5_4gg = top5_4gg;
             html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Max km in 4 giorni</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span><b>${Math.round(max4gg)} km</b><br><small style="color:#888;font-weight:400;">${max4ggData}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-4gg">TOP 5</button></span></div></div>`;
@@ -832,6 +847,18 @@
                 alert(`TOP 5 — ${label}\n\n${righe}`);
             });
         });
+        // Event listener TOP5 strisce
+        const btnStrisce = c.querySelector('#btn-top5-strisce');
+        if (btnStrisce) {
+            btnStrisce.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const righe = (window._top5_strisce || []).map((s, i) =>
+                    `${i+1}. ${getMondayFromAbs(s.start)} – ${getSundayFromAbs(s.end)}: ${s.len} sett.`
+                ).join('\n');
+                alert(`TOP 5 — Strisce settimane consecutive\n\n${righe}`);
+            });
+        }
+
         // Event listener TOP5 4 giorni
         const btn4gg = c.querySelector('#btn-top5-4gg');
         if (btn4gg) {
