@@ -51,7 +51,16 @@
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
-        .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
+        .target-box.obiettivo-raggiunto {
+            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
+            background-size: 200% 200% !important;
+            animation: shimmer 2s ease infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
     </style>
 </head>
 <body>
@@ -410,19 +419,30 @@
             // Previsione data arrivo
             const kmSettimana = kY / (doyOggi / 7);
             let arrivoStr = '';
-            if (kmSettimana > 0 && mancanti > 0) {
-                const settimaneMancanti = mancanti / kmSettimana;
-                const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
-                arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
-            } else if (mancanti <= 0) {
-                arrivoStr = '&#127881; Obiettivo raggiunto!';
+            if (mancanti <= 0) {
+                arrivoStr = '&#11088; HAI RAGGIUNTO L\'OBIETTIVO! &#11088;';
+                targetBox.style.background = '';
+                targetBox.classList.add('obiettivo-raggiunto');
+                paceBar.style.borderTop = '1px solid rgba(0,0,0,0.15)';
+                paceLabel.style.color = '#5d3a00';
+                arrivalLabel.style.color = '#5d3a00';
+            } else {
+                targetBox.classList.remove('obiettivo-raggiunto');
+                targetBox.style.background = boxColor;
+                paceBar.style.borderTop = '1px solid rgba(255,255,255,0.3)';
+                paceLabel.style.color = '';
+                arrivalLabel.style.color = '';
+                if (kmSettimana > 0) {
+                    const settimaneMancanti = mancanti / kmSettimana;
+                    const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
+                    arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
+                }
             }
-
-            targetBox.style.background = boxColor;
             paceBar.style.display = 'block';
-            paceLabel.innerHTML = `${paceEmoji} ${paceMsg}`;
+            paceLabel.innerHTML = mancanti <= 0 ? `&#127942; ${kY.toFixed(0)} km su ${myTarget} km` : `${paceEmoji} ${paceMsg}`;
             arrivalLabel.innerHTML = arrivoStr;
         } else {
+            targetBox.classList.remove('obiettivo-raggiunto');
             targetBox.style.background = 'linear-gradient(135deg, #fb8c00, #f57c00)';
             paceBar.style.display = 'none';
         }
@@ -441,15 +461,16 @@
         const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
         let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKm = 0, tOre = 0, nAtt = filtrati.length;
+        let tKm = 0, tOre = 0, tDisliv = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
             tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            tDisliv += parseFloat(a.dislivello) || 0;
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
             listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
         });
         let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
-        recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b></div>`;
+        recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b><br>Dislivello: <b>${tDisliv.toFixed(0)} m</b></div>`;
     }
 
     function disegnaClassifica() {
@@ -570,6 +591,9 @@
         rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
         const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
 
+        // Record 4 giorni - disabilitato temporaneamente
+        const max4giorni = 0, max4start = null, max4end = null;
+
         // Medie
         const totUscite = rawData.length;
         const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
@@ -607,6 +631,8 @@
         html += actRow('&#9889;', 'Media piu alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`, 'media_max');
         html += actRow('&#128034;', 'Media piu bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`, 'media_min');
         html += '</div>';
+        html += recordFascia('50-60 KM', 50, 60);
+        html += recordFascia('100-110 KM', 100, 110);
         html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
         html += actRow('&#9201;', 'Uscita piu lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)), 'tempo_max');
         html += '</div>';
@@ -639,6 +665,16 @@
         html += '</div>';
 
         // RECORD PER FASCIA DISTANZA E DISLIVELLO
+        window._fasce = {};
+
+        window.top5Fascia = function(key) {
+            const arr = window._fasce[key];
+            if (!arr || !arr.length) return;
+            const top = [...arr].sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
+            const righe = top.map((a,i) => (i+1) + '. ' + new Date(a.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}) + ': ' + formattaTempo(parseFloat(a.tempo)) + ' (' + parseFloat(a.distanza).toFixed(1) + 'km | ' + (a.dislivello||0).toFixed(0) + 'm)').join('\n');
+            alert('TOP 5\n\n' + righe);
+        }
+
         function recordFascia(titolo, minKm, maxKm) {
             const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined && new Date(a.data).getFullYear() >= 2019);
             if (!fascia.length) return '';
@@ -647,29 +683,33 @@
             const collina = fascia.filter(a => (a.dislivello || 0) >= 1000 && (a.dislivello || 0) < 2000);
             const montagna = fascia.filter(a => (a.dislivello || 0) >= 2000);
 
-            const bestTempo = (arr) => arr.length ? arr.reduce((a,b) => parseFloat(a.tempo) < parseFloat(b.tempo) ? a : b) : null;
+            const key = titolo.replace(/\s/g,'').replace(/-/g,'');
+            window._fasce[key+'P'] = pianura;
+            window._fasce[key+'C'] = collina;
+            window._fasce[key+'M'] = montagna;
 
+            const bestTempo = (arr) => arr.length ? arr.reduce((a,b) => parseFloat(a.tempo) < parseFloat(b.tempo) ? a : b) : null;
             const bP = bestTempo(pianura);
             const bC = bestTempo(collina);
             const bM = bestTempo(montagna);
 
             if (!bP && !bC && !bM) return '';
 
+            const btn = (fkey, arr) => arr.length > 1 ? `<button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();top5Fascia('${fkey}')">TOP 5</button>` : '';
+
             let rows = '';
-            if (bP) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bP.id})"><div class="rank-info"><span>&#127963; Pianura <small style="color:#888;">&lt;1000m dislivello</small><br><small style="color:#888;font-weight:400;">${new Date(bP.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bP.nome?' — '+bP.nome:''}</small></span><span style="color:var(--primary);">${formattaTempo(parseFloat(bP.tempo))}<br><small>${parseFloat(bP.distanza).toFixed(1)}km | ${(bP.dislivello||0).toFixed(0)}m</small></span></div></div>`;
-            if (bC) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bC.id})"><div class="rank-info"><span>&#9968; Collinare <small style="color:#888;">1000-2000m</small><br><small style="color:#888;font-weight:400;">${new Date(bC.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bC.nome?' — '+bC.nome:''}</small></span><span style="color:var(--primary);">${formattaTempo(parseFloat(bC.tempo))}<br><small>${parseFloat(bC.distanza).toFixed(1)}km | ${(bC.dislivello||0).toFixed(0)}m</small></span></div></div>`;
-            if (bM) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bM.id})"><div class="rank-info"><span>&#127956; Montagna <small style="color:#888;">&gt;2000m</small><br><small style="color:#888;font-weight:400;">${new Date(bM.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bM.nome?' — '+bM.nome:''}</small></span><span style="color:var(--primary);">${formattaTempo(parseFloat(bM.tempo))}<br><small>${parseFloat(bM.distanza).toFixed(1)}km | ${(bM.dislivello||0).toFixed(0)}m</small></span></div></div>`;
+            if (bP) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bP.id})"><div class="rank-info"><span>&#127963; Pianura <small style="color:#888;">&lt;1000m</small><br><small style="color:#888;font-weight:400;">${new Date(bP.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bP.nome?' — '+bP.nome:''}</small></span><span style="color:var(--primary);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${formattaTempo(parseFloat(bP.tempo))} <small>${parseFloat(bP.distanza).toFixed(1)}km|${(bP.dislivello||0).toFixed(0)}m</small>${btn(key+'P', pianura)}</span></div></div>`;
+            if (bC) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bC.id})"><div class="rank-info"><span>&#9968; Collinare <small style="color:#888;">1000-2000m</small><br><small style="color:#888;font-weight:400;">${new Date(bC.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bC.nome?' — '+bC.nome:''}</small></span><span style="color:var(--primary);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${formattaTempo(parseFloat(bC.tempo))} <small>${parseFloat(bC.distanza).toFixed(1)}km|${(bC.dislivello||0).toFixed(0)}m</small>${btn(key+'C', collina)}</span></div></div>`;
+            if (bM) rows += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${bM.id})"><div class="rank-info"><span>&#127956; Montagna <small style="color:#888;">&gt;2000m</small><br><small style="color:#888;font-weight:400;">${new Date(bM.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${bM.nome?' — '+bM.nome:''}</small></span><span style="color:var(--primary);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${formattaTempo(parseFloat(bM.tempo))} <small>${parseFloat(bM.distanza).toFixed(1)}km|${(bM.dislivello||0).toFixed(0)}m</small>${btn(key+'M', montagna)}</span></div></div>`;
 
             return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
         }
-
-        html += recordFascia('50-60 KM', 50, 60);
-        html += recordFascia('100-110 KM', 100, 110);
 
         html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary);">${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span></div></div>`;
+        if (max4start) html += `<div class="rank-item"><div class="rank-info"><span>&#128170; Record 4 giorni</span><span style="color:var(--primary);">${max4giorni.toFixed(0)} km<br><small style="color:#888;font-weight:400;">${max4start.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})} — ${max4end.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}</small></span></div></div>`;
         html += '</div>';
 
         c.innerHTML = html;
@@ -682,7 +722,12 @@
                 if (!attivita) return;
                 const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
                 const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
-                alert(`${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`);
+                const msg = `${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`;
+                if (attivita.strava_id && confirm(msg + '\n\nVuoi aprire su Strava?')) {
+                    window.open('https://www.strava.com/activities/' + attivita.strava_id, '_blank');
+                } else if (!attivita.strava_id) {
+                    alert(msg);
+                }
             });
         });
 
@@ -698,8 +743,8 @@
                 else if (tipo === 'media_max') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
                 else if (tipo === 'media_min') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => a.media - b.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
                 else if (tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
-                else if (tipo === 'disliv_max') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
-                else if (tipo === 'disliv_min') righe = [...rawData].filter(a => a.dislivello > 0).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                else if (tipo === 'disliv_max') righe = [...rawData].filter(a => a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                else if (tipo === 'disliv_min') righe = [...rawData].filter(a => a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
                 alert(`TOP 5 — ${titolo}\n\n${righe}`);
             });
         });
@@ -900,10 +945,10 @@
     function disegnaDiario() {
         const c = document.getElementById('lista-diario'); c.innerHTML = '';
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKmD = 0, tOreD = 0;
-        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); });
+        let tKmD = 0, tOreD = 0, tDislivD = 0;
+        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); tDislivD += parseFloat(a.dislivello) || 0; });
         let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
-        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b></div>`;
+        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b><br>Dislivello: <b>${tDislivD.toFixed(0)} m</b></div>`;
         lista.forEach(a => {
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
