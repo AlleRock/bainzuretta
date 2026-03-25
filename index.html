@@ -659,24 +659,24 @@
 
             if (!bP && !bC && !bM) return '';
 
-            const top5FasciaId = `top5fascia_${minKm}_${maxKm}`;
-
-            const rigaFascia = (best, arr, emoji, label, sottoLabel) => {
+            const rigaFascia = (best, arr, emoji, label, sottoLabel, fasciaKey) => {
                 if (!best) return '';
-                const top5Id = `${top5FasciaId}_${label.replace(/\s/g,'')}`;
+                // Salva top5 in variabile globale temporanea indicizzata
+                const key = `_top5_${fasciaKey}`;
+                window[key] = arr.slice().sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
                 return `<div class="rank-item"><div class="rank-info">
                     <span style="cursor:pointer;" onclick="apriAttivita(${best.id})">${emoji} ${label} <small style="color:#888;">${sottoLabel}</small><br><small style="color:#888;font-weight:400;">${new Date(best.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${best.nome?' — '+best.nome:''}</small></span>
                     <span style="color:var(--primary); display:flex; align-items:center; gap:6px; flex-direction:column; align-items:flex-end;">
                         <span onclick="apriAttivita(${best.id})" style="cursor:pointer;">${formattaTempo(parseFloat(best.tempo))}<br><small>${parseFloat(best.distanza).toFixed(1)}km | ${(best.dislivello||0).toFixed(0)}m</small></span>
-                        <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" class="btn-top5-fascia" data-arr='${JSON.stringify(arr.sort((a,b)=>a.tempo-b.tempo).slice(0,5).map(a=>({data:a.data,dist:parseFloat(a.distanza).toFixed(1),tempo:formattaTempo(parseFloat(a.tempo)),nome:a.nome||''})))}' data-label="${label} ${titolo}">TOP 5</button>
+                        <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" class="btn-top5-fascia" data-key="${key}" data-label="${label} ${titolo}">TOP 5</button>
                     </span>
                 </div></div>`;
             };
 
             let rows = '';
-            rows += rigaFascia(bP, pianura, '&#127963;', 'Pianura', '&lt;1000m dislivello');
-            rows += rigaFascia(bC, collina, '&#9968;', 'Collinare', '1000-2000m');
-            rows += rigaFascia(bM, montagna, '&#127956;', 'Montagna', '&gt;2000m');
+            rows += rigaFascia(bP, pianura, '&#127963;', 'Pianura', '&lt;1000m dislivello', `${minKm}_${maxKm}_p`);
+            rows += rigaFascia(bC, collina, '&#9968;', 'Collinare', '1000-2000m', `${minKm}_${maxKm}_c`);
+            rows += rigaFascia(bM, montagna, '&#127956;', 'Montagna', '&gt;2000m', `${minKm}_${maxKm}_m`);
 
             return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
         }
@@ -736,13 +736,17 @@
                 else if (statTipo === 'mesi_dislivello') righe = Object.keys(pMesi).filter(k => pMesi[k].dislivello > 0).sort((a,b) => pMesi[b].dislivello - pMesi[a].dislivello).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].dislivello.toFixed(0)} m`; }).join('\n');
                 else if (statTipo === 'sett_km') righe = Object.keys(pSett).sort((a,b) => pSett[b].km - pSett[a].km).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].km.toFixed(0)} km`).join('\n');
                 else if (statTipo === 'sett_uscite') righe = Object.keys(pSett).sort((a,b) => pSett[b].count - pSett[a].count).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].count} uscite`).join('\n');
+                alert(`TOP 5 — ${titolo}\n\n${righe}`);
+            });
+        });
+
         // Event listener TOP5 fasce distanza
         c.querySelectorAll('.btn-top5-fascia').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const arr = JSON.parse(btn.dataset.arr);
+                const arr = window[btn.dataset.key] || [];
                 const label = btn.dataset.label;
-                const righe = arr.map((a,i) => `${i+1}. ${new Date(a.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${a.nome?' — '+a.nome:''}: ${a.tempo} (${a.dist} km)`).join('\n');
+                const righe = arr.map((a,i) => `${i+1}. ${new Date(a.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${a.nome?' — '+a.nome:''}: ${formattaTempo(parseFloat(a.tempo))} (${parseFloat(a.distanza).toFixed(1)} km)`).join('\n');
                 alert(`TOP 5 — ${label}\n\n${righe}`);
             });
         });
