@@ -503,39 +503,72 @@
     }
 
     function disegnaRecords() {
-        const c = document.getElementById('lista-records');
-        c.innerHTML = '';
-        if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
 
-        const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+    if (!rawData.length) {
+        document.getElementById('recordsList').innerHTML = "<p>Nessun dato disponibile.</p>";
+        return;
+    }
 
-        // Calcoli
-        const maxDist = rawData.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
-        const minDist = rawData.reduce((a,b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
-        const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
-        const minMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) < parseFloat(b.media) ? a : b);
-        const maxTempo = rawData.reduce((a,b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
-        const conDislivello = rawData.filter(a => a.dislivello && a.dislivello > 0 && new Date(a.data).getFullYear() >= 2019);
-        const maxDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello > b.dislivello ? a : b) : null;
-        const minDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello < b.dislivello ? a : b) : null;
+    const maxDist = rawData.reduce((a, b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
+    const minDist = rawData.reduce((a, b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
 
-        let pAnni = {}, pMesi = {};
-        rawData.forEach(a => {
-            const y = new Date(a.data).getFullYear();
-            if (!pAnni[y]) pAnni[y] = { km: 0, dislivello: 0, count: 0 };
-            pAnni[y].km += parseFloat(a.distanza) || 0;
-            pAnni[y].dislivello += a.dislivello || 0;
-            pAnni[y].count++;
-            const d = new Date(a.data);
-            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0, count: 0 };
-            pMesi[k].km += parseFloat(a.distanza) || 0;
-            pMesi[k].dislivello += a.dislivello || 0;
-            pMesi[k].count++;
-        });
+    const mediaArray = rawData.filter(a => parseFloat(a.media) > 0);
 
+    const maxMedia = mediaArray.length
+        ? mediaArray.reduce((a, b) => parseFloat(a.media) > parseFloat(b.media) ? a : b)
+        : null;
+
+    const minMedia = mediaArray.length
+        ? mediaArray.reduce((a, b) => parseFloat(a.media) < parseFloat(b.media) ? a : b)
+        : null;
+
+    const maxTempo = rawData.reduce((a, b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
+
+    const dislivelloArray = rawData.filter(a => parseFloat(a.dislivello) > 0);
+
+    const maxDislivello = dislivelloArray.length
+        ? dislivelloArray.reduce((a, b) => parseFloat(a.dislivello) > parseFloat(b.dislivello) ? a : b)
+        : null;
+
+    const minDislivello = dislivelloArray.length
+        ? dislivelloArray.reduce((a, b) => parseFloat(a.dislivello) < parseFloat(b.dislivello) ? a : b)
+        : null;
+
+    let html = '';
+    html += '<div class="card"><div class="record-section-title">DISTANZA</div>';
+    html += actRow('&#127942;', 'Giro piu lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`, 'dist_max');
+    html += actRow('&#128138;', 'Giro piu corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`, 'dist_min');
+    html += '</div>';
+
+    html += '<div class="card"><div class="record-section-title">VELOCITA</div>';
+
+    if (maxMedia) {
+        html += actRow('&#9889;', 'Media piu alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`, 'media_max');
+    }
+
+    if (minMedia) {
+        html += actRow('&#128034;', 'Media piu bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`, 'media_min');
+    }
+
+    html += '</div>';
+
+    html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
+    html += actRow('&#9201;', 'Uscita piu lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)), 'tempo_max');
+    html += '</div>';
+
+    if (maxDislivello) {
+        html += '<div class="card"><div class="record-section-title">DISLIVELLO</div>';
+        html += actRow('&#127956;', 'Piu dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`, 'disliv_max');
+
+        if (minDislivello) {
+            html += actRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`, 'disliv_min');
+        }
+
+        html += '</div>';
+    }
+
+    document.getElementById('recordsList').innerHTML = html;
+}
         const annoBestKm = Object.keys(pAnni).reduce((a,b) => pAnni[a].km > pAnni[b].km ? a : b);
         const annoMaxUscite = Object.keys(pAnni).reduce((a,b) => pAnni[a].count > pAnni[b].count ? a : b);
         const meseBestKm = Object.keys(pMesi).reduce((a,b) => pMesi[a].km > pMesi[b].km ? a : b);
