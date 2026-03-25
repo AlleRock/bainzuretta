@@ -52,6 +52,23 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
         .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
+        @keyframes shimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes pulse-gold {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0px rgba(255,210,0,0); }
+            50%       { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,210,0,0.6); }
+        }
+        .target-box-gold {
+            background: linear-gradient(110deg, #f7971e, #ffd200, #fff5a0, #ffd200, #f7971e) !important;
+            background-size: 300% 100% !important;
+            animation: shimmer 2.5s linear infinite, pulse-gold 2s ease-in-out infinite !important;
+            color: #5a3a00 !important;
+        }
+        .target-box-gold small, .target-box-gold b { color: #5a3a00 !important; }
+        .target-box-gold * { color: #5a3a00 !important; }
+        .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
     </style>
 </head>
 <body>
@@ -388,41 +405,54 @@
         const targetBox = document.getElementById('target-box');
 
         if (kY > 0 && myTarget > 0) {
-            const kmAttesi = (myTarget / giorniAnno) * doyOggi;
-            const diff = kY - kmAttesi;
-            const percDiff = diff / kmAttesi;
-
-            let paceEmoji, paceMsg, boxColor;
-            if (percDiff >= 0) {
-                paceEmoji = '&#9989;';
-                paceMsg = `In anticipo di ${Math.abs(diff).toFixed(0)} km`;
-                boxColor = 'linear-gradient(135deg, #2e7d32, #388e3c)';
-            } else if (percDiff >= -0.1) {
-                paceEmoji = '&#9888;&#65039;';
-                paceMsg = `In ritardo di ${Math.abs(diff).toFixed(0)} km`;
-                boxColor = 'linear-gradient(135deg, #f57f17, #f9a825)';
+            if (mancanti <= 0) {
+                // 🏆 OBIETTIVO RAGGIUNTO
+                targetBox.className = 'card target-box target-box-gold';
+                targetBox.style.background = '';
+                paceBar.style.display = 'block';
+                document.getElementById('km-mancanti').innerHTML = '&#127942;';
+                document.querySelector('#target-box small').innerHTML = '&#11088; OBIETTIVO ' + currY + ' &#11088;';
+                paceLabel.innerHTML = '<b style="font-size:1.5em; display:block; margin:4px 0;">&#127942; OBIETTIVO RAGGIUNTO! &#127942;</b><span style="font-size:1.4em;">⭐ ⭐ ⭐</span>';
+                arrivalLabel.innerHTML = `&#127881; <b>+${Math.abs(mancanti).toFixed(0)} km</b> oltre il target di ${myTarget.toLocaleString('it-IT')} km!`;
+                document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * giorniAnno).toLocaleString('it-IT');
+                document.getElementById('val-week').innerText = '0';
             } else {
-                paceEmoji = '&#128308;';
-                paceMsg = `In ritardo di ${Math.abs(diff).toFixed(0)} km`;
-                boxColor = 'linear-gradient(135deg, #c62828, #d32f2f)';
-            }
+                targetBox.className = 'card target-box';
+                const kmAttesi = (myTarget / giorniAnno) * doyOggi;
+                const diff = kY - kmAttesi;
+                const percDiff = diff / kmAttesi;
 
-            // Previsione data arrivo
-            const kmSettimana = kY / (doyOggi / 7);
-            let arrivoStr = '';
-            if (kmSettimana > 0 && mancanti > 0) {
-                const settimaneMancanti = mancanti / kmSettimana;
-                const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
-                arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
-            } else if (mancanti <= 0) {
-                arrivoStr = '&#127881; Obiettivo raggiunto!';
-            }
+                let paceEmoji, paceMsg, boxColor;
+                if (percDiff >= 0) {
+                    paceEmoji = '&#9989;';
+                    paceMsg = `In anticipo di ${Math.abs(diff).toFixed(0)} km`;
+                    boxColor = 'linear-gradient(135deg, #2e7d32, #388e3c)';
+                } else if (percDiff >= -0.1) {
+                    paceEmoji = '&#9888;&#65039;';
+                    paceMsg = `In ritardo di ${Math.abs(diff).toFixed(0)} km`;
+                    boxColor = 'linear-gradient(135deg, #f57f17, #f9a825)';
+                } else {
+                    paceEmoji = '&#128308;';
+                    paceMsg = `In ritardo di ${Math.abs(diff).toFixed(0)} km`;
+                    boxColor = 'linear-gradient(135deg, #c62828, #d32f2f)';
+                }
 
-            targetBox.style.background = boxColor;
-            paceBar.style.display = 'block';
-            paceLabel.innerHTML = `${paceEmoji} ${paceMsg}`;
-            arrivalLabel.innerHTML = arrivoStr;
+                // Previsione data arrivo
+                const kmSettimana = kY / (doyOggi / 7);
+                let arrivoStr = '';
+                if (kmSettimana > 0) {
+                    const settimaneMancanti = mancanti / kmSettimana;
+                    const dataArrivo = new Date(oggi.getTime() + settimaneMancanti * 7 * 24 * 60 * 60 * 1000);
+                    arrivoStr = `&#127937; Arrivo previsto: ${dataArrivo.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}`;
+                }
+
+                targetBox.style.background = boxColor;
+                paceBar.style.display = 'block';
+                paceLabel.innerHTML = `${paceEmoji} ${paceMsg}`;
+                arrivalLabel.innerHTML = arrivoStr;
+            }
         } else {
+            targetBox.className = 'card target-box';
             targetBox.style.background = 'linear-gradient(135deg, #fb8c00, #f57c00)';
             paceBar.style.display = 'none';
         }
