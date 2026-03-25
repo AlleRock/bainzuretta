@@ -555,13 +555,13 @@
             const y = new Date(a.data).getFullYear();
             if (!pAnni[y]) pAnni[y] = { km: 0, dislivello: 0, count: 0 };
             pAnni[y].km += parseFloat(a.distanza) || 0;
-            pAnni[y].dislivello += a.dislivello || 0;
+            if (y >= 2019) pAnni[y].dislivello += a.dislivello || 0;
             pAnni[y].count++;
             const d = new Date(a.data);
             const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0, count: 0 };
             pMesi[k].km += parseFloat(a.distanza) || 0;
-            pMesi[k].dislivello += a.dislivello || 0;
+            if (d.getFullYear() >= 2019) pMesi[k].dislivello += a.dislivello || 0;
             pMesi[k].count++;
         });
 
@@ -589,17 +589,18 @@
         const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
         const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
 
-        // Striscia con date
+        // Striscia con date — ancora: lunedì 5 gennaio 1970 (primo lunedì dopo epoch)
+        const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
             const d = new Date(dateStr);
             const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
             const monday = new Date(d);
             monday.setDate(d.getDate() - day);
             monday.setHours(0,0,0,0);
-            return Math.floor(monday.getTime() / (7 * 24 * 60 * 60 * 1000));
+            return Math.floor((monday.getTime() - MONDAY_ANCHOR) / (7 * 24 * 60 * 60 * 1000));
         };
-        const getMondayFromAbs = (absWeek) => { const d = new Date(absWeek * 7 * 24 * 60 * 60 * 1000); d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'}); };
-        const getSundayFromAbs = (absWeek) => { const d = new Date((absWeek * 7 + 6) * 24 * 60 * 60 * 1000); d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'}); };
+        const getMondayFromAbs = (absWeek) => { const d = new Date(MONDAY_ANCHOR + absWeek * 7 * 24 * 60 * 60 * 1000); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'}); };
+        const getSundayFromAbs = (absWeek) => { const d = new Date(MONDAY_ANCHOR + (absWeek * 7 + 6) * 24 * 60 * 60 * 1000); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'}); };
 
         const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
         let maxStriscia = 1, striscia = 1;
