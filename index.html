@@ -52,6 +52,22 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
         .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
+        .target-box-gold {
+            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
+            background-size: 200% 200% !important;
+            animation: shimmerGold 2s ease-in-out infinite, pulseGold 2s ease-in-out infinite !important;
+            color: #5a3a00 !important;
+        }
+        .target-box-gold small, .target-box-gold b, .target-box-gold #km-mancanti { color: #5a3a00 !important; }
+        @keyframes shimmerGold {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes pulseGold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 0, 0.5); }
+            50% { box-shadow: 0 0 20px 8px rgba(255, 210, 0, 0.4); }
+        }
         @keyframes shimmer {
             0%   { background-position: -200% center; }
             100% { background-position: 200% center; }
@@ -412,8 +428,8 @@
                 paceBar.style.display = 'block';
                 document.getElementById('km-mancanti').innerHTML = '&#127942;';
                 document.querySelector('#target-box small').innerHTML = '&#11088; OBIETTIVO ' + currY + ' &#11088;';
-                paceLabel.innerHTML = '<b style="font-size:1.5em; display:block; margin:4px 0;">&#127942; OBIETTIVO RAGGIUNTO! &#127942;</b><span style="font-size:1.4em;">⭐ ⭐ ⭐</span>';
-                arrivalLabel.innerHTML = `&#127881; <b>+${Math.abs(mancanti).toFixed(0)} km</b> oltre il target di ${myTarget.toLocaleString('it-IT')} km!`;
+                paceLabel.innerHTML = '<b style="font-size:1.6em; display:block; margin:6px 0; color:#5a3a00;">&#127942; OBIETTIVO RAGGIUNTO! &#127942;</b><span style="font-size:1.8em; letter-spacing:4px;">⭐⭐⭐</span>';
+                arrivalLabel.innerHTML = `<span style="color:#5a3a00; font-size:0.9em;">&#127881; <b>${Math.round(kY)} km</b> fatti su ${myTarget.toLocaleString('it-IT')} — superato di <b>${Math.round(kY - myTarget)} km</b>!</span>`;
                 document.getElementById('val-proiezione').innerText = Math.round((kY / Math.max(1, doyOggi)) * giorniAnno).toLocaleString('it-IT');
                 document.getElementById('val-week').innerText = '0';
             } else {
@@ -615,10 +631,11 @@
             if (!attivita) return '';
             const data = fmt(attivita.data);
             const nome = attivita.nome ? ` — ${attivita.nome}` : '';
+            const stravaBtn = attivita.strava_id ? `<button style="background:#FC4C02;color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();window.open('https://www.strava.com/activities/${attivita.strava_id}','_blank')">STRAVA</button>` : '';
             return `<div class="rank-item">
                 <div class="rank-info" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}">
                     <span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span>
-                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
+                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} ${stravaBtn}<button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
                 </div>
             </div>`;
         }
