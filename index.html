@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V70</title>
+    <title>Bainzuretta V73</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
@@ -98,7 +98,7 @@
             <div style="position:relative;">
                 <button onclick="event.stopPropagation(); mostraInfoObiettivo()" style="position:absolute; top:-5px; right:-5px; background:rgba(255,255,255,0.3); border:none; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; font-weight:900; cursor:pointer; line-height:22px; text-align:center; padding:0;">i</button>
             </div>
-            <small>&#127919; OBIETTIVO <span class="year-label"></span></small><br>
+            <small>&#128640; OBIETTIVO <span class="year-label"></span> &#128640;</small><br>
             <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
             <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
                 Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
@@ -731,10 +731,45 @@
         html += recordFascia('50-60 KM', 50, 60);
         html += recordFascia('100-110 KM', 100, 110);
 
+        // Record 4 giorni consecutivi — calcola top 5 finestre
+        let finestre4gg = [];
+        const dateMap = {};
+        rawData.forEach(a => {
+            const giorno = a.data.slice(0, 10);
+            dateMap[giorno] = (dateMap[giorno] || 0) + (parseFloat(a.distanza) || 0);
+        });
+        const dateOrdinate = Object.keys(dateMap).sort();
+        for (let i = 0; i < dateOrdinate.length; i++) {
+            const d0 = new Date(dateOrdinate[i]);
+            const d3 = new Date(d0); d3.setDate(d0.getDate() + 3);
+            let sumFin = 0, lastD = null;
+            for (let k = i; k < dateOrdinate.length; k++) {
+                const dk = new Date(dateOrdinate[k]);
+                if (dk > d3) break;
+                sumFin += dateMap[dateOrdinate[k]];
+                lastD = dateOrdinate[k];
+            }
+            if (sumFin > 0) finestre4gg.push({ km: sumFin, dal: dateOrdinate[i], al: lastD || dateOrdinate[i] });
+        }
+        finestre4gg.sort((a, b) => b.km - a.km);
+        // deduplicazione: rimuove finestre che si sovrappongono con una già scelta
+        const top5_4gg = [];
+        for (const f of finestre4gg) {
+            const overlaps = top5_4gg.some(t => f.dal <= t.al && f.al >= t.dal);
+            if (!overlaps) top5_4gg.push(f);
+            if (top5_4gg.length >= 5) break;
+        }
+        const max4gg = top5_4gg[0] ? top5_4gg[0].km : 0;
+        const max4ggData = top5_4gg[0] ? `${top5_4gg[0].dal.split('-').reverse().join('/')} – ${top5_4gg[0].al.split('-').reverse().join('/')}` : '';
+
         html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary);">${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span></div></div>`;
+        if (max4gg > 0) {
+            window._top5_4gg = top5_4gg;
+            html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Max km in 4 giorni</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span><b>${Math.round(max4gg)} km</b><br><small style="color:#888;font-weight:400;">${max4ggData}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-4gg">TOP 5</button></span></div></div>`;
+        }
         html += '</div>';
 
         c.innerHTML = html;
@@ -797,8 +832,18 @@
                 alert(`TOP 5 — ${label}\n\n${righe}`);
             });
         });
+        // Event listener TOP5 4 giorni
+        const btn4gg = c.querySelector('#btn-top5-4gg');
+        if (btn4gg) {
+            btn4gg.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const righe = (window._top5_4gg || []).map((f, i) =>
+                    `${i+1}. ${f.dal.split('-').reverse().join('/')} – ${f.al.split('-').reverse().join('/')}: ${Math.round(f.km)} km`
+                ).join('\n');
+                alert(`TOP 5 — Max km in 4 giorni\n\n${righe}`);
+            });
+        }
     }
-
 
 
     async function salvaManuale() {
