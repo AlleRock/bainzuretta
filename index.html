@@ -645,11 +645,10 @@
             if (!attivita) return '';
             const data = fmt(attivita.data);
             const nome = attivita.nome ? ` — ${attivita.nome}` : '';
-            const stravaBtn = attivita.strava_id ? `<button style="background:#FC4C02;color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();window.open('https://www.strava.com/activities/${attivita.strava_id}','_blank')">STRAVA</button>` : '';
             return `<div class="rank-item">
                 <div class="rank-info" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}">
                     <span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span>
-                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} ${stravaBtn}<button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
+                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
                 </div>
             </div>`;
         }
@@ -780,7 +779,7 @@
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span>${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-strisce">TOP 5</button></span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia attuale</span><span style="color:var(--primary);">${strisciaAttuale > 0 ? strisciaAttuale + ' sett.' : '—'}</span></div></div>`;
+        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia attuale</span><span style="color:var(--primary);">${strisciaAttuale > 0 ? strisciaAttuale + ' sett.<br><small style="color:#888;font-weight:400;">dal ' + getMondayFromAbs(settOggi - strisciaAttuale + 1) + '</small>' : '—'}</span></div></div>`;
         if (max4gg > 0) {
             window._top5_4gg = top5_4gg;
             html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Max km in 4 giorni</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span><b>${Math.round(max4gg)} km</b><br><small style="color:#888;font-weight:400;">${max4ggData}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-4gg">TOP 5</button></span></div></div>`;
