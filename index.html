@@ -598,8 +598,8 @@
             monday.setHours(0,0,0,0);
             return Math.floor(monday.getTime() / (7 * 24 * 60 * 60 * 1000));
         };
-        const getMondayFromAbs = (absWeek) => new Date(absWeek * 7 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const getSundayFromAbs = (absWeek) => new Date((absWeek * 7 + 6) * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const getMondayFromAbs = (absWeek) => { const d = new Date(absWeek * 7 * 24 * 60 * 60 * 1000); d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'}); };
+        const getSundayFromAbs = (absWeek) => { const d = new Date((absWeek * 7 + 6) * 24 * 60 * 60 * 1000); d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'}); };
 
         const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
         let maxStriscia = 1, striscia = 1;
@@ -791,12 +791,8 @@
         // Event listener per dettaglio attività (click su riga)
         c.querySelectorAll('[data-act]').forEach(el => {
             el.addEventListener('click', (e) => {
-                if (e.target.closest('button')) return; // ignora click sul bottone TOP5
-                const attivita = rawData.find(a => String(a.id) === el.dataset.act);
-                if (!attivita) return;
-                const disStr = attivita.dislivello ? `\nDislivello: ${attivita.dislivello.toFixed(0)} m` : '';
-                const nomeStr = attivita.nome ? `\n"${attivita.nome}"` : '';
-                alert(`${el.dataset.titolo}\n\n${fmt(attivita.data)}${nomeStr}\n\n${parseFloat(attivita.distanza).toFixed(1)} km\n${formattaTempo(parseFloat(attivita.tempo))}\n${parseFloat(attivita.media).toFixed(2)} km/h${disStr}`);
+                if (e.target.closest('button')) return;
+                apriAttivita(parseInt(el.dataset.act));
             });
         });
 
