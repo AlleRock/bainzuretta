@@ -20,7 +20,7 @@
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
         .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
         .page.active { display: block; }
-        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 8px; }
         .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
         input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
@@ -38,8 +38,8 @@
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
         #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
-        .page-fixed-top { padding: 12px 12px 0 12px; }
-        .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
+        .page-fixed-top { padding: 8px 8px 0 8px; }
+        .page-scroll-list { overflow-y: auto; padding: 0 8px 12px 8px; -webkit-overflow-scrolling: touch; }
         .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
         .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
@@ -95,32 +95,32 @@
 
 <div id="home" class="page active">
     <div class="page-fixed-top">
-        <div class="card target-box" onclick="cambiaObiettivo()" id="target-box">
+        <div class="card target-box" onclick="cambiaObiettivo()" id="target-box" style="padding:10px;">
             <div style="position:relative;">
                 <button onclick="event.stopPropagation(); mostraInfoObiettivo()" style="position:absolute; top:-5px; right:-5px; background:rgba(255,255,255,0.3); border:none; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; font-weight:900; cursor:pointer; line-height:22px; text-align:center; padding:0;">i</button>
             </div>
             <small>&#128640; OBIETTIVO <span class="year-label"></span> &#128640;</small><br>
-            <b id="km-mancanti" style="font-size: 2em;">0</b> <small>KM AL TRAGUARDO</small>
-            <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em;">
+            <b id="km-mancanti" style="font-size: 1.7em;">0</b> <small>KM AL TRAGUARDO</small>
+            <div style="margin-top:6px; border-top:1px solid rgba(255,255,255,0.3); padding-top:6px; font-size:0.75em;">
                 Target: <b id="val-target-tot">5000</b> | Proiezione: <b id="val-proiezione">0</b> | <b id="val-week">0</b> KM/SETT
             </div>
-            <div id="pace-bar" style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.3); padding-top:8px; font-size:0.75em; display:none;">
+            <div id="pace-bar" style="margin-top:6px; border-top:1px solid rgba(255,255,255,0.3); padding-top:6px; font-size:0.75em; display:none;">
                 <div id="pace-label"></div>
-                <div id="arrival-label" style="margin-top:3px;"></div>
+                <div id="arrival-label" style="margin-top:2px;"></div>
             </div>
         </div>
-        <div class="card">
-            <div class="stats-grid">
-                <div class="stat-box" style="grid-column: span 2;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div>
-                <div class="stat-box"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div>
-                <div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div>
+        <div class="card" style="padding:10px;">
+            <div class="stats-grid" style="gap:8px;">
+                <div class="stat-box" style="grid-column: span 2; padding:8px;"><small>TOTALE KM STORICI</small><br><b id="st-km">0</b></div>
+                <div class="stat-box" style="padding:8px;"><small>GIRI DEL MONDO</small><br><b id="st-world">0.00</b></div>
+                <div class="stat-box" style="padding:8px;"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div>
             </div>
         </div>
-        <div class="card" id="striscia-box">
+        <div class="card" id="striscia-box" style="padding:10px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div>
                     <div style="font-size:0.72em; color:#888; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">🔥 Striscia attuale</div>
-                    <div id="striscia-valore" style="font-size:1.8em; font-weight:900; color:var(--primary); line-height:1.1; margin-top:2px;">—</div>
+                    <div id="striscia-valore" style="font-size:1.6em; font-weight:900; color:var(--primary); line-height:1.1; margin-top:2px;">—</div>
                     <div id="striscia-sub" style="font-size:0.72em; color:#888; margin-top:2px;"></div>
                 </div>
                 <div style="text-align:right; font-size:0.72em; color:#888;">
@@ -525,14 +525,13 @@
 
             if (strisciaAttuale > 0) {
                 valEl.textContent = strisciaAttuale + (strisciaAttuale === 1 ? ' settimana' : ' settimane');
-                // settimana di riposo = quella immediatamente prima dell'inizio della striscia
                 const strisciaStartAbs = settOggi - strisciaAttuale + 1;
-                subEl.textContent = 'ultima sett. di riposo: ' + getMondayFromAbs(strisciaStartAbs - 1);
+                subEl.textContent = 'inizio: ' + getMondayFromAbs(strisciaStartAbs);
                 subEl.style.color = '#888';
             } else {
                 valEl.textContent = '0 settimane';
                 // nessuna striscia attiva: riposo = questa settimana, mostra quella corrente
-                subEl.textContent = 'inizio: ' + getMondayFromAbs(settOggi);
+                subEl.textContent = 'ultima settimana di riposo: ' + getMondayFromAbs(settOggi);
                 subEl.style.color = '#888';
             }
 
@@ -848,7 +847,6 @@
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
         html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span>${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-strisce">TOP 5</button></span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia attuale</span><span style="color:var(--primary);">${strisciaAttuale > 0 ? strisciaAttuale + ' sett.<br><small style="color:#888;font-weight:400;">dal ' + getMondayFromAbs(settOggi - strisciaAttuale + 1) + '</small>' : '—'}</span></div></div>`;
         if (max4gg > 0) {
             window._top5_4gg = top5_4gg;
             html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Max km in 4 giorni</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span><b>${Math.round(max4gg)} km</b><br><small style="color:#888;font-weight:400;">${max4ggData}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-4gg">TOP 5</button></span></div></div>`;
