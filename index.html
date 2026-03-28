@@ -1,91 +1,142 @@
 <!DOCTYPE html>
+
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta V70</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#fb8c00">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Bainzuretta">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
-    
-    <style>
-        :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
-        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
-        .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
-        .page.active { display: block; }
-        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
-        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
-        input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
-        .stat-box b { font-size: 1.1em; color: var(--primary); }
-        .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
-        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
-        .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
-        .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
-        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
-        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
-        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-        .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
-        #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
-        .page-fixed-top { padding: 12px 12px 0 12px; }
-        .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
-        .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
-        .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
-        .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
-        .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
-        .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
-        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
-        .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
-        .target-box-gold {
-            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
-            background-size: 200% 200% !important;
-            animation: shimmerGold 2s ease-in-out infinite, pulseGold 2s ease-in-out infinite !important;
-            color: #5a3a00 !important;
-        }
-        .target-box-gold small, .target-box-gold b, .target-box-gold #km-mancanti { color: #5a3a00 !important; }
-        @keyframes shimmerGold {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        @keyframes pulseGold {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 0, 0.5); }
-            50% { box-shadow: 0 0 20px 8px rgba(255, 210, 0, 0.4); }
-        }
-        @keyframes shimmer {
-            0%   { background-position: -200% center; }
-            100% { background-position: 200% center; }
-        }
-        @keyframes pulse-gold {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0px rgba(255,210,0,0); }
-            50%       { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,210,0,0.6); }
-        }
-        .target-box-gold {
-            background: linear-gradient(110deg, #f7971e, #ffd200, #fff5a0, #ffd200, #f7971e) !important;
-            background-size: 300% 100% !important;
-            animation: shimmer 2.5s linear infinite, pulse-gold 2s ease-in-out infinite !important;
-            color: #5a3a00 !important;
-        }
-        .target-box-gold small, .target-box-gold b { color: #5a3a00 !important; }
-        .target-box-gold * { color: #5a3a00 !important; }
-        .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
-    </style>
+
+```
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#fb8c00">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bainzuretta">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
+
+<style>
+    :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+    header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
+    .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
+    .page.active { display: block; }
+    .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
+    .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
+    input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
+    .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
+    .stat-box b { font-size: 1.1em; color: var(--primary); }
+    .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+    .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
+    .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+    .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
+    nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+    nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
+    nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+    .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+    .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+    .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
+    #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
+    .page-fixed-top { padding: 12px 12px 0 12px; }
+    .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
+    .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
+    .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
+    .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
+    .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
+    .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
+    #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+    .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
+    .target-box-gold {
+        background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
+        background-size: 200% 200% !important;
+        animation: shimmerGold 2s ease-in-out infinite, pulseGold 2s ease-in-out infinite !important;
+        color: #5a3a00 !important;
+    }
+    .target-box-gold small, .target-box-gold b, .target-box-gold #km-mancanti { color: #5a3a00 !important; }
+    @keyframes shimmerGold {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes pulseGold {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 0, 0.5); }
+        50% { box-shadow: 0 0 20px 8px rgba(255, 210, 0, 0.4); }
+    }
+    @keyframes shimmer {
+        0%   { background-position: -200% center; }
+        100% { background-position: 200% center; }
+    }
+    @keyframes pulse-gold {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0px rgba(255,210,0,0); }
+        50%       { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,210,0,0.6); }
+    }
+    .target-box-gold {
+        background: linear-gradient(110deg, #f7971e, #ffd200, #fff5a0, #ffd200, #f7971e) !important;
+        background-size: 300% 100% !important;
+        animation: shimmer 2.5s linear infinite, pulse-gold 2s ease-in-out infinite !important;
+        color: #5a3a00 !important;
+    }
+    .target-box-gold small, .target-box-gold b { color: #5a3a00 !important; }
+    .target-box-gold * { color: #5a3a00 !important; }
+    .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
+
+    /* ── Selettore vista (Diario / Archivio) ── */
+    .vista-select-wrap { margin: 10px 0 0 0; }
+    .vista-select-wrap select {
+        height: 38px;
+        font-size: 13px;
+        font-weight: 700;
+        border: 2px solid var(--primary);
+        border-radius: 10px;
+        color: var(--primary);
+        background: var(--card);
+        padding: 0 10px;
+    }
+
+    /* Card settimana / mese nella lista */
+    .group-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .group-card-header {
+        background: rgba(251,140,0,0.12);
+        border-bottom: 1px solid var(--border);
+        padding: 9px 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .group-card-header .group-label {
+        font-weight: 900;
+        font-size: 0.82em;
+        color: var(--primary);
+    }
+    .group-card-header .group-km {
+        font-weight: 900;
+        font-size: 0.85em;
+        color: var(--primary);
+    }
+    .group-card-body {
+        padding: 9px 13px;
+        font-size: 0.78em;
+        line-height: 1.7;
+        color: var(--text);
+    }
+    .group-card-body span { color: #888; }
+</style>
+```
+
 </head>
 <body>
 
@@ -116,33 +167,47 @@
             </div>
         </div>
 
+```
+</div>
+<div class="page-scroll-list">
+    <div class="card">
+        <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">+ AGGIUNGI ATTIVITA' MANUALE</h3>
+        <input type="date" id="in-date" style="margin-bottom:10px;">
+        <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
+        <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
+        <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
     </div>
-    <div class="page-scroll-list">
-        <div class="card">
-            <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">+ AGGIUNGI ATTIVITA' MANUALE</h3>
-            <input type="date" id="in-date" style="margin-bottom:10px;">
-            <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
-            <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
-            <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
-        </div>
-        <div class="card" style="text-align:center;">
-            <div id="strava-section"></div>
-            <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">BACKUP JSON</button>
-            <input type="file" id="json-input" accept=".json" style="display:none;">
-            <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
-            <button onclick="esportaPDF()" style="background:#1a1a2e; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">&#128196; PDF RIEPILOGO ANNO</button>
-            <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">RESET DATI</button>
-        </div>
+    <div class="card" style="text-align:center;">
+        <div id="strava-section"></div>
+        <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">BACKUP JSON</button>
+        <input type="file" id="json-input" accept=".json" style="display:none;">
+        <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
+        <button onclick="esportaPDF()" style="background:#1a1a2e; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">&#128196; PDF RIEPILOGO ANNO</button>
+        <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">RESET DATI</button>
     </div>
 </div>
+```
+
+</div>
+
+<!-- ═══════════════════════════════ DIARIO ═══════════════════════════════ -->
 
 <div id="diario" class="page">
     <div class="page-fixed-top">
         <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">DIARIO <span class="year-label"></span></h3></div>
         <div id="recap-diario"></div>
+        <div class="vista-select-wrap">
+            <select id="sel-vista-diario" onchange="disegnaDiario()">
+                <option value="attivita">&#128314; ATTIVITÀ</option>
+                <option value="mese">&#128197; MESE</option>
+                <option value="settimana">&#128197; SETTIMANA</option>
+            </select>
+        </div>
     </div>
     <div class="page-scroll-list"><div id="lista-diario"></div></div>
 </div>
+
+<!-- ═══════════════════════════════ ARCHIVIO ═════════════════════════════ -->
 
 <div id="archivio" class="page">
     <div class="page-fixed-top">
@@ -151,6 +216,13 @@
             <select id="sel-anno-archivio" onchange="disegnaArchivio()"></select>
         </div>
         <div id="recap-archivio"></div>
+        <div class="vista-select-wrap">
+            <select id="sel-vista-archivio" onchange="disegnaArchivio()">
+                <option value="attivita">&#128314; ATTIVITÀ</option>
+                <option value="mese">&#128197; MESE</option>
+                <option value="settimana">&#128197; SETTIMANA</option>
+            </select>
+        </div>
     </div>
     <div class="page-scroll-list"><div id="lista-archivio"></div></div>
 </div>
@@ -414,7 +486,6 @@
         const giorniRimanenti = Math.max(1, giorniAnno - doyOggi);
         document.getElementById('val-week').innerText = Math.ceil(mancanti / (giorniRimanenti / 7));
 
-        // Notifica visiva passo obiettivo + previsione arrivo
         const paceBar = document.getElementById('pace-bar');
         const paceLabel = document.getElementById('pace-label');
         const arrivalLabel = document.getElementById('arrival-label');
@@ -422,7 +493,6 @@
 
         if (kY > 0 && myTarget > 0) {
             if (mancanti <= 0) {
-                // 🏆 OBIETTIVO RAGGIUNTO
                 targetBox.className = 'card target-box target-box-gold';
                 targetBox.style.background = '';
                 paceBar.style.display = 'block';
@@ -453,7 +523,6 @@
                     boxColor = 'linear-gradient(135deg, #c62828, #d32f2f)';
                 }
 
-                // Previsione data arrivo
                 const kmSettimana = kY / (doyOggi / 7);
                 let arrivoStr = '';
                 if (kmSettimana > 0) {
@@ -481,23 +550,176 @@
         else { sel.innerHTML = '<option>Nessun dato</option>'; }
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    //  Helper: raggruppa attività per mese
+    // ─────────────────────────────────────────────────────────────────────
+    function raggruppaPerMese(lista) {
+        const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                          'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+        const map = {};
+        lista.forEach(a => {
+            const d = new Date(a.data);
+            const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            if (!map[key]) map[key] = { label: `${mesiNomi[d.getMonth()]} ${d.getFullYear()}`, km: 0, ore: 0, dis: 0, count: 0 };
+            const dist = parseFloat(a.distanza) || 0;
+            const med  = parseFloat(a.media) || 0;
+            map[key].km    += dist;
+            map[key].ore   += med > 0 ? dist / med : 0;
+            map[key].dis   += parseFloat(a.dislivello) || 0;
+            map[key].count++;
+        });
+        return Object.keys(map).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...map[k] }));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  Helper: raggruppa attività per settimana ISO (lun–dom)
+    // ─────────────────────────────────────────────────────────────────────
+    function raggruppaPerSettimana(lista) {
+        const map = {};
+        lista.forEach(a => {
+            const d = new Date(a.data);
+            // Trova il lunedì della settimana
+            const dow = d.getDay() === 0 ? 6 : d.getDay() - 1; // 0=lun … 6=dom
+            const lun = new Date(d);
+            lun.setDate(d.getDate() - dow);
+            lun.setHours(0,0,0,0);
+            const dom = new Date(lun);
+            dom.setDate(lun.getDate() + 6);
+            const key = lun.toISOString().slice(0,10); // YYYY-MM-DD del lunedì
+            const fmtData = (dt) => dt.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
+            if (!map[key]) map[key] = {
+                label: `${fmtData(lun)} – ${fmtData(dom)}`,
+                km: 0, ore: 0, dis: 0, count: 0
+            };
+            const dist = parseFloat(a.distanza) || 0;
+            const med  = parseFloat(a.media) || 0;
+            map[key].km    += dist;
+            map[key].ore   += med > 0 ? dist / med : 0;
+            map[key].dis   += parseFloat(a.dislivello) || 0;
+            map[key].count++;
+        });
+        return Object.keys(map).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...map[k] }));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  Helper: rendering HTML per una lista di gruppi (mese o settimana)
+    // ─────────────────────────────────────────────────────────────────────
+    function renderGruppi(gruppi) {
+        if (!gruppi.length) return '<div class="card" style="text-align:center;color:#888;">Nessun dato</div>';
+        return gruppi.map(g => {
+            const medPond = g.ore > 0 ? (g.km / g.ore).toFixed(2) : '—';
+            const disStr  = g.dis > 0 ? `<br><span>Dislivello:</span> <b>${Math.round(g.dis).toLocaleString('it-IT')} m</b>` : '';
+            return `<div class="group-card">
+                <div class="group-card-header">
+                    <span class="group-label">${g.label}</span>
+                    <span class="group-km">${g.km.toFixed(1)} km</span>
+                </div>
+                <div class="group-card-body">
+                    <span>Uscite:</span> <b>${g.count}</b> &nbsp;|&nbsp;
+                    <span>Media pond.:</span> <b>${medPond} km/h</b>${disStr}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  DIARIO
+    // ─────────────────────────────────────────────────────────────────────
+    function disegnaDiario() {
+        const c = document.getElementById('lista-diario');
+        c.innerHTML = '';
+        const vista = document.getElementById('sel-vista-diario').value;
+        const lista = rawData
+            .filter(a => new Date(a.data).getFullYear() === currY)
+            .sort((a,b) => new Date(b.data) - new Date(a.data));
+
+        // Recap sempre uguale (totali anno)
+        let tKmD = 0, tOreD = 0, tDisD = 0;
+        lista.forEach(a => {
+            tKmD += parseFloat(a.distanza);
+            tOreD += (parseFloat(a.distanza) / (parseFloat(a.media) || 1));
+            tDisD += parseFloat(a.dislivello) || 0;
+        });
+        let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
+        let disStrD = tDisD > 0 ? `<br>Dislivello: <b>${Math.round(tDisD).toLocaleString('it-IT')} m</b>` : '';
+        document.getElementById('recap-diario').innerHTML =
+            `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br>` +
+            `<b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>` +
+            `Media Ponderata: <b>${medPondD} km/h</b>${disStrD}</div>`;
+
+        if (vista === 'mese') {
+            c.innerHTML = renderGruppi(raggruppaPerMese(lista));
+            return;
+        }
+        if (vista === 'settimana') {
+            c.innerHTML = renderGruppi(raggruppaPerSettimana(lista));
+            return;
+        }
+
+        // Vista ATTIVITÀ (default)
+        lista.forEach(a => {
+            let badge   = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+            let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
+            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})">
+                <div class="rank-info">
+                    <span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span>
+                    <span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span>
+                    <div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div>
+                </div>
+            </div>`;
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  ARCHIVIO
+    // ─────────────────────────────────────────────────────────────────────
     function disegnaArchivio() {
         const annoScelto = parseInt(document.getElementById('sel-anno-archivio').value);
-        if(isNaN(annoScelto)) return;
-        const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
+        if (isNaN(annoScelto)) return;
+        const vista = document.getElementById('sel-vista-archivio').value;
+        const listaCont  = document.getElementById('lista-archivio');
+        const recapCont  = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
-        let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
+
+        const filtrati = rawData
+            .filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; })
+            .sort((a,b) => new Date(b.data) - new Date(a.data));
+
         let tKm = 0, tOre = 0, tDis = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
-            tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            tKm  += parseFloat(a.distanza);
+            tOre += (parseFloat(a.distanza) / (parseFloat(a.media) || 1));
             tDis += parseFloat(a.dislivello) || 0;
-            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
-            let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
         });
         let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
-        let disStr = tDis > 0 ? `<br>Dislivello: <b>${Math.round(tDis).toLocaleString('it-IT')} m</b>` : '';
-        recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b>${disStr}</div>`;
+        let disStr  = tDis > 0 ? `<br>Dislivello: <b>${Math.round(tDis).toLocaleString('it-IT')} m</b>` : '';
+        recapCont.innerHTML =
+            `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br>` +
+            `<b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>` +
+            `Media Ponderata: <b>${medPond} km/h</b>${disStr}</div>`;
+
+        if (vista === 'mese') {
+            listaCont.innerHTML = renderGruppi(raggruppaPerMese(filtrati));
+            return;
+        }
+        if (vista === 'settimana') {
+            listaCont.innerHTML = renderGruppi(raggruppaPerSettimana(filtrati));
+            return;
+        }
+
+        // Vista ATTIVITÀ (default)
+        filtrati.forEach(a => {
+            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+            let riga  = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            listaCont.innerHTML +=
+                `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})">
+                    <div class="rank-info">
+                        <span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span>
+                        <span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span>
+                    </div>
+                </div>`;
+        });
     }
 
     function disegnaClassifica() {
@@ -538,7 +760,6 @@
         const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
-        // Calcoli — solo dal 2019 in poi
         const dati2019 = rawData.filter(a => new Date(a.data).getFullYear() >= 2019);
         if (!dati2019.length) { c.innerHTML = '<div class="card" style="text-align:center;color:#888;">Nessun dato dal 2019</div>'; return; }
         const maxDist = dati2019.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
@@ -575,7 +796,6 @@
         const mesiConDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
         const meseMaxDislivello = mesiConDislivello.length ? mesiConDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
 
-        // Settimane
         let pSett = {};
         rawData.forEach(a => {
             const d = new Date(a.data);
@@ -589,7 +809,6 @@
         const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
         const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
 
-        // Striscia con date — ancora: lunedì 5 gennaio 1970 (primo lunedì dopo epoch)
         const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
             const d = new Date(dateStr);
@@ -603,9 +822,8 @@
         const getSundayFromAbs = (absWeek) => { const d = new Date(MONDAY_ANCHOR + (absWeek * 7 + 6) * 24 * 60 * 60 * 1000); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'}); };
 
         const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
-        let maxStriscia = 1, striscia = 1;
-        let strisciaStart = settimaneAssolute[0], maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
-        // top5 strisce
+        let maxStriscia = 1;
+        let maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
         let tutteStrisce = [];
         let curStart = settimaneAssolute[0], curLen = 1;
         for (let i = 1; i < settimaneAssolute.length; i++) {
@@ -620,13 +838,11 @@
         tutteStrisce.push({ len: curLen, start: curStart, end: settimaneAssolute[settimaneAssolute.length-1] });
         tutteStrisce.sort((a,b) => b.len - a.len);
         window._top5_strisce = tutteStrisce.slice(0, 5);
-        // striscia attuale: quante settimane consecutive fino ad oggi
         const settOggi = getAbsWeek(oggi.toISOString());
         let strisciaAttuale = 0, sw = settOggi;
         const setSet = new Set(settimaneAssolute);
         while (setSet.has(sw)) { strisciaAttuale++; sw--; }
 
-        // Curiosita
         const giorni = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
         let pGiorni = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
         rawData.forEach(a => { pGiorni[new Date(a.data).getDay()]++; });
@@ -635,13 +851,11 @@
         rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
         const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
 
-        // Medie
         const totUscite = rawData.length;
         const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
         const mediaKmUscita = totUscite > 0 ? (totKmGen / totUscite) : 0;
         const mediaUsciteMese = Object.keys(pMesi).length > 0 ? (totUscite / Object.keys(pMesi).length) : 0;
 
-        // Helper righe
         function actRow(emoji, titolo, attivita, valore, top5tipo) {
             if (!attivita) return '';
             const data = fmt(attivita.data);
@@ -703,26 +917,17 @@
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Media uscite al mese</span><span style="color:var(--primary);">${mediaUsciteMese.toFixed(1)} uscite</span></div></div>`;
         html += '</div>';
 
-        // RECORD PER FASCIA DISTANZA E DISLIVELLO
         function recordFascia(titolo, minKm, maxKm) {
             const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined && new Date(a.data).getFullYear() >= 2019);
             if (!fascia.length) return '';
-
-            const pianura = fascia.filter(a => (a.dislivello || 0) < 1000);
-            const collina = fascia.filter(a => (a.dislivello || 0) >= 1000 && (a.dislivello || 0) < 2000);
+            const pianura  = fascia.filter(a => (a.dislivello || 0) < 1000);
+            const collina  = fascia.filter(a => (a.dislivello || 0) >= 1000 && (a.dislivello || 0) < 2000);
             const montagna = fascia.filter(a => (a.dislivello || 0) >= 2000);
-
             const bestTempo = (arr) => arr.length ? arr.reduce((a,b) => parseFloat(a.tempo) < parseFloat(b.tempo) ? a : b) : null;
-
-            const bP = bestTempo(pianura);
-            const bC = bestTempo(collina);
-            const bM = bestTempo(montagna);
-
+            const bP = bestTempo(pianura), bC = bestTempo(collina), bM = bestTempo(montagna);
             if (!bP && !bC && !bM) return '';
-
             const rigaFascia = (best, arr, emoji, label, sottoLabel, fasciaKey) => {
                 if (!best) return '';
-                // Salva top5 in variabile globale temporanea indicizzata
                 const key = `_top5_${fasciaKey}`;
                 window[key] = arr.slice().sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
                 return `<div class="rank-item"><div class="rank-info">
@@ -733,19 +938,16 @@
                     </span>
                 </div></div>`;
             };
-
             let rows = '';
             rows += rigaFascia(bP, pianura, '&#127963;', 'Pianura', '&lt;1000m dislivello', `${minKm}_${maxKm}_p`);
             rows += rigaFascia(bC, collina, '&#9968;', 'Collinare', '1000-2000m', `${minKm}_${maxKm}_c`);
             rows += rigaFascia(bM, montagna, '&#127956;', 'Montagna', '&gt;2000m', `${minKm}_${maxKm}_m`);
-
             return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
         }
 
         html += recordFascia('50-60 KM', 50, 60);
         html += recordFascia('100-110 KM', 100, 110);
 
-        // Record 4 giorni consecutivi — calcola top 5 finestre
         let finestre4gg = [];
         const dateMap = {};
         rawData.forEach(a => {
@@ -766,7 +968,6 @@
             if (sumFin > 0) finestre4gg.push({ km: sumFin, dal: dateOrdinate[i], al: lastD || dateOrdinate[i] });
         }
         finestre4gg.sort((a, b) => b.km - a.km);
-        // deduplicazione: rimuove finestre che si sovrappongono con una già scelta
         const top5_4gg = [];
         for (const f of finestre4gg) {
             const overlaps = top5_4gg.some(t => f.dal <= t.al && f.al >= t.dal);
@@ -789,7 +990,6 @@
 
         c.innerHTML = html;
 
-        // Event listener per dettaglio attività (click su riga)
         c.querySelectorAll('[data-act]').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target.closest('button')) return;
@@ -797,7 +997,6 @@
             });
         });
 
-        // Event listener per TOP5 bottoni su attività
         c.querySelectorAll('button[data-top5]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -815,7 +1014,6 @@
             });
         });
 
-        // Event listener per TOP5 su statistiche
         c.querySelectorAll('button[data-stat]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -833,7 +1031,6 @@
             });
         });
 
-        // Event listener TOP5 fasce distanza
         c.querySelectorAll('.btn-top5-fascia').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -843,7 +1040,7 @@
                 alert(`TOP 5 — ${label}\n\n${righe}`);
             });
         });
-        // Event listener TOP5 strisce
+
         const btnStrisce = c.querySelector('#btn-top5-strisce');
         if (btnStrisce) {
             btnStrisce.addEventListener('click', (e) => {
@@ -855,7 +1052,6 @@
             });
         }
 
-        // Event listener TOP5 4 giorni
         const btn4gg = c.querySelector('#btn-top5-4gg');
         if (btn4gg) {
             btn4gg.addEventListener('click', (e) => {
@@ -867,7 +1063,6 @@
             });
         }
     }
-
 
     async function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
@@ -908,7 +1103,6 @@
         const medPond = totOre > 0 ? (totKm / totOre) : 0;
         const nUscite = datiAnno.length;
 
-        // Statistiche mensili
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
         let pMesi = {};
         datiAnno.forEach(a => {
@@ -918,11 +1112,8 @@
             pMesi[m].count++;
         });
 
-        // Top 5 distanza
-        const top5Dist = [...datiAnno].sort((a,b) => b.distanza - a.distanza).slice(0,5);
-        // Top 5 velocità
+        const top5Dist  = [...datiAnno].sort((a,b) => b.distanza - a.distanza).slice(0,5);
         const top5Media = [...datiAnno].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5);
-
         const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
 
         const contenuto = `
@@ -944,10 +1135,10 @@
     tr:nth-child(even) { background: #fff8f0; }
     .footer { margin-top: 40px; text-align: center; color: #aaa; font-size: 0.75em; border-top: 1px solid #eee; padding-top: 15px; }
 </style>
+
 </head>
 <body>
 <h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1>
-
 <div class="stats-grid">
     <div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT', {minimumFractionDigits:1, maximumFractionDigits:1})}</div><div class="lab">km totali</div></div>
     <div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div>
@@ -956,127 +1147,110 @@
     <div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre % 1) * 60)}m</div><div class="lab">ore in sella</div></div>
     <div class="stat-box"><div class="val">${(totKm / 40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div>
 </div>
-
 <h2>Top 5 Uscite per Distanza</h2>
 <table>
     <tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>
     ${top5Dist.map((a,i) => `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome || '—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}
 </table>
-
 <h2>Top 5 Uscite per Velocita</h2>
 <table>
     <tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>
     ${top5Media.map((a,i) => `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome || '—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}
 </table>
-
 <h2>Statistiche Mensili</h2>
 <table>
     <tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>
     ${mesiNomi.map((nome, i) => pMesi[i] ? `<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km / pMesi[i].count).toFixed(1)}</td></tr>` : '').join('')}
 </table>
-
 <div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div>
 </body>
 </html>`;
 
-        const a = document.createElement('a');
-        a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
-        a.download = `Bainzuretta_${anno}.html`;
-        a.click();
-        showToast('Apri il file scaricato e stampa come PDF!', 4000);
-    }
+```
+    const a = document.createElement('a');
+    a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
+    a.download = `Bainzuretta_${anno}.html`;
+    a.click();
+    showToast('Apri il file scaricato e stampa come PDF!', 4000);
+}
 
-    function mostraInfoObiettivo() {
-        alert(
-            'LEGENDA COLORI\n\n' +
-            '🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n' +
-            '🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n' +
-            '🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\n' +
-            'CALCOLI\n\n' +
-            'Proiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\n' +
-            'Km/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\n' +
-            'Arrivo previsto: calcolato sulla media km/settimana attuale'
-        );
-    }
+function mostraInfoObiettivo() {
+    alert(
+        'LEGENDA COLORI\n\n' +
+        '🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n' +
+        '🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n' +
+        '🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\n' +
+        'CALCOLI\n\n' +
+        'Proiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\n' +
+        'Km/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\n' +
+        'Arrivo previsto: calcolato sulla media km/settimana attuale'
+    );
+}
 
-    function apriAttivita(id) {
-        const a = rawData.find(x => x.id == id);
-        if (!a) return;
-        const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const nome = a.nome ? '\n"' + a.nome + '"' : '';
-        const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
-        const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
-        if (a.strava_id) {
-            if (confirm(msg + '\n\nVuoi aprire su Strava?')) {
-                window.open('https://www.strava.com/activities/' + a.strava_id, '_blank');
-            }
-        } else {
-            alert(msg);
+function apriAttivita(id) {
+    const a = rawData.find(x => x.id == id);
+    if (!a) return;
+    const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const nome = a.nome ? '\n"' + a.nome + '"' : '';
+    const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
+    const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
+    if (a.strava_id) {
+        if (confirm(msg + '\n\nVuoi aprire su Strava?')) {
+            window.open('https://www.strava.com/activities/' + a.strava_id, '_blank');
         }
+    } else {
+        alert(msg);
     }
+}
 
-    function esportaJSON() {
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
-        const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
-    }
+function esportaJSON() {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
+    const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
+}
 
-    document.getElementById('json-input').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
-        };
-        reader.readAsArrayBuffer(e.target.files[0]);
+document.getElementById('json-input').onchange = (e) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
+        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
     };
+    reader.readAsArrayBuffer(e.target.files[0]);
+};
 
-    function vaiA(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
-        document.getElementById('nav-'+id).classList.add('active');
-        if(id === 'ranking') disegnaClassifica();
-        if(id === 'diario') disegnaDiario();
-        if(id === 'archivio') disegnaArchivio();
-        if(id === 'records') disegnaRecords();
+function vaiA(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
+    document.getElementById('nav-'+id).classList.add('active');
+    if(id === 'ranking') disegnaClassifica();
+    if(id === 'diario') disegnaDiario();
+    if(id === 'archivio') disegnaArchivio();
+    if(id === 'records') disegnaRecords();
+}
+
+function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
+
+function eliminaAttivita(id) {
+    if(confirm('Elimina?')) {
+        rawData = rawData.filter(a => a.id !== id);
+        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+        disegnaDiario(); aggiornaStats();
     }
+}
 
-    function disegnaDiario() {
-        const c = document.getElementById('lista-diario'); c.innerHTML = '';
-        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKmD = 0, tOreD = 0, tDisD = 0;
-        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); tDisD += parseFloat(a.dislivello) || 0; });
-        let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
-        let disStrD = tDisD > 0 ? `<br>Dislivello: <b>${Math.round(tDisD).toLocaleString('it-IT')} m</b>` : '';
-        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b>${disStrD}</div>`;
-        lista.forEach(a => {
-            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
-            let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
-            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
-        });
-    }
+function pulisciTutto() { if(confirm('CANCELLARE TUTTO?')) { localStorage.clear(); location.reload(); } }
 
-    function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
+function cambiaObiettivo() {
+    let n = prompt('Target per il ' + currY + ':', myTarget);
+    if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); document.getElementById('val-target-tot').innerText = myTarget; aggiornaStats(); }
+}
 
-    function eliminaAttivita(id) {
-        if(confirm('Elimina?')) {
-            rawData = rawData.filter(a => a.id !== id);
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            disegnaDiario(); aggiornaStats();
-        }
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
+}
+```
 
-    function pulisciTutto() { if(confirm('CANCELLARE TUTTO?')) { localStorage.clear(); location.reload(); } }
-
-    function cambiaObiettivo() {
-        let n = prompt('Target per il ' + currY + ':', myTarget);
-        if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); document.getElementById('val-target-tot').innerText = myTarget; aggiornaStats(); }
-    }
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
-    }
 </script>
 </body>
 </html>
