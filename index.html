@@ -87,16 +87,11 @@
     .target-box-gold small, .target-box-gold b { color: #5a3a00 !important; }
     .target-box-gold * { color: #5a3a00 !important; }
     .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
-    /* ── Selettore vista ── */
-    .vista-select-wrap { margin: 8px 0 0 0; }
-    .vista-select-wrap select { height: 38px; font-size: 13px; font-weight: 700; border: 2px solid var(--primary); border-radius: 10px; color: var(--primary); background: var(--card); padding: 0 10px; }
-    /* ── Card gruppo (mese/settimana) ── */
-    .group-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
-    .group-card-header { background: rgba(251,140,0,0.12); border-bottom: 1px solid var(--border); padding: 9px 13px; display: flex; justify-content: space-between; align-items: center; }
-    .group-card-header .group-label { font-weight: 900; font-size: 0.82em; color: var(--primary); }
-    .group-card-header .group-km { font-weight: 900; font-size: 0.85em; color: var(--primary); }
-    .group-card-body { padding: 9px 13px; font-size: 0.78em; line-height: 1.7; color: var(--text); }
-    .group-card-body span { color: #888; }
+    /* -- NUOVO: stili vista raggruppata -- */
+    .vista-select-wrap { margin-top: 10px; }
+    .gruppo-item { padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+    .gruppo-header { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 0.85em; color: var(--primary); margin-bottom: 4px; }
+    .gruppo-sub { font-size: 0.78em; color: var(--text); opacity: 0.75; display: flex; gap: 10px; flex-wrap: wrap; }
 </style>
 ```
 
@@ -129,41 +124,39 @@
                 <div class="stat-box"><small>TOP MEDIA ANNO</small><br><b id="st-speed">0.00</b></div>
             </div>
         </div>
-
-```
-</div>
-<div class="page-scroll-list">
-    <div class="card">
-        <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">+ AGGIUNGI ATTIVITA' MANUALE</h3>
-        <input type="date" id="in-date" style="margin-bottom:10px;">
-        <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
-        <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
-        <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
     </div>
-    <div class="card" style="text-align:center;">
-        <div id="strava-section"></div>
-        <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">BACKUP JSON</button>
-        <input type="file" id="json-input" accept=".json" style="display:none;">
-        <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
-        <button onclick="esportaPDF()" style="background:#1a1a2e; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">&#128196; PDF RIEPILOGO ANNO</button>
-        <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">RESET DATI</button>
+    <div class="page-scroll-list">
+        <div class="card">
+            <h3 id="form-title" style="color:var(--primary); font-size: 0.8em; margin-bottom: 10px;">+ AGGIUNGI ATTIVITA' MANUALE</h3>
+            <input type="date" id="in-date" style="margin-bottom:10px;">
+            <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
+            <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
+            <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div id="strava-section"></div>
+            <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">BACKUP JSON</button>
+            <input type="file" id="json-input" accept=".json" style="display:none;">
+            <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
+            <button onclick="esportaPDF()" style="background:#1a1a2e; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">&#128196; PDF RIEPILOGO ANNO</button>
+            <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">RESET DATI</button>
+        </div>
     </div>
-</div>
-```
-
 </div>
 
 <div id="diario" class="page">
     <div class="page-fixed-top">
-        <div class="card" style="text-align:center;"><h3 style="margin:0; font-size: 1em;">DIARIO <span class="year-label"></span></h3></div>
-        <div id="recap-diario"></div>
-        <div class="vista-select-wrap">
-            <select id="sel-vista-diario" onchange="disegnaDiario()">
-                <option value="attivita">&#128314; ATTIVITÀ</option>
-                <option value="mese">&#128197; MESE</option>
-                <option value="settimana">&#128197; SETTIMANA</option>
-            </select>
+        <div class="card" style="text-align:center;">
+            <h3 style="margin:0; font-size: 1em;">DIARIO <span class="year-label"></span></h3>
+            <div class="vista-select-wrap">
+                <select id="vista-diario" onchange="disegnaDiario()">
+                    <option value="attivita">Attività</option>
+                    <option value="mese">Mese</option>
+                    <option value="settimana">Settimana</option>
+                </select>
+            </div>
         </div>
+        <div id="recap-diario"></div>
     </div>
     <div class="page-scroll-list"><div id="lista-diario"></div></div>
 </div>
@@ -173,15 +166,15 @@
         <div class="card" style="text-align:center;">
             <h3 style="margin:0; font-size: 1em; margin-bottom:10px;">ARCHIVIO STORICO YTD</h3>
             <select id="sel-anno-archivio" onchange="disegnaArchivio()"></select>
+            <div class="vista-select-wrap">
+                <select id="vista-archivio" onchange="disegnaArchivio()">
+                    <option value="attivita">Attività</option>
+                    <option value="mese">Mese</option>
+                    <option value="settimana">Settimana</option>
+                </select>
+            </div>
         </div>
         <div id="recap-archivio"></div>
-        <div class="vista-select-wrap">
-            <select id="sel-vista-archivio" onchange="disegnaArchivio()">
-                <option value="attivita">&#128314; ATTIVITÀ</option>
-                <option value="mese">&#128197; MESE</option>
-                <option value="settimana">&#128197; SETTIMANA</option>
-            </select>
-        </div>
     </div>
     <div class="page-scroll-list"><div id="lista-archivio"></div></div>
 </div>
@@ -445,7 +438,6 @@
         const giorniRimanenti = Math.max(1, giorniAnno - doyOggi);
         document.getElementById('val-week').innerText = Math.ceil(mancanti / (giorniRimanenti / 7));
 
-        // Notifica visiva passo obiettivo + previsione arrivo
         const paceBar = document.getElementById('pace-bar');
         const paceLabel = document.getElementById('pace-label');
         const arrivalLabel = document.getElementById('arrival-label');
@@ -453,7 +445,6 @@
 
         if (kY > 0 && myTarget > 0) {
             if (mancanti <= 0) {
-                // 🏆 OBIETTIVO RAGGIUNTO
                 targetBox.className = 'card target-box target-box-gold';
                 targetBox.style.background = '';
                 paceBar.style.display = 'block';
@@ -484,7 +475,6 @@
                     boxColor = 'linear-gradient(135deg, #c62828, #d32f2f)';
                 }
 
-                // Previsione data arrivo
                 const kmSettimana = kY / (doyOggi / 7);
                 let arrivoStr = '';
                 if (kmSettimana > 0) {
@@ -512,93 +502,126 @@
         else { sel.innerHTML = '<option>Nessun dato</option>'; }
     }
 
-    // ── Helper raggruppamento per mese ──
-    function raggruppaPerMese(lista) {
-        const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
-                          'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-        const map = {};
+    // ---- HELPER RAGGRUPPAMENTO (NUOVO) ----
+
+    const mesiNomiBreve = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+
+    function gruppaMesi(lista) {
+        const gruppi = {};
         lista.forEach(a => {
             const d = new Date(a.data);
-            const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            if (!map[key]) map[key] = { label: `${mesiNomi[d.getMonth()]} ${d.getFullYear()}`, km: 0, ore: 0, dis: 0, count: 0 };
-            const dist = parseFloat(a.distanza) || 0;
-            const med  = parseFloat(a.media) || 0;
-            map[key].km    += dist;
-            map[key].ore   += med > 0 ? dist / med : 0;
-            map[key].dis   += parseFloat(a.dislivello) || 0;
-            map[key].count++;
+            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0 };
+            gruppi[k].km += parseFloat(a.distanza) || 0;
+            const med = parseFloat(a.media) || 0;
+            gruppi[k].ore += med > 0 ? (parseFloat(a.distanza) / med) : 0;
+            gruppi[k].count++;
+            gruppi[k].dislivello += a.dislivello || 0;
         });
-        return Object.keys(map).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...map[k] }));
+        return Object.keys(gruppi).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...gruppi[k] }));
     }
 
-    // ── Helper raggruppamento per settimana (lun–dom) ──
-    function raggruppaPerSettimana(lista) {
-        const map = {};
+    function gruppaSett(lista) {
+        const gruppi = {};
         lista.forEach(a => {
             const d = new Date(a.data);
-            const dow = d.getDay() === 0 ? 6 : d.getDay() - 1;
-            const lun = new Date(d);
-            lun.setDate(d.getDate() - dow);
-            lun.setHours(0,0,0,0);
-            const dom = new Date(lun);
-            dom.setDate(lun.getDate() + 6);
-            const key = lun.toISOString().slice(0,10);
-            const fmtData = (dt) => dt.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
-            if (!map[key]) map[key] = { label: `${fmtData(lun)} – ${fmtData(dom)}`, km: 0, ore: 0, dis: 0, count: 0 };
-            const dist = parseFloat(a.distanza) || 0;
-            const med  = parseFloat(a.media) || 0;
-            map[key].km    += dist;
-            map[key].ore   += med > 0 ? dist / med : 0;
-            map[key].dis   += parseFloat(a.dislivello) || 0;
-            map[key].count++;
+            const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
+            const lun = new Date(d); lun.setDate(d.getDate() - day); lun.setHours(0,0,0,0);
+            const k = lun.toISOString().slice(0,10);
+            if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0 };
+            gruppi[k].km += parseFloat(a.distanza) || 0;
+            const med = parseFloat(a.media) || 0;
+            gruppi[k].ore += med > 0 ? (parseFloat(a.distanza) / med) : 0;
+            gruppi[k].count++;
+            gruppi[k].dislivello += a.dislivello || 0;
         });
-        return Object.keys(map).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...map[k] }));
+        return Object.keys(gruppi).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...gruppi[k] }));
     }
 
-    // ── Helper rendering card gruppo ──
-    function renderGruppi(gruppi) {
-        if (!gruppi.length) return '<div class="card" style="text-align:center;color:#888;">Nessun dato</div>';
-        return gruppi.map(g => {
-            const medPond = g.ore > 0 ? (g.km / g.ore).toFixed(2) : '—';
-            const disStr  = g.dis > 0 ? `<br><span>Dislivello:</span> <b>${Math.round(g.dis).toLocaleString('it-IT')} m</b>` : '';
-            return `<div class="group-card">
-                <div class="group-card-header">
-                    <span class="group-label">${g.label}</span>
-                    <span class="group-km">${g.km.toFixed(1)} km</span>
-                </div>
-                <div class="group-card-body">
-                    <span>Uscite:</span> <b>${g.count}</b> &nbsp;|&nbsp;
-                    <span>Media pond.:</span> <b>${medPond} km/h</b>${disStr}
-                </div>
-            </div>`;
-        }).join('');
+    function renderGruppoItem(label, g) {
+        const medPond = g.ore > 0 ? (g.km / g.ore).toFixed(1) : '—';
+        const disStr = g.dislivello > 0 ? `<span>&#9650; ${Math.round(g.dislivello).toLocaleString('it-IT')} m</span>` : '';
+        return `<div class="gruppo-item">
+            <div class="gruppo-header"><span>${label}</span><span>${g.km.toFixed(1)} km</span></div>
+            <div class="gruppo-sub">
+                <span>&#128336; ${g.count} uscite</span>
+                <span>&#128205; ${medPond} km/h</span>
+                ${disStr}
+            </div>
+        </div>`;
     }
+
+    // ---- DIARIO (MODIFICATO) ----
+
+    function disegnaDiario() {
+        const vista = document.getElementById('vista-diario').value;
+        const c = document.getElementById('lista-diario'); c.innerHTML = '';
+        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
+        let tKmD = 0, tOreD = 0, tDisD = 0;
+        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); tDisD += parseFloat(a.dislivello) || 0; });
+        let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
+        let disStrD = tDisD > 0 ? `<br>Dislivello: <b>${Math.round(tDisD).toLocaleString('it-IT')} m</b>` : '';
+        document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b>${disStrD}</div>`;
+
+        if (vista === 'attivita') {
+            lista.forEach(a => {
+                let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+                let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
+                let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+                c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
+            });
+        } else if (vista === 'mese') {
+            gruppaMesi(lista).forEach(g => {
+                const [y, m] = g.key.split('-');
+                c.innerHTML += renderGruppoItem(`${mesiNomiBreve[parseInt(m)-1]} ${y}`, g);
+            });
+        } else if (vista === 'settimana') {
+            gruppaSett(lista).forEach(g => {
+                const lun = new Date(g.key + 'T00:00:00');
+                const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
+                const label = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
+                c.innerHTML += renderGruppoItem(label, g);
+            });
+        }
+    }
+
+    // ---- ARCHIVIO (MODIFICATO) ----
 
     function disegnaArchivio() {
         const annoScelto = parseInt(document.getElementById('sel-anno-archivio').value);
+        const vista = document.getElementById('vista-archivio').value;
         if(isNaN(annoScelto)) return;
-        const vista = document.getElementById('sel-vista-archivio').value;
         const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
         let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
         let tKm = 0, tOre = 0, tDis = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
-            tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / (parseFloat(a.media) || 1));
+            tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
             tDis += parseFloat(a.dislivello) || 0;
         });
         let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
-        let disStr  = tDis > 0 ? `<br>Dislivello: <b>${Math.round(tDis).toLocaleString('it-IT')} m</b>` : '';
+        let disStr = tDis > 0 ? `<br>Dislivello: <b>${Math.round(tDis).toLocaleString('it-IT')} m</b>` : '';
         recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b>${disStr}</div>`;
 
-        if (vista === 'mese') { listaCont.innerHTML = renderGruppi(raggruppaPerMese(filtrati)); return; }
-        if (vista === 'settimana') { listaCont.innerHTML = renderGruppi(raggruppaPerSettimana(filtrati)); return; }
-
-        // vista attività (originale)
-        filtrati.forEach(a => {
-            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
-            let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
-        });
+        if (vista === 'attivita') {
+            filtrati.forEach(a => {
+                let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+                let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+                listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
+            });
+        } else if (vista === 'mese') {
+            gruppaMesi(filtrati).forEach(g => {
+                const [y, m] = g.key.split('-');
+                listaCont.innerHTML += renderGruppoItem(`${mesiNomiBreve[parseInt(m)-1]} ${y}`, g);
+            });
+        } else if (vista === 'settimana') {
+            gruppaSett(filtrati).forEach(g => {
+                const lun = new Date(g.key + 'T00:00:00');
+                const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
+                const label = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
+                listaCont.innerHTML += renderGruppoItem(label, g);
+            });
+        }
     }
 
     function disegnaClassifica() {
@@ -639,7 +662,6 @@
         const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
-        // Calcoli — solo dal 2019 in poi
         const dati2019 = rawData.filter(a => new Date(a.data).getFullYear() >= 2019);
         if (!dati2019.length) { c.innerHTML = '<div class="card" style="text-align:center;color:#888;">Nessun dato dal 2019</div>'; return; }
         const maxDist = dati2019.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
@@ -676,7 +698,6 @@
         const mesiConDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
         const meseMaxDislivello = mesiConDislivello.length ? mesiConDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
 
-        // Settimane
         let pSett = {};
         rawData.forEach(a => {
             const d = new Date(a.data);
@@ -690,7 +711,6 @@
         const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
         const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
 
-        // Striscia con date — ancora: lunedì 5 gennaio 1970 (primo lunedì dopo epoch)
         const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
             const d = new Date(dateStr);
@@ -704,9 +724,8 @@
         const getSundayFromAbs = (absWeek) => { const d = new Date(MONDAY_ANCHOR + (absWeek * 7 + 6) * 24 * 60 * 60 * 1000); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'}); };
 
         const settimaneAssolute = [...new Set(rawData.map(a => getAbsWeek(a.data)))].sort((a,b) => a-b);
-        let maxStriscia = 1, striscia = 1;
-        let strisciaStart = settimaneAssolute[0], maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
-        // top5 strisce
+        let maxStriscia = 1;
+        let maxStart = settimaneAssolute[0], maxEnd = settimaneAssolute[0];
         let tutteStrisce = [];
         let curStart = settimaneAssolute[0], curLen = 1;
         for (let i = 1; i < settimaneAssolute.length; i++) {
@@ -721,13 +740,11 @@
         tutteStrisce.push({ len: curLen, start: curStart, end: settimaneAssolute[settimaneAssolute.length-1] });
         tutteStrisce.sort((a,b) => b.len - a.len);
         window._top5_strisce = tutteStrisce.slice(0, 5);
-        // striscia attuale: quante settimane consecutive fino ad oggi
         const settOggi = getAbsWeek(oggi.toISOString());
         let strisciaAttuale = 0, sw = settOggi;
         const setSet = new Set(settimaneAssolute);
         while (setSet.has(sw)) { strisciaAttuale++; sw--; }
 
-        // Curiosita
         const giorni = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
         let pGiorni = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
         rawData.forEach(a => { pGiorni[new Date(a.data).getDay()]++; });
@@ -736,13 +753,11 @@
         rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
         const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
 
-        // Medie
         const totUscite = rawData.length;
         const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
         const mediaKmUscita = totUscite > 0 ? (totKmGen / totUscite) : 0;
         const mediaUsciteMese = Object.keys(pMesi).length > 0 ? (totUscite / Object.keys(pMesi).length) : 0;
 
-        // Helper righe
         function actRow(emoji, titolo, attivita, valore, top5tipo) {
             if (!attivita) return '';
             const data = fmt(attivita.data);
@@ -804,26 +819,17 @@
         html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Media uscite al mese</span><span style="color:var(--primary);">${mediaUsciteMese.toFixed(1)} uscite</span></div></div>`;
         html += '</div>';
 
-        // RECORD PER FASCIA DISTANZA E DISLIVELLO
         function recordFascia(titolo, minKm, maxKm) {
             const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined && new Date(a.data).getFullYear() >= 2019);
             if (!fascia.length) return '';
-
             const pianura = fascia.filter(a => (a.dislivello || 0) < 1000);
             const collina = fascia.filter(a => (a.dislivello || 0) >= 1000 && (a.dislivello || 0) < 2000);
             const montagna = fascia.filter(a => (a.dislivello || 0) >= 2000);
-
             const bestTempo = (arr) => arr.length ? arr.reduce((a,b) => parseFloat(a.tempo) < parseFloat(b.tempo) ? a : b) : null;
-
-            const bP = bestTempo(pianura);
-            const bC = bestTempo(collina);
-            const bM = bestTempo(montagna);
-
+            const bP = bestTempo(pianura), bC = bestTempo(collina), bM = bestTempo(montagna);
             if (!bP && !bC && !bM) return '';
-
             const rigaFascia = (best, arr, emoji, label, sottoLabel, fasciaKey) => {
                 if (!best) return '';
-                // Salva top5 in variabile globale temporanea indicizzata
                 const key = `_top5_${fasciaKey}`;
                 window[key] = arr.slice().sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
                 return `<div class="rank-item"><div class="rank-info">
@@ -834,25 +840,19 @@
                     </span>
                 </div></div>`;
             };
-
             let rows = '';
             rows += rigaFascia(bP, pianura, '&#127963;', 'Pianura', '&lt;1000m dislivello', `${minKm}_${maxKm}_p`);
             rows += rigaFascia(bC, collina, '&#9968;', 'Collinare', '1000-2000m', `${minKm}_${maxKm}_c`);
             rows += rigaFascia(bM, montagna, '&#127956;', 'Montagna', '&gt;2000m', `${minKm}_${maxKm}_m`);
-
             return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
         }
 
         html += recordFascia('50-60 KM', 50, 60);
         html += recordFascia('100-110 KM', 100, 110);
 
-        // Record 4 giorni consecutivi — calcola top 5 finestre
         let finestre4gg = [];
         const dateMap = {};
-        rawData.forEach(a => {
-            const giorno = a.data.slice(0, 10);
-            dateMap[giorno] = (dateMap[giorno] || 0) + (parseFloat(a.distanza) || 0);
-        });
+        rawData.forEach(a => { const giorno = a.data.slice(0, 10); dateMap[giorno] = (dateMap[giorno] || 0) + (parseFloat(a.distanza) || 0); });
         const dateOrdinate = Object.keys(dateMap).sort();
         for (let i = 0; i < dateOrdinate.length; i++) {
             const d0 = new Date(dateOrdinate[i]);
@@ -861,13 +861,11 @@
             for (let k = i; k < dateOrdinate.length; k++) {
                 const dk = new Date(dateOrdinate[k]);
                 if (dk > d3) break;
-                sumFin += dateMap[dateOrdinate[k]];
-                lastD = dateOrdinate[k];
+                sumFin += dateMap[dateOrdinate[k]]; lastD = dateOrdinate[k];
             }
             if (sumFin > 0) finestre4gg.push({ km: sumFin, dal: dateOrdinate[i], al: lastD || dateOrdinate[i] });
         }
         finestre4gg.sort((a, b) => b.km - a.km);
-        // deduplicazione: rimuove finestre che si sovrappongono con una già scelta
         const top5_4gg = [];
         for (const f of finestre4gg) {
             const overlaps = top5_4gg.some(t => f.dal <= t.al && f.al >= t.dal);
@@ -890,20 +888,13 @@
 
         c.innerHTML = html;
 
-        // Event listener per dettaglio attività (click su riga)
         c.querySelectorAll('[data-act]').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (e.target.closest('button')) return;
-                apriAttivita(parseInt(el.dataset.act));
-            });
+            el.addEventListener('click', (e) => { if (e.target.closest('button')) return; apriAttivita(parseInt(el.dataset.act)); });
         });
-
-        // Event listener per TOP5 bottoni su attività
         c.querySelectorAll('button[data-top5]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const tipo = btn.dataset.top5;
-                const titolo = btn.dataset.titolo;
+                const tipo = btn.dataset.top5, titolo = btn.dataset.titolo;
                 let righe = '';
                 if (tipo === 'dist_max') righe = [...dati2019].sort((a,b) => b.distanza - a.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
                 else if (tipo === 'dist_min') righe = [...dati2019].sort((a,b) => a.distanza - b.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
@@ -915,13 +906,10 @@
                 alert(`TOP 5 — ${titolo}\n\n${righe}`);
             });
         });
-
-        // Event listener per TOP5 su statistiche
         c.querySelectorAll('button[data-stat]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const statTipo = btn.dataset.stat;
-                const titolo = btn.dataset.titolo;
+                const statTipo = btn.dataset.stat, titolo = btn.dataset.titolo;
                 let righe = '';
                 if (statTipo === 'anni_km') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].km - pAnni[a].km).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].km.toFixed(0)} km`).join('\n');
                 else if (statTipo === 'anni_uscite') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].count - pAnni[a].count).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].count} uscite`).join('\n');
@@ -933,42 +921,31 @@
                 alert(`TOP 5 — ${titolo}\n\n${righe}`);
             });
         });
-
-        // Event listener TOP5 fasce distanza
         c.querySelectorAll('.btn-top5-fascia').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const arr = window[btn.dataset.key] || [];
-                const label = btn.dataset.label;
+                const arr = window[btn.dataset.key] || [], label = btn.dataset.label;
                 const righe = arr.map((a,i) => `${i+1}. ${new Date(a.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${a.nome?' — '+a.nome:''}: ${formattaTempo(parseFloat(a.tempo))} (${parseFloat(a.distanza).toFixed(1)} km)`).join('\n');
                 alert(`TOP 5 — ${label}\n\n${righe}`);
             });
         });
-        // Event listener TOP5 strisce
         const btnStrisce = c.querySelector('#btn-top5-strisce');
         if (btnStrisce) {
             btnStrisce.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const righe = (window._top5_strisce || []).map((s, i) =>
-                    `${i+1}. ${getMondayFromAbs(s.start)} – ${getSundayFromAbs(s.end)}: ${s.len} sett.`
-                ).join('\n');
+                const righe = (window._top5_strisce || []).map((s, i) => `${i+1}. ${getMondayFromAbs(s.start)} – ${getSundayFromAbs(s.end)}: ${s.len} sett.`).join('\n');
                 alert(`TOP 5 — Strisce settimane consecutive\n\n${righe}`);
             });
         }
-
-        // Event listener TOP5 4 giorni
         const btn4gg = c.querySelector('#btn-top5-4gg');
         if (btn4gg) {
             btn4gg.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const righe = (window._top5_4gg || []).map((f, i) =>
-                    `${i+1}. ${f.dal.split('-').reverse().join('/')} – ${f.al.split('-').reverse().join('/')}: ${Math.round(f.km)} km`
-                ).join('\n');
+                const righe = (window._top5_4gg || []).map((f, i) => `${i+1}. ${f.dal.split('-').reverse().join('/')} – ${f.al.split('-').reverse().join('/')}: ${Math.round(f.km)} km`).join('\n');
                 alert(`TOP 5 — Max km in 4 giorni\n\n${righe}`);
             });
         }
     }
-
 
     async function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
@@ -1003,83 +980,17 @@
         const anno = currY;
         const datiAnno = rawData.filter(a => new Date(a.data).getFullYear() === anno);
         if (!datiAnno.length) { showToast('Nessun dato per ' + anno); return; }
-
         const totKm = datiAnno.reduce((s,a) => s + parseFloat(a.distanza), 0);
         const totOre = datiAnno.reduce((s,a) => s + parseFloat(a.tempo), 0);
         const medPond = totOre > 0 ? (totKm / totOre) : 0;
         const nUscite = datiAnno.length;
-
-        // Statistiche mensili
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
         let pMesi = {};
-        datiAnno.forEach(a => {
-            const m = new Date(a.data).getMonth();
-            if (!pMesi[m]) pMesi[m] = { km: 0, count: 0 };
-            pMesi[m].km += parseFloat(a.distanza);
-            pMesi[m].count++;
-        });
-
-        // Top 5 distanza
+        datiAnno.forEach(a => { const m = new Date(a.data).getMonth(); if (!pMesi[m]) pMesi[m] = { km: 0, count: 0 }; pMesi[m].km += parseFloat(a.distanza); pMesi[m].count++; });
         const top5Dist = [...datiAnno].sort((a,b) => b.distanza - a.distanza).slice(0,5);
-        // Top 5 velocità
         const top5Media = [...datiAnno].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5);
-
         const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-
-        const contenuto = `
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #111; }
-    h1 { color: #fb8c00; border-bottom: 3px solid #fb8c00; padding-bottom: 10px; }
-    h2 { color: #fb8c00; margin-top: 30px; font-size: 1em; text-transform: uppercase; letter-spacing: 1px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
-    .stat-box { background: #fff8f0; border: 1px solid #fb8c00; border-radius: 10px; padding: 15px; text-align: center; }
-    .stat-box .val { font-size: 1.8em; font-weight: 900; color: #fb8c00; }
-    .stat-box .lab { font-size: 0.75em; color: #888; text-transform: uppercase; }
-    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-    th { background: #fb8c00; color: white; padding: 8px; text-align: left; font-size: 0.85em; }
-    td { padding: 7px 8px; border-bottom: 1px solid #eee; font-size: 0.85em; }
-    tr:nth-child(even) { background: #fff8f0; }
-    .footer { margin-top: 40px; text-align: center; color: #aaa; font-size: 0.75em; border-top: 1px solid #eee; padding-top: 15px; }
-</style>
-
-</head>
-<body>
-<h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1>
-
-<div class="stats-grid">
-    <div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT', {minimumFractionDigits:1, maximumFractionDigits:1})}</div><div class="lab">km totali</div></div>
-    <div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div>
-    <div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div>
-    <div class="stat-box"><div class="val">${(totKm / nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div>
-    <div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre % 1) * 60)}m</div><div class="lab">ore in sella</div></div>
-    <div class="stat-box"><div class="val">${(totKm / 40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div>
-</div>
-
-<h2>Top 5 Uscite per Distanza</h2>
-<table>
-    <tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>
-    ${top5Dist.map((a,i) => `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome || '—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}
-</table>
-
-<h2>Top 5 Uscite per Velocita</h2>
-<table>
-    <tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>
-    ${top5Media.map((a,i) => `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome || '—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}
-</table>
-
-<h2>Statistiche Mensili</h2>
-<table>
-    <tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>
-    ${mesiNomi.map((nome, i) => pMesi[i] ? `<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km / pMesi[i].count).toFixed(1)}</td></tr>` : '').join('')}
-</table>
-
-<div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div>
-</body>
-</html>`;
+        const contenuto = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#111}h1{color:#fb8c00;border-bottom:3px solid #fb8c00;padding-bottom:10px}h2{color:#fb8c00;margin-top:30px;font-size:1em;text-transform:uppercase;letter-spacing:1px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.stat-box{background:#fff8f0;border:1px solid #fb8c00;border-radius:10px;padding:15px;text-align:center}.stat-box .val{font-size:1.8em;font-weight:900;color:#fb8c00}.stat-box .lab{font-size:.75em;color:#888;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#fb8c00;color:white;padding:8px;text-align:left;font-size:.85em}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:.85em}tr:nth-child(even){background:#fff8f0}.footer{margin-top:40px;text-align:center;color:#aaa;font-size:.75em;border-top:1px solid #eee;padding-top:15px}</style></head><body><h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1><div class="stats-grid"><div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1})}</div><div class="lab">km totali</div></div><div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div><div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div><div class="stat-box"><div class="val">${(totKm/nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div><div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre%1)*60)}m</div><div class="lab">ore in sella</div></div><div class="stat-box"><div class="val">${(totKm/40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div></div><h2>Top 5 Uscite per Distanza</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>${top5Dist.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}</table><h2>Top 5 Uscite per Velocita</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>${top5Media.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}</table><h2>Statistiche Mensili</h2><table><tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>${mesiNomi.map((nome,i)=>pMesi[i]?`<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km/pMesi[i].count).toFixed(1)}</td></tr>`:'').join('')}</table><div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div></body></html>`;
 
 ```
     const a = document.createElement('a');
@@ -1090,16 +1001,7 @@
 }
 
 function mostraInfoObiettivo() {
-    alert(
-        'LEGENDA COLORI\n\n' +
-        '🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n' +
-        '🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n' +
-        '🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\n' +
-        'CALCOLI\n\n' +
-        'Proiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\n' +
-        'Km/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\n' +
-        'Arrivo previsto: calcolato sulla media km/settimana attuale'
-    );
+    alert('LEGENDA COLORI\n\n🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\nCALCOLI\n\nProiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\nKm/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\nArrivo previsto: calcolato sulla media km/settimana attuale');
 }
 
 function apriAttivita(id) {
@@ -1110,12 +1012,8 @@ function apriAttivita(id) {
     const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
     const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
     if (a.strava_id) {
-        if (confirm(msg + '\n\nVuoi aprire su Strava?')) {
-            window.open('https://www.strava.com/activities/' + a.strava_id, '_blank');
-        }
-    } else {
-        alert(msg);
-    }
+        if (confirm(msg + '\n\nVuoi aprire su Strava?')) { window.open('https://www.strava.com/activities/' + a.strava_id, '_blank'); }
+    } else { alert(msg); }
 }
 
 function esportaJSON() {
@@ -1142,28 +1040,6 @@ function vaiA(id) {
     if(id === 'diario') disegnaDiario();
     if(id === 'archivio') disegnaArchivio();
     if(id === 'records') disegnaRecords();
-}
-
-function disegnaDiario() {
-    const c = document.getElementById('lista-diario'); c.innerHTML = '';
-    const vista = document.getElementById('sel-vista-diario').value;
-    const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
-    let tKmD = 0, tOreD = 0, tDisD = 0;
-    lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / (parseFloat(a.media) || 1)); tDisD += parseFloat(a.dislivello) || 0; });
-    let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
-    let disStrD = tDisD > 0 ? `<br>Dislivello: <b>${Math.round(tDisD).toLocaleString('it-IT')} m</b>` : '';
-    document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b>${disStrD}</div>`;
-
-    if (vista === 'mese') { c.innerHTML = renderGruppi(raggruppaPerMese(lista)); return; }
-    if (vista === 'settimana') { c.innerHTML = renderGruppi(raggruppaPerSettimana(lista)); return; }
-
-    // vista attività (originale)
-    lista.forEach(a => {
-        let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
-        let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
-        let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-        c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
-    });
 }
 
 function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
