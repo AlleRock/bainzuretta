@@ -1,100 +1,96 @@
 <!DOCTYPE html>
-
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bainzuretta V74</title>
-
-```
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#fb8c00">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bainzuretta">
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
-
-<style>
-    :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
-    header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
-    .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
-    .page.active { display: block; }
-    .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
-    .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
-    input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
-    .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
-    .stat-box b { font-size: 1.1em; color: var(--primary); }
-    .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
-    .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
-    .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
-    .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
-    nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-    nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
-    nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
-    .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-    .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-    .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
-    #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
-    .page-fixed-top { padding: 12px 12px 0 12px; }
-    .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
-    .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
-    .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
-    .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
-    .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
-    .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
-    #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
-    .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
-    .target-box-gold {
-        background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
-        background-size: 200% 200% !important;
-        animation: shimmerGold 2s ease-in-out infinite, pulseGold 2s ease-in-out infinite !important;
-        color: #5a3a00 !important;
-    }
-    .target-box-gold small, .target-box-gold b, .target-box-gold #km-mancanti { color: #5a3a00 !important; }
-    @keyframes shimmerGold {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    @keyframes pulseGold {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 0, 0.5); }
-        50% { box-shadow: 0 0 20px 8px rgba(255, 210, 0, 0.4); }
-    }
-    @keyframes shimmer {
-        0%   { background-position: -200% center; }
-        100% { background-position: 200% center; }
-    }
-    @keyframes pulse-gold {
-        0%, 100% { transform: scale(1); box-shadow: 0 0 0px rgba(255,210,0,0); }
-        50%       { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,210,0,0.6); }
-    }
-    .target-box-gold {
-        background: linear-gradient(110deg, #f7971e, #ffd200, #fff5a0, #ffd200, #f7971e) !important;
-        background-size: 300% 100% !important;
-        animation: shimmer 2.5s linear infinite, pulse-gold 2s ease-in-out infinite !important;
-        color: #5a3a00 !important;
-    }
-    .target-box-gold small, .target-box-gold b { color: #5a3a00 !important; }
-    .target-box-gold * { color: #5a3a00 !important; }
-    .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
-    /* -- NUOVO: stili vista raggruppata -- */
-    .vista-select-wrap { margin-top: 10px; }
-    .gruppo-item { padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
-    .gruppo-header { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 0.85em; color: var(--primary); margin-bottom: 4px; }
-    .gruppo-sub { font-size: 0.78em; color: var(--text); opacity: 0.75; display: flex; gap: 10px; flex-wrap: wrap; }
-</style>
-```
-
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fb8c00">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bainzuretta">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
+    
+    <style>
+        :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; }
+        .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
+        .page.active { display: block; }
+        .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .target-box { background: linear-gradient(135deg, #fb8c00, #f57c00); color: white; text-align: center; cursor: pointer; }
+        input, select { width: 100%; height: 45px; padding: 0 10px; border: 2px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 16px; -webkit-appearance: none; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: rgba(251, 140, 0, 0.1); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--primary); }
+        .stat-box b { font-size: 1.1em; color: var(--primary); }
+        .rank-item { padding: 10px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
+        .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+        .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
+        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
+        nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
+        .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
+        #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
+        .page-fixed-top { padding: 12px 12px 0 12px; }
+        .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
+        .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-sync { background: #FC4C02; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 11px; margin-bottom: 5px; cursor: pointer; }
+        .btn-sync:disabled { background: #aaa; cursor: not-allowed; }
+        .strava-status { font-size: 11px; text-align: center; padding: 5px; border-radius: 8px; margin-bottom: 5px; }
+        .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
+        .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+        .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
+        .target-box-gold {
+            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
+            background-size: 200% 200% !important;
+            animation: shimmerGold 2s ease-in-out infinite, pulseGold 2s ease-in-out infinite !important;
+            color: #5a3a00 !important;
+        }
+        .target-box-gold small, .target-box-gold b, .target-box-gold #km-mancanti { color: #5a3a00 !important; }
+        @keyframes shimmerGold {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes pulseGold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 0, 0.5); }
+            50% { box-shadow: 0 0 20px 8px rgba(255, 210, 0, 0.4); }
+        }
+        @keyframes shimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes pulse-gold {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0px rgba(255,210,0,0); }
+            50%       { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,210,0,0.6); }
+        }
+        .target-box-gold {
+            background: linear-gradient(110deg, #f7971e, #ffd200, #fff5a0, #ffd200, #f7971e) !important;
+            background-size: 300% 100% !important;
+            animation: shimmer 2.5s linear infinite, pulse-gold 2s ease-in-out infinite !important;
+            color: #5a3a00 !important;
+        }
+        .target-box-gold small, .target-box-gold b { color: #5a3a00 !important; }
+        .target-box-gold * { color: #5a3a00 !important; }
+        .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
+        /* -- NUOVO: stili vista raggruppata -- */
+        .vista-select-wrap { margin-top: 10px; }
+        .gruppo-item { padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .gruppo-header { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 0.85em; color: var(--primary); margin-bottom: 4px; }
+        .gruppo-sub { font-size: 0.78em; color: var(--text); opacity: 0.75; display: flex; gap: 10px; flex-wrap: wrap; }
+    </style>
 </head>
 <body>
 
@@ -991,79 +987,75 @@
         const top5Media = [...datiAnno].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5);
         const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const contenuto = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#111}h1{color:#fb8c00;border-bottom:3px solid #fb8c00;padding-bottom:10px}h2{color:#fb8c00;margin-top:30px;font-size:1em;text-transform:uppercase;letter-spacing:1px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.stat-box{background:#fff8f0;border:1px solid #fb8c00;border-radius:10px;padding:15px;text-align:center}.stat-box .val{font-size:1.8em;font-weight:900;color:#fb8c00}.stat-box .lab{font-size:.75em;color:#888;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#fb8c00;color:white;padding:8px;text-align:left;font-size:.85em}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:.85em}tr:nth-child(even){background:#fff8f0}.footer{margin-top:40px;text-align:center;color:#aaa;font-size:.75em;border-top:1px solid #eee;padding-top:15px}</style></head><body><h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1><div class="stats-grid"><div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1})}</div><div class="lab">km totali</div></div><div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div><div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div><div class="stat-box"><div class="val">${(totKm/nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div><div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre%1)*60)}m</div><div class="lab">ore in sella</div></div><div class="stat-box"><div class="val">${(totKm/40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div></div><h2>Top 5 Uscite per Distanza</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>${top5Dist.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}</table><h2>Top 5 Uscite per Velocita</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>${top5Media.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}</table><h2>Statistiche Mensili</h2><table><tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>${mesiNomi.map((nome,i)=>pMesi[i]?`<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km/pMesi[i].count).toFixed(1)}</td></tr>`:'').join('')}</table><div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div></body></html>`;
-
-```
-    const a = document.createElement('a');
-    a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
-    a.download = `Bainzuretta_${anno}.html`;
-    a.click();
-    showToast('Apri il file scaricato e stampa come PDF!', 4000);
-}
-
-function mostraInfoObiettivo() {
-    alert('LEGENDA COLORI\n\n🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\nCALCOLI\n\nProiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\nKm/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\nArrivo previsto: calcolato sulla media km/settimana attuale');
-}
-
-function apriAttivita(id) {
-    const a = rawData.find(x => x.id == id);
-    if (!a) return;
-    const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-    const nome = a.nome ? '\n"' + a.nome + '"' : '';
-    const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
-    const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
-    if (a.strava_id) {
-        if (confirm(msg + '\n\nVuoi aprire su Strava?')) { window.open('https://www.strava.com/activities/' + a.strava_id, '_blank'); }
-    } else { alert(msg); }
-}
-
-function esportaJSON() {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
-    const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
-}
-
-document.getElementById('json-input').onchange = (e) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
-        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-        aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
-    };
-    reader.readAsArrayBuffer(e.target.files[0]);
-};
-
-function vaiA(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
-    document.getElementById('nav-'+id).classList.add('active');
-    if(id === 'ranking') disegnaClassifica();
-    if(id === 'diario') disegnaDiario();
-    if(id === 'archivio') disegnaArchivio();
-    if(id === 'records') disegnaRecords();
-}
-
-function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
-
-function eliminaAttivita(id) {
-    if(confirm('Elimina?')) {
-        rawData = rawData.filter(a => a.id !== id);
-        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-        disegnaDiario(); aggiornaStats();
+        const a = document.createElement('a');
+        a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
+        a.download = `Bainzuretta_${anno}.html`;
+        a.click();
+        showToast('Apri il file scaricato e stampa come PDF!', 4000);
     }
-}
 
-function pulisciTutto() { if(confirm('CANCELLARE TUTTO?')) { localStorage.clear(); location.reload(); } }
+    function mostraInfoObiettivo() {
+        alert('LEGENDA COLORI\n\n🟢 Verde — sei in anticipo rispetto al passo necessario per raggiungere l\'obiettivo\n\n🟡 Giallo — sei indietro fino al 10% rispetto al passo necessario\n\n🔴 Rosso — sei indietro di oltre il 10% rispetto al passo necessario\n\nCALCOLI\n\nProiezione: (km fatti / giorno dell\'anno) × giorni totali anno\n\nKm/sett: km mancanti all\'obiettivo ÷ settimane rimanenti\n\nArrivo previsto: calcolato sulla media km/settimana attuale');
+    }
 
-function cambiaObiettivo() {
-    let n = prompt('Target per il ' + currY + ':', myTarget);
-    if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); document.getElementById('val-target-tot').innerText = myTarget; aggiornaStats(); }
-}
+    function apriAttivita(id) {
+        const a = rawData.find(x => x.id == id);
+        if (!a) return;
+        const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const nome = a.nome ? '\n"' + a.nome + '"' : '';
+        const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
+        const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
+        if (a.strava_id) {
+            if (confirm(msg + '\n\nVuoi aprire su Strava?')) { window.open('https://www.strava.com/activities/' + a.strava_id, '_blank'); }
+        } else { alert(msg); }
+    }
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
-}
-```
+    function esportaJSON() {
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
+        const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
+    }
 
+    document.getElementById('json-input').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    };
+
+    function vaiA(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
+        document.getElementById('nav-'+id).classList.add('active');
+        if(id === 'ranking') disegnaClassifica();
+        if(id === 'diario') disegnaDiario();
+        if(id === 'archivio') disegnaArchivio();
+        if(id === 'records') disegnaRecords();
+    }
+
+    function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
+
+    function eliminaAttivita(id) {
+        if(confirm('Elimina?')) {
+            rawData = rawData.filter(a => a.id !== id);
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            disegnaDiario(); aggiornaStats();
+        }
+    }
+
+    function pulisciTutto() { if(confirm('CANCELLARE TUTTO?')) { localStorage.clear(); location.reload(); } }
+
+    function cambiaObiettivo() {
+        let n = prompt('Target per il ' + currY + ':', myTarget);
+        if(n) { myTarget = parseInt(n); localStorage.setItem('bainzuretta_target_' + currY, n); document.getElementById('val-target-tot').innerText = myTarget; aggiornaStats(); }
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
+    }
 </script>
 </body>
 </html>
