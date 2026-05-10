@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V75</title>
+    <title>Bainzuretta V70</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
@@ -714,11 +714,9 @@
         const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
             const d = new Date(dateStr);
-            const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
-            const monday = new Date(d);
-            monday.setDate(d.getDate() - day);
-            monday.setHours(0,0,0,0);
-            return Math.floor((monday.getTime() - MONDAY_ANCHOR) / (7 * 24 * 60 * 60 * 1000));
+            const dayUTC = d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1;
+            const mondayUTC = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dayUTC);
+            return Math.floor((mondayUTC - MONDAY_ANCHOR) / (7 * 24 * 60 * 60 * 1000));
         };
         const getMondayFromAbs = (absWeek) => { const d = new Date(MONDAY_ANCHOR + absWeek * 7 * 24 * 60 * 60 * 1000); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'}); };
         const getSundayFromAbs = (absWeek) => { const d = new Date(MONDAY_ANCHOR + (absWeek * 7 + 6) * 24 * 60 * 60 * 1000); return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'}); };
