@@ -1001,7 +1001,7 @@
         const recap = document.getElementById('sfida-recap');
         container.innerHTML = '';
 
-        const quotaSettimana = Math.round(myTarget / 52);
+        const quotaSettimana = myTarget / 52;
 
         // Settimana corrente (numero ISO)
         function getISOWeek(d) {
@@ -1034,14 +1034,14 @@
             kmPerSett[w] += parseFloat(a.distanza) || 0;
         });
 
-        recap.innerHTML = `Obiettivo: <b>${myTarget.toLocaleString('it-IT')} km</b> · Quota sett.: <b>${quotaSettimana} km</b>`;
+        recap.innerHTML = `Obiettivo: <b>${myTarget.toLocaleString('it-IT')} km</b> · Quota sett.: <b>${quotaSettimana.toFixed(1)} km</b>`;
 
         // Header colonne
         container.innerHTML = `<div class="sfida-header-row">
             <span class="sfida-week-num">#</span>
             <span class="sfida-dates" style="flex:1;">Periodo</span>
             <span class="sfida-quota">Quota</span>
-            <span class="sfida-km" style="min-width:52px; text-align:right;">Fatto</span>
+            <span class="sfida-km" style="min-width:80px; text-align:right;">Fatto</span>
         </div>`;
 
         for (let w = settimanaCorrente; w >= 1; w--) {
@@ -1050,16 +1050,20 @@
             const kmFatti = kmPerSett[w] || 0;
             const isCurrent = (w === settimanaCorrente);
 
-            let classeKm, testoKm;
+            let classeKm, testoKm, deltaHtml = '';
             if (isCurrent && kmFatti === 0) {
                 classeKm = 'grigio';
                 testoKm = '—';
             } else if (kmFatti >= quotaSettimana) {
                 classeKm = 'verde';
+                const delta = kmFatti - quotaSettimana;
                 testoKm = kmFatti.toFixed(1) + ' km';
+                deltaHtml = `<span style="font-size:0.8em; font-weight:400; color:#2e7d32;"> +${delta.toFixed(1)}</span>`;
             } else {
                 classeKm = 'rosso';
+                const delta = kmFatti - quotaSettimana;
                 testoKm = kmFatti.toFixed(1) + ' km';
+                deltaHtml = `<span style="font-size:0.8em; font-weight:400; color:#c62828;"> ${delta.toFixed(1)}</span>`;
             }
 
             const dateLabel = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
@@ -1068,8 +1072,8 @@
             container.innerHTML += `<div class="sfida-row" style="${currentStyle}">
                 <span class="sfida-week-num">${w}</span>
                 <span class="sfida-dates">${dateLabel}</span>
-                <span class="sfida-quota">${quotaSettimana} km</span>
-                <span class="sfida-km ${classeKm}">${testoKm}</span>
+                <span class="sfida-quota">${quotaSettimana.toFixed(1)}</span>
+                <span class="sfida-km ${classeKm}" style="min-width:80px;">${testoKm}${deltaHtml}</span>
             </div>`;
         }
     }
