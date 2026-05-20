@@ -94,7 +94,7 @@
         .sfida-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); font-size: 0.82em; }
         .sfida-week-num { font-weight: 900; color: var(--primary); min-width: 28px; font-size: 1em; }
         .sfida-dates { flex: 1; color: var(--text); opacity: 0.7; font-size: 0.9em; }
-        .sfida-quota { min-width: 52px; text-align: right; color: var(--text); opacity: 0.6; }
+        .sfida-quota { min-width: 52px; text-align: right; color: var(--text); opacity: 0.6; font-weight: 900; font-size: 1em; }
         .sfida-km { min-width: 52px; text-align: right; font-weight: 900; font-size: 1em; }
         .sfida-km.verde { color: #2e7d32; }
         .sfida-km.rosso { color: #c62828; }
@@ -673,7 +673,7 @@
             let isCurrentYear = parseInt(y) === currY;
             let linkStyle = !isCurrentYear ? 'cursor:pointer;' : '';
             let linkHint = !isCurrentYear ? ` onclick="apriArchivioAnno(${y})" title="Apri in Archivio"` : '';
-            let totAnnoHtml = (m === 'distanza' && !isCurrentYear) ? ` <span style="color:#1565c0; font-size:0.82em; font-weight:600;">${Math.round(p[y].tot).toLocaleString('it-IT')} km</span>` : '';
+            let totAnnoHtml = (m === 'distanza' && !isCurrentYear) ? ` <span style="color:#1565c0; font-weight:600;">${Math.round(p[y].tot).toLocaleString('it-IT')} km</span>` : '';
             container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${displayVal}${totAnnoHtml}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${maxVal > 0 ? (val/maxVal)*100 : 0}%"></div></div></div>`;
         });
     }
@@ -1060,12 +1060,12 @@
                 classeKm = 'verde';
                 const delta = kmFatti - quotaSettimana;
                 testoKm = kmFatti.toFixed(1) + ' km';
-                deltaHtml = `<span style="font-size:0.8em; font-weight:400; color:#2e7d32;"> +${delta.toFixed(1)}</span>`;
+                deltaHtml = `<span style="font-weight:400; color:#2e7d32;"> +${delta.toFixed(1)}</span>`;
             } else {
                 classeKm = 'rosso';
                 const delta = kmFatti - quotaSettimana;
                 testoKm = kmFatti.toFixed(1) + ' km';
-                deltaHtml = `<span style="font-size:0.8em; font-weight:400; color:#c62828;"> ${delta.toFixed(1)}</span>`;
+                deltaHtml = `<span style="font-weight:400; color:#c62828;"> ${delta.toFixed(1)}</span>`;
             }
 
             const dateLabel = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
