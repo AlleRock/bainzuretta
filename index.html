@@ -651,7 +651,8 @@
         rawData.forEach(a => {
             let dt = new Date(a.data), y = dt.getFullYear();
             if (m === 'dislivello' && y < 2019) return;
-            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0, dis:0 };
+            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0, dis:0, tot:0 };
+            p[y].tot += parseFloat(a.distanza) || 0;
             if(getDOY(dt) <= doyOggi) {
                 let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
                 p[y].d += dist; p[y].mSum += med; p[y].c++; p[y].tSum += (med > 0 ? dist / med : 0);
@@ -672,7 +673,8 @@
             let isCurrentYear = parseInt(y) === currY;
             let linkStyle = !isCurrentYear ? 'cursor:pointer;' : '';
             let linkHint = !isCurrentYear ? ` onclick="apriArchivioAnno(${y})" title="Apri in Archivio"` : '';
-            container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${displayVal}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${maxVal > 0 ? (val/maxVal)*100 : 0}%"></div></div></div>`;
+            let totAnnoHtml = (m === 'distanza' && !isCurrentYear) ? ` <span style="color:#1565c0; font-size:0.82em; font-weight:600;">${Math.round(p[y].tot).toLocaleString('it-IT')} km</span>` : '';
+            container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${displayVal}${totAnnoHtml}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${maxVal > 0 ? (val/maxVal)*100 : 0}%"></div></div></div>`;
         });
     }
 
