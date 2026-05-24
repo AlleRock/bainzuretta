@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V70</title>
+    <title>Bainzuretta V77.3</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
     
@@ -12,15 +15,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bainzuretta">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
     
     <style>
         :root { --primary: #fb8c00; --bg: #f0f2f5; --card: #ffffff; --text: #111111; --border: #888888; }
         @media (prefers-color-scheme: dark) { :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #444444; } }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
-        header { background: var(--primary); color: white; padding: 10px 15px; text-align: center; font-family: 'Lobster', cursive; font-size: 2.8em; font-weight: normal; line-height: 1; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 6px 15px; text-align: center; font-weight: 900; font-family: 'Lobster', cursive; font-size: 2.6em; letter-spacing: 1px; line-height: 1.15; }
         .page { display: none; padding: 12px; width: 100%; max-width: 500px; margin: 0 auto; }
         .page.active { display: block; }
         .card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
@@ -40,7 +41,7 @@
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .btn-edit { background: #007aff; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .archive-recap { background: var(--primary); color: white; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9em; text-align: center; line-height: 1.5; }
-        #home.active, #diario.active, #archivio.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
+        #home.active, #diario.active, #archivio.active, #sfida.active, #ranking.active, #records.active { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - 115px); overflow: hidden; padding: 0; }
         .page-fixed-top { padding: 12px 12px 0 12px; }
         .page-scroll-list { overflow-y: auto; padding: 0 12px 12px 12px; -webkit-overflow-scrolling: touch; }
         .btn-strava { background: #FC4C02; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 900; width: 100%; cursor: pointer; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -92,12 +93,23 @@
         .gruppo-item { padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
         .gruppo-header { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 0.85em; color: var(--primary); margin-bottom: 4px; }
         .gruppo-sub { font-size: 0.78em; color: var(--text); opacity: 0.75; display: flex; gap: 10px; flex-wrap: wrap; }
+        /* -- LA SFIDA -- */
+        .sfida-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); font-size: 0.82em; }
+        .sfida-week-num { font-weight: 900; color: var(--primary); min-width: 28px; font-size: 1em; }
+        .sfida-dates { flex: 1; color: var(--text); opacity: 0.7; font-size: 0.9em; }
+        .sfida-quota { min-width: 52px; text-align: right; color: var(--text); opacity: 0.6; font-weight: 900; font-size: 1em; }
+        .sfida-km { min-width: 52px; text-align: right; font-weight: 900; font-size: 1em; }
+        .sfida-km.verde { color: #2e7d32; }
+        .sfida-km.rosso { color: #c62828; }
+        .sfida-km.grigio { color: #888; }
+        .sfida-header-row { display: flex; gap: 8px; padding: 4px 12px 8px; font-size: 0.72em; color: #888; font-weight: 700; text-transform: uppercase; }
+        .sfida-header-row .sfida-week-num { color: #888; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
-<header id="main-header">BAINZURETTA</header>
+<header id="main-header">Bainzuretta</header>
 
 <div id="home" class="page active">
     <div class="page-fixed-top">
@@ -177,6 +189,16 @@
     <div class="page-scroll-list"><div id="lista-archivio"></div></div>
 </div>
 
+<div id="sfida" class="page">
+    <div class="page-fixed-top">
+        <div class="card" style="text-align:center;">
+            <h3 style="margin:0; font-size: 1em;">&#127937; LA SFIDA <span class="year-label"></span></h3>
+            <div id="sfida-recap" style="margin-top:8px; font-size:0.78em; color:#888;"></div>
+        </div>
+    </div>
+    <div class="page-scroll-list"><div id="lista-sfida"></div></div>
+</div>
+
 <div id="ranking" class="page">
     <div class="page-fixed-top">
         <div class="card" style="text-align:center;">
@@ -204,6 +226,7 @@
 <nav>
     <div id="nav-home" class="active" onclick="vaiA('home')">&#127968;<span>HOME</span></div>
     <div id="nav-diario" onclick="vaiA('diario')">&#128214;<span>DIARIO</span></div>
+    <div id="nav-sfida" onclick="vaiA('sfida')">&#127937;<span>SFIDA</span></div>
     <div id="nav-archivio" onclick="vaiA('archivio')">&#128194;<span>ARCHIVIO</span></div>
     <div id="nav-ranking" onclick="vaiA('ranking')">&#127942;<span>RANK</span></div>
     <div id="nav-records" onclick="vaiA('records')">&#128081;<span>RECORD</span></div>
@@ -631,7 +654,8 @@
         rawData.forEach(a => {
             let dt = new Date(a.data), y = dt.getFullYear();
             if (m === 'dislivello' && y < 2019) return;
-            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0, dis:0 };
+            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0, dis:0, tot:0 };
+            p[y].tot += parseFloat(a.distanza) || 0;
             if(getDOY(dt) <= doyOggi) {
                 let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
                 p[y].d += dist; p[y].mSum += med; p[y].c++; p[y].tSum += (med > 0 ? dist / med : 0);
@@ -652,7 +676,8 @@
             let isCurrentYear = parseInt(y) === currY;
             let linkStyle = !isCurrentYear ? 'cursor:pointer;' : '';
             let linkHint = !isCurrentYear ? ` onclick="apriArchivioAnno(${y})" title="Apri in Archivio"` : '';
-            container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${displayVal}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${maxVal > 0 ? (val/maxVal)*100 : 0}%"></div></div></div>`;
+            let totAnnoHtml = (m === 'distanza' && !isCurrentYear) ? ` <span style="color:#1565c0; font-weight:600;">${Math.round(p[y].tot).toLocaleString('it-IT')} km</span>` : '';
+            container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${displayVal}${totAnnoHtml}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${maxVal > 0 ? (val/maxVal)*100 : 0}%"></div></div></div>`;
         });
     }
 
@@ -976,6 +1001,88 @@
         rawData = rawData.filter(x => x.id !== id);
     }
 
+    function disegnaSfida() {
+        const container = document.getElementById('lista-sfida');
+        const recap = document.getElementById('sfida-recap');
+        container.innerHTML = '';
+
+        const quotaSettimana = myTarget / 52;
+
+        // Settimana corrente (numero ISO)
+        function getISOWeek(d) {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const day = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - day);
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function getLunFromWeek(year, week) {
+            // Lunedì della settimana ISO
+            const jan4 = new Date(year, 0, 4);
+            const dayOfWeek = (jan4.getDay() + 6) % 7;
+            const firstMon = new Date(jan4);
+            firstMon.setDate(jan4.getDate() - dayOfWeek);
+            const lun = new Date(firstMon);
+            lun.setDate(firstMon.getDate() + (week - 1) * 7);
+            return lun;
+        }
+
+        const settimanaCorrente = getISOWeek(oggi);
+
+        // Mappa km per settimana ISO dell'anno corrente
+        const kmPerSett = {};
+        rawData.filter(a => new Date(a.data).getFullYear() === currY).forEach(a => {
+            const d = new Date(a.data);
+            const w = getISOWeek(d);
+            if (!kmPerSett[w]) kmPerSett[w] = 0;
+            kmPerSett[w] += parseFloat(a.distanza) || 0;
+        });
+
+        recap.innerHTML = `Obiettivo: <b>${myTarget.toLocaleString('it-IT')} km</b> · Quota sett.: <b>${quotaSettimana.toFixed(1)} km</b>`;
+
+        // Header colonne
+        container.innerHTML = `<div class="sfida-header-row">
+            <span class="sfida-week-num">#</span>
+            <span class="sfida-dates" style="flex:1;">Periodo</span>
+            <span class="sfida-quota">Quota</span>
+            <span class="sfida-km" style="min-width:80px; text-align:right;">Fatto</span>
+        </div>`;
+
+        for (let w = settimanaCorrente; w >= 1; w--) {
+            const lun = getLunFromWeek(currY, w);
+            const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
+            const kmFatti = kmPerSett[w] || 0;
+            const isCurrent = (w === settimanaCorrente);
+
+            let classeKm, testoKm, deltaHtml = '';
+            if (isCurrent && kmFatti === 0) {
+                classeKm = 'grigio';
+                testoKm = '—';
+            } else if (kmFatti >= quotaSettimana) {
+                classeKm = 'verde';
+                const delta = kmFatti - quotaSettimana;
+                testoKm = kmFatti.toFixed(1) + ' km';
+                deltaHtml = `<span style="font-weight:400; color:#2e7d32;"> +${delta.toFixed(1)}</span>`;
+            } else {
+                classeKm = 'rosso';
+                const delta = kmFatti - quotaSettimana;
+                testoKm = kmFatti.toFixed(1) + ' km';
+                deltaHtml = `<span style="font-weight:400; color:#c62828;"> ${delta.toFixed(1)}</span>`;
+            }
+
+            const dateLabel = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
+            const currentStyle = isCurrent ? 'border-color: var(--primary);' : '';
+
+            container.innerHTML += `<div class="sfida-row" style="${currentStyle}">
+                <span class="sfida-week-num">${w}</span>
+                <span class="sfida-dates">${dateLabel}</span>
+                <span class="sfida-quota">${quotaSettimana.toFixed(1)}</span>
+                <span class="sfida-km ${classeKm}" style="min-width:80px;">${testoKm}${deltaHtml}</span>
+            </div>`;
+        }
+    }
+
     function esportaPDF() {
         const anno = currY;
         const datiAnno = rawData.filter(a => new Date(a.data).getFullYear() === anno);
@@ -1035,6 +1142,7 @@
         document.querySelectorAll('nav div').forEach(n => n.classList.remove('active'));
         document.getElementById('nav-'+id).classList.add('active');
         if(id === 'ranking') disegnaClassifica();
+        if(id === 'sfida') disegnaSfida();
         if(id === 'diario') disegnaDiario();
         if(id === 'archivio') disegnaArchivio();
         if(id === 'records') disegnaRecords();
