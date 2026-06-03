@@ -374,7 +374,8 @@
                         tempo: parseFloat(oreDec.toFixed(4)),
                         media: parseFloat(media.toFixed(2)),
                         nome: act.name || '',
-                        dislivello: act.total_elevation_gain || 0
+                        dislivello: act.total_elevation_gain || 0,
+                        cadenza: act.average_cadence || 0
                     });
                 }
                 if (activities.length < 100) break;
@@ -822,6 +823,14 @@
             html += actRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`, 'disliv_min');
             html += '</div>';
         }
+        const conCadenza = rawData.filter(a => a.cadenza && a.cadenza > 0);
+        const maxCadenza = conCadenza.length ? conCadenza.reduce((a,b) => a.cadenza > b.cadenza ? a : b) : null;
+        if (maxCadenza) {
+            window._top5_cadenza = [...conCadenza].sort((a,b) => b.cadenza - a.cadenza).slice(0,5);
+            html += '<div class="card"><div class="record-section-title">CADENZA</div>';
+            html += actRow('&#129354;', 'Cadenza piu alta', maxCadenza, `${Math.round(maxCadenza.cadenza)} rpm`, 'cadenza_max');
+            html += '</div>';
+        }
         html += '<div class="card"><div class="record-section-title">STATISTICHE ANNI</div>';
         html += statRow('&#127942;', 'Anno con piu km', `${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km`, 'anni_km');
         html += statRow('&#128336;', 'Anno con piu uscite', `${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite`, 'anni_uscite');
@@ -928,6 +937,7 @@
                 else if (tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
                 else if (tipo === 'disliv_max') righe = [...dati2019].filter(a => a.dislivello > 0).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
                 else if (tipo === 'disliv_min') righe = [...dati2019].filter(a => a.dislivello > 0).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
+                else if (tipo === 'cadenza_max') righe = (window._top5_cadenza || []).map((a,i) => `${i+1}. ${fmtShort(a.data)}${a.nome?' — '+a.nome:''}: ${Math.round(a.cadenza)} rpm`).join('\n');
                 alert(`TOP 5 — ${titolo}\n\n${righe}`);
             });
         });
@@ -1096,8 +1106,17 @@
         datiAnno.forEach(a => { const m = new Date(a.data).getMonth(); if (!pMesi[m]) pMesi[m] = { km: 0, count: 0 }; pMesi[m].km += parseFloat(a.distanza); pMesi[m].count++; });
         const top5Dist = [...datiAnno].sort((a,b) => b.distanza - a.distanza).slice(0,5);
         const top5Media = [...datiAnno].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5);
+        const datiAnnoOrd = [...datiAnno].sort((a,b) => new Date(a.data) - new Date(b.data));
+        const conCadenzaAnno = datiAnno.filter(a => a.cadenza && a.cadenza > 0);
+        const maxCadAnno = conCadenzaAnno.length ? conCadenzaAnno.reduce((a,b) => a.cadenza > b.cadenza ? a : b) : null;
         const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const contenuto = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#111}h1{color:#fb8c00;border-bottom:3px solid #fb8c00;padding-bottom:10px}h2{color:#fb8c00;margin-top:30px;font-size:1em;text-transform:uppercase;letter-spacing:1px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.stat-box{background:#fff8f0;border:1px solid #fb8c00;border-radius:10px;padding:15px;text-align:center}.stat-box .val{font-size:1.8em;font-weight:900;color:#fb8c00}.stat-box .lab{font-size:.75em;color:#888;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#fb8c00;color:white;padding:8px;text-align:left;font-size:.85em}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:.85em}tr:nth-child(even){background:#fff8f0}.footer{margin-top:40px;text-align:center;color:#aaa;font-size:.75em;border-top:1px solid #eee;padding-top:15px}</style></head><body><h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1><div class="stats-grid"><div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1})}</div><div class="lab">km totali</div></div><div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div><div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div><div class="stat-box"><div class="val">${(totKm/nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div><div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre%1)*60)}m</div><div class="lab">ore in sella</div></div><div class="stat-box"><div class="val">${(totKm/40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div></div><h2>Top 5 Uscite per Distanza</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>${top5Dist.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}</table><h2>Top 5 Uscite per Velocita</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>${top5Media.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}</table><h2>Statistiche Mensili</h2><table><tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>${mesiNomi.map((nome,i)=>pMesi[i]?`<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km/pMesi[i].count).toFixed(1)}</td></tr>`:'').join('')}</table><div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div></body></html>`;
+        const righeAttivita = datiAnnoOrd.map((a,i) => {
+            const cad = (a.cadenza && a.cadenza > 0) ? Math.round(a.cadenza) + ' rpm' : '—';
+            const dis = (a.dislivello && a.dislivello > 0) ? Math.round(a.dislivello) + ' m' : '—';
+            return `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${formattaTempo(parseFloat(a.tempo))}</td><td>${parseFloat(a.media).toFixed(2)} km/h</td><td>${dis}</td><td>${cad}</td></tr>`;
+        }).join('');
+        const cadRecordHtml = maxCadAnno ? `<h2>Record Cadenza ${anno}</h2><p style="font-size:.85em;">&#129354; Cadenza più alta: <b>${Math.round(maxCadAnno.cadenza)} rpm</b> — ${fmt(maxCadAnno.data)}${maxCadAnno.nome?' ('+maxCadAnno.nome+')':''}</p>` : '';
+        const contenuto = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:20px;color:#111}h1{color:#fb8c00;border-bottom:3px solid #fb8c00;padding-bottom:10px}h2{color:#fb8c00;margin-top:30px;font-size:1em;text-transform:uppercase;letter-spacing:1px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.stat-box{background:#fff8f0;border:1px solid #fb8c00;border-radius:10px;padding:15px;text-align:center}.stat-box .val{font-size:1.8em;font-weight:900;color:#fb8c00}.stat-box .lab{font-size:.75em;color:#888;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#fb8c00;color:white;padding:8px;text-align:left;font-size:.85em}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:.85em}tr:nth-child(even){background:#fff8f0}.footer{margin-top:40px;text-align:center;color:#aaa;font-size:.75em;border-top:1px solid #eee;padding-top:15px}</style></head><body><h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1><div class="stats-grid"><div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1})}</div><div class="lab">km totali</div></div><div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div><div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div><div class="stat-box"><div class="val">${(totKm/nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div><div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre%1)*60)}m</div><div class="lab">ore in sella</div></div><div class="stat-box"><div class="val">${(totKm/40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div></div><h2>Top 5 Uscite per Distanza</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>${top5Dist.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}</table><h2>Top 5 Uscite per Velocita</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>${top5Media.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}</table><h2>Statistiche Mensili</h2><table><tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>${mesiNomi.map((nome,i)=>pMesi[i]?`<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km/pMesi[i].count).toFixed(1)}</td></tr>`:'').join('')}</table>${cadRecordHtml}<h2>Tutte le Attivita ${anno}</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Tempo</th><th>Media</th><th>Dislivello</th><th>Cadenza</th></tr>${righeAttivita}</table><div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div></body></html>`;
         const a = document.createElement('a');
         a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
         a.download = `Bainzuretta_${anno}.html`;
@@ -1115,7 +1134,8 @@
         const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const nome = a.nome ? '\n"' + a.nome + '"' : '';
         const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
-        const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis;
+        const cad = (a.cadenza && a.cadenza > 0) ? '\nCadenza: ' + Math.round(a.cadenza) + ' rpm' : '';
+        const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis + cad;
         if (a.strava_id) {
             if (confirm(msg + '\n\nVuoi aprire su Strava?')) { window.open('https://www.strava.com/activities/' + a.strava_id, '_blank'); }
         } else { alert(msg); }
