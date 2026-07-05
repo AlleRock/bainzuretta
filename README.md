@@ -4,7 +4,7 @@
 [![PWA](https://img.shields.io/badge/PWA-Ready-brightgreen?style=flat-square&logo=progressive-web-apps)](https://allerock.github.io/bainzuretta/)
 [![Strava API](https://img.shields.io/badge/Strava-Integrated-FC4C02?style=flat-square&logo=strava)](https://www.strava.com/)
 
-**Bainzuretta V70** è un'applicazione web progressiva (PWA) e standalone, leggera e ottimizzata per dispositivi mobili, progettata per i ciclisti che desiderano monitorare le proprie attività, sfidare i propri limiti storici e tracciare in tempo reale l'avvicinamento al proprio obiettivo chilometrico annuale.
+**Bainzuretta** è un'applicazione web progressiva (PWA) e standalone, leggera e ottimizzata per dispositivi mobili, progettata per i ciclisti che desiderano monitorare le proprie attività, sfidare i propri limiti storici e tracciare in tempo reale l'avvicinamento al proprio obiettivo chilometrico annuale.
 
 Nata come strumento personale e indipendente, Bainzuretta si interfaccia nativamente con le **API di Strava** per sincronizzare automaticamente le uscite (Ride, VirtualRide, EBikeRide, MountainBikeRide) memorizzando in modo sicuro tutti i dati in locale sul dispositivo dell'utente.
 
