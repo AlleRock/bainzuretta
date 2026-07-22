@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bainzuretta V70</title>
+    <title>Bainzuretta</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Outfit:wght@400;0;900&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fb8c00">
     
@@ -35,7 +35,7 @@
         .rank-info { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.82em; align-items: center; gap: 2px; }
         .progress-bg { background: #e0e0e0; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; transition: width 0.5s; }
-        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        nav { position: fixed; bottom: 0; width: 100%; height: px; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         nav div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #888; font-size: 9px; flex-direction: column; }
         nav div.active { color: var(--primary); border-top: 4px solid var(--primary); }
         .btn-del { background: #ff3b30; color: white; border: none; padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; }
@@ -102,7 +102,7 @@
         .sfida-km.verde { color: #2e7d32; }
         .sfida-km.rosso { color: #c62828; }
         .sfida-km.grigio { color: #888; }
-        .sfida-header-row { display: flex; gap: 8px; padding: 4px 12px 8px; font-size: 0.72em; color: #888; font-weight: 700; text-transform: uppercase; }
+        .sfida-header-row { display: flex; gap: 8px; padding: 4px 12px 8px; font-size: 0.72em; color: #888; font-weight: 0; text-transform: uppercase; }
         .sfida-header-row .sfida-week-num { color: #888; }
     </style>
 </head>
@@ -233,7 +233,7 @@
 </nav>
 
 <script>
-    const STRAVA_CLIENT_ID = '210700';
+    const STRAVA_CLIENT_ID = '2100';
     const STRAVA_REDIRECT_URI = 'https://allerock.github.io/bainzuretta/';
     const STRAVA_SCOPE = 'activity:read_all';
 
@@ -739,7 +739,7 @@
         const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
         const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
 
-        const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
+        const MONDAY_ANCHOR = new Date('19-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
             const d = new Date(dateStr);
             const dayUTC = d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1;
