@@ -1,12 +1,10 @@
-const CACHE_NAME = 'bainzuretta-v78'; // Incrementato la versione per forzare l'aggiornamento su iPhone
-
+const CACHE_NAME = 'bainzuretta-v79'; // Incrementato la versione per forzare l'aggiornamento su iPhone
 const ASSETS = [
     './',
     './index.html',
     './Bainzuretta 77.4.html', // Includiamo entrambi i possibili nomi per sicurezza
     'https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png'
 ];
-
 // 1. Installazione: Salviamo gli asset fondamentali nella cache
 self.addEventListener('install', e => {
     e.waitUntil(
@@ -20,7 +18,6 @@ self.addEventListener('install', e => {
     );
     self.skipWaiting();
 });
-
 // 2. Attivazione: Pulizia delle vecchie cache per evitare conflitti
 self.addEventListener('activate', e => {
     e.waitUntil(
@@ -37,11 +34,9 @@ self.addEventListener('activate', e => {
     );
     self.clients.claim();
 });
-
 // 3. Fetch: Strategia Cache-First con fallback intelligente per iOS e richieste Strava
 self.addEventListener('fetch', e => {
     const url = new URL(e.request.url);
-
     // Gestione speciale per la pagina di navigazione principale (ignora i parametri query come ?code= di Strava)
     if (e.request.mode === 'navigate' || (url.origin === self.location.origin && (url.pathname.endsWith('.html') || url.pathname === '/'))) {
         e.respondWith(
@@ -51,14 +46,12 @@ self.addEventListener('fetch', e => {
         );
         return;
     }
-
     // Strategia standard: Cerca in cache, se manca vai in rete
     e.respondWith(
         caches.match(e.request).then(cachedResponse => {
             if (cachedResponse) {
                 return cachedResponse;
             }
-
             // Se la risorsa non è in cache, proviamo a prenderla dalla rete
             return fetch(e.request).then(networkResponse => {
                 // Se è un font di Google o un'immagine esterna, salviamola dinamicamente nella cache per la prossima volta offline
