@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bainzuretta-v79'; // Incrementato la versione per forzare l'aggiornamento su iPhone
+const CACHE_NAME = 'bainzuretta-v80'; // Incrementato la versione per forzare l'aggiornamento su iPhone
 const ASSETS = [
     './',
     './index.html',

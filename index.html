@@ -90,9 +90,13 @@
         .target-box-gold .btn-info-obiettivo { background: rgba(90,58,0,0.2) !important; color: #5a3a00 !important; }
         /* -- NUOVO: stili vista raggruppata -- */
         .vista-select-wrap { margin-top: 10px; }
-        .gruppo-item { padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .gruppo-item { padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); position: relative; }
         .gruppo-header { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 0.85em; color: var(--primary); margin-bottom: 4px; }
         .gruppo-sub { font-size: 0.78em; color: var(--text); opacity: 0.75; display: flex; gap: 10px; flex-wrap: wrap; }
+        .gruppo-item.g-oro { border: 1px solid #d4af37; background: linear-gradient(135deg, rgba(255,215,0,0.16), var(--card) 60%); }
+        .gruppo-item.g-argento { border: 1px solid #a8a9ad; background: linear-gradient(135deg, rgba(192,192,192,0.18), var(--card) 60%); }
+        .gruppo-item.g-bronzo { border: 1px solid #b08d57; background: linear-gradient(135deg, rgba(205,127,50,0.16), var(--card) 60%); }
+        .gruppo-medaglia { position: absolute; top: -8px; right: -6px; font-size: 1.3em; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35)); }
         /* -- LA SFIDA -- */
         .sfida-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); font-size: 0.82em; }
         .sfida-week-num { font-weight: 900; color: var(--primary); min-width: 28px; font-size: 1em; }
@@ -561,10 +565,14 @@
         return Object.keys(gruppi).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...gruppi[k] }));
     }
 
-    function renderGruppoItem(label, g) {
+    function renderGruppoItem(label, g, rank) {
         const medPond = g.ore > 0 ? (g.km / g.ore).toFixed(1) : '—';
         const disStr = g.dislivello > 0 ? `<span>&#9650; ${Math.round(g.dislivello).toLocaleString('it-IT')} m</span>` : '';
-        return `<div class="gruppo-item">
+        const medaglie = { 1: ['g-oro', '&#129351;'], 2: ['g-argento', '&#129352;'], 3: ['g-bronzo', '&#129353;'] };
+        const [rankClass, rankIcon] = medaglie[rank] || ['', ''];
+        const medagliaHtml = rankIcon ? `<span class="gruppo-medaglia">${rankIcon}</span>` : '';
+        return `<div class="gruppo-item ${rankClass}">
+            ${medagliaHtml}
             <div class="gruppo-header"><span>${label}</span><span>${g.km.toFixed(1)} km</span></div>
             <div class="gruppo-sub">
                 <span>&#128336; ${g.count} uscite</span>
@@ -572,6 +580,13 @@
                 ${disStr}
             </div>
         </div>`;
+    }
+
+    function calcolaTopGruppi(gruppi) {
+        const top = [...gruppi].sort((a, b) => b.km - a.km).slice(0, 3);
+        const mappa = {};
+        top.forEach((g, i) => { mappa[g.key] = i + 1; });
+        return mappa;
     }
 
     // ---- DIARIO (MODIFICATO) ----
@@ -594,16 +609,20 @@
                 c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
             });
         } else if (vista === 'mese') {
-            gruppaMesi(lista).forEach(g => {
+            const gruppiMese = gruppaMesi(lista);
+            const topMese = calcolaTopGruppi(gruppiMese);
+            gruppiMese.forEach(g => {
                 const [y, m] = g.key.split('-');
-                c.innerHTML += renderGruppoItem(`${mesiNomiBreve[parseInt(m)-1]} ${y}`, g);
+                c.innerHTML += renderGruppoItem(`${mesiNomiBreve[parseInt(m)-1]} ${y}`, g, topMese[g.key]);
             });
         } else if (vista === 'settimana') {
-            gruppaSett(lista).forEach(g => {
+            const gruppiSett = gruppaSett(lista);
+            const topSett = calcolaTopGruppi(gruppiSett);
+            gruppiSett.forEach(g => {
                 const lun = new Date(g.key + 'T00:00:00');
                 const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
                 const label = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
-                c.innerHTML += renderGruppoItem(label, g);
+                c.innerHTML += renderGruppoItem(label, g, topSett[g.key]);
             });
         }
     }
@@ -633,16 +652,20 @@
                 listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
             });
         } else if (vista === 'mese') {
-            gruppaMesi(filtrati).forEach(g => {
+            const gruppiMeseArch = gruppaMesi(filtrati);
+            const topMeseArch = calcolaTopGruppi(gruppiMeseArch);
+            gruppiMeseArch.forEach(g => {
                 const [y, m] = g.key.split('-');
-                listaCont.innerHTML += renderGruppoItem(`${mesiNomiBreve[parseInt(m)-1]} ${y}`, g);
+                listaCont.innerHTML += renderGruppoItem(`${mesiNomiBreve[parseInt(m)-1]} ${y}`, g, topMeseArch[g.key]);
             });
         } else if (vista === 'settimana') {
-            gruppaSett(filtrati).forEach(g => {
+            const gruppiSettArch = gruppaSett(filtrati);
+            const topSettArch = calcolaTopGruppi(gruppiSettArch);
+            gruppiSettArch.forEach(g => {
                 const lun = new Date(g.key + 'T00:00:00');
                 const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
                 const label = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
-                listaCont.innerHTML += renderGruppoItem(label, g);
+                listaCont.innerHTML += renderGruppoItem(label, g, topSettArch[g.key]);
             });
         }
     }
