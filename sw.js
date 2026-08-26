@@ -1,8 +1,7 @@
-const CACHE_NAME = 'bainzuretta-v80'; // Incrementato la versione per forzare l'aggiornamento su iPhone
+const CACHE_NAME = 'bainzuretta-v81'; // Incrementato la versione per forzare l'aggiornamento su iPhone
 const ASSETS = [
     './',
     './index.html',
-    './Bainzuretta 77.4.html', // Includiamo entrambi i possibili nomi per sicurezza
     'https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png'
 ];
 // 1. Installazione: Salviamo gli asset fondamentali nella cache
