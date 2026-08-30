@@ -51,6 +51,12 @@
         .strava-status.ok { background: rgba(252,76,2,0.1); color: #FC4C02; }
         .strava-status.ko { background: rgba(255,59,48,0.1); color: #ff3b30; }
         #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; z-index: 9999; display: none; max-width: 90%; text-align: center; }
+        #gruppo-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 2000; align-items: flex-end; justify-content: center; }
+        #gruppo-modal-overlay.active { display: flex; }
+        #gruppo-modal { background: var(--bg); width: 100%; max-width: 520px; max-height: 78vh; border-radius: 20px 20px 0 0; padding: 15px 12px calc(15px + env(safe-area-inset-bottom)) 12px; overflow-y: auto; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+        #gruppo-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px; }
+        #gruppo-modal-header h3 { margin: 0; font-size: 1.05em; color: var(--primary); }
+        #gruppo-modal-close { background: none; border: none; font-size: 1.6em; line-height: 1; color: var(--text); cursor: pointer; padding: 0 4px; }
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
@@ -113,6 +119,12 @@
 <body>
 
 <div id="toast"></div>
+<div id="gruppo-modal-overlay" onclick="if(event.target===this) chiudiGruppoModal()">
+    <div id="gruppo-modal">
+        <div id="gruppo-modal-header"><h3 id="gruppo-modal-title"></h3><button id="gruppo-modal-close" onclick="chiudiGruppoModal()">&times;</button></div>
+        <div id="gruppo-modal-list"></div>
+    </div>
+</div>
 <header id="main-header">Bainzuretta</header>
 
 <div id="home" class="page active">
@@ -538,12 +550,13 @@
         lista.forEach(a => {
             const d = new Date(a.data);
             const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0 };
+            if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0, items: [] };
             gruppi[k].km += parseFloat(a.distanza) || 0;
             const med = parseFloat(a.media) || 0;
             gruppi[k].ore += med > 0 ? (parseFloat(a.distanza) / med) : 0;
             gruppi[k].count++;
             gruppi[k].dislivello += a.dislivello || 0;
+            gruppi[k].items.push(a);
         });
         return Object.keys(gruppi).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...gruppi[k] }));
     }
@@ -555,23 +568,27 @@
             const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
             const lun = new Date(d); lun.setDate(d.getDate() - day); lun.setHours(0,0,0,0);
             const k = lun.toISOString().slice(0,10);
-            if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0 };
+            if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0, items: [] };
             gruppi[k].km += parseFloat(a.distanza) || 0;
             const med = parseFloat(a.media) || 0;
             gruppi[k].ore += med > 0 ? (parseFloat(a.distanza) / med) : 0;
             gruppi[k].count++;
             gruppi[k].dislivello += a.dislivello || 0;
+            gruppi[k].items.push(a);
         });
         return Object.keys(gruppi).sort((a,b) => b.localeCompare(a)).map(k => ({ key: k, ...gruppi[k] }));
     }
 
+    let gruppiAttivitaMap = {};
+
     function renderGruppoItem(label, g, rank) {
+        gruppiAttivitaMap[g.key] = { items: g.items, label };
         const medPond = g.ore > 0 ? (g.km / g.ore).toFixed(1) : '—';
         const disStr = g.dislivello > 0 ? `<span>&#9650; ${Math.round(g.dislivello).toLocaleString('it-IT')} m</span>` : '';
         const medaglie = { 1: ['g-oro', '&#129351;'], 2: ['g-argento', '&#129352;'], 3: ['g-bronzo', '&#129353;'] };
         const [rankClass, rankIcon] = medaglie[rank] || ['', ''];
         const medagliaHtml = rankIcon ? `<span class="gruppo-medaglia">${rankIcon}</span>` : '';
-        return `<div class="gruppo-item ${rankClass}">
+        return `<div class="gruppo-item ${rankClass}" style="cursor:pointer;" onclick="mostraGruppoAttivita('${g.key}')">
             ${medagliaHtml}
             <div class="gruppo-header"><span>${label}</span><span>${g.km.toFixed(1)} km</span></div>
             <div class="gruppo-sub">
@@ -580,6 +597,24 @@
                 ${disStr}
             </div>
         </div>`;
+    }
+
+    function mostraGruppoAttivita(key) {
+        const dati = gruppiAttivitaMap[key];
+        if (!dati) return;
+        const lista = [...dati.items].sort((a,b) => new Date(b.data) - new Date(a.data));
+        document.getElementById('gruppo-modal-title').textContent = dati.label;
+        const cont = document.getElementById('gruppo-modal-list');
+        cont.innerHTML = lista.map(a => {
+            let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
+            let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
+            return `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
+        }).join('');
+        document.getElementById('gruppo-modal-overlay').classList.add('active');
+    }
+
+    function chiudiGruppoModal() {
+        document.getElementById('gruppo-modal-overlay').classList.remove('active');
     }
 
     function calcolaTopGruppi(gruppi) {
