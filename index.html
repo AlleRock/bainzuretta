@@ -1195,7 +1195,19 @@
         const cad = (a.cadenza && a.cadenza > 0) ? '\nCadenza: ' + Math.round(a.cadenza) + ' rpm' : '';
         const msg = data + nome + '\n\n' + parseFloat(a.distanza).toFixed(1) + ' km\n' + formattaTempo(parseFloat(a.tempo)) + '\n' + parseFloat(a.media).toFixed(2) + ' km/h' + dis + cad;
         if (a.strava_id) {
-            if (confirm(msg + '\n\nVuoi aprire su Strava?')) { window.open('https://www.strava.com/activities/' + a.strava_id, '_blank'); }
+            if (confirm(msg + '\n\nVuoi aprire su Strava?')) {
+                const webUrl = 'https://www.strava.com/activities/' + a.strava_id;
+                const appUrl = 'strava://activities/' + a.strava_id;
+                let tornato = false;
+                document.addEventListener('visibilitychange', function onHide() {
+                    if (document.hidden) { tornato = true; }
+                    document.removeEventListener('visibilitychange', onHide);
+                }, { once: true });
+                window.location.href = appUrl;
+                setTimeout(function () {
+                    if (!tornato) { window.open(webUrl, '_blank'); }
+                }, 800);
+            }
         } else { alert(msg); }
     }
 
