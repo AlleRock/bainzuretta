@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bainzuretta-v82'; // Incrementato la versione per forzare l'aggiornamento su iPhone
+const CACHE_NAME = 'bainzuretta-v83'; // Fix apertura Strava iOS 27 - bump cache
 const ASSETS = [
     './',
     './index.html',
