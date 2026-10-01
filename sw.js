@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bainzuretta-v83'; // Fix apertura Strava iOS 27 - bump cache
+const CACHE_NAME = 'bainzuretta-v84'; // Record storici con categorie - bump cache
 const ASSETS = [
     './',
     './index.html',
