@@ -60,6 +60,7 @@
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .strava-badge { background: #FC4C02; color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+        .btn-strava-mini { background: #FC4C02; color: white; border: none; padding: 6px 9px; border-radius: 8px; font-size: 10px; font-weight: 900; cursor: pointer; white-space: nowrap; }
         .record-section-title { color: var(--primary); font-size: 0.8em; font-weight: 900; margin-bottom: 10px; }
         .target-box-gold {
             background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e) !important;
@@ -234,6 +235,15 @@
     <div class="page-fixed-top">
         <div class="card" style="text-align:center;">
             <h3 style="margin:0; font-size: 1em;">&#128081; RECORD STORICI</h3>
+            <select id="sel-record-cat" onchange="cambiaCategoriaRecord()" style="margin-top:10px;">
+                <option value="dist">DISTANZA</option>
+                <option value="vel">VELOCITÀ</option>
+                <option value="tempo">TEMPO</option>
+                <option value="disliv">DISLIVELLO</option>
+                <option value="cad">CADENZA</option>
+                <option value="cost">COSTANZA</option>
+                <option value="cur">CURIOSITÀ</option>
+            </select>
         </div>
     </div>
     <div class="page-scroll-list"><div id="lista-records"></div></div>
@@ -740,63 +750,32 @@
         });
     }
 
+    function cambiaCategoriaRecord() {
+        localStorage.setItem('bainzuretta_record_cat', document.getElementById('sel-record-cat').value);
+        disegnaRecords();
+        document.getElementById('lista-records').parentElement.scrollTop = 0;
+    }
+
     function disegnaRecords() {
         const c = document.getElementById('lista-records');
+        const sel = document.getElementById('sel-record-cat');
+        let cat = localStorage.getItem('bainzuretta_record_cat') || 'dist';
+        if (![...sel.options].some(o => o.value === cat)) cat = 'dist';
+        sel.value = cat;
         c.innerHTML = '';
         if (!rawData.length) { c.innerHTML = '<div class="card" style="text-align:center;">Nessun dato</div>'; return; }
 
-        const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const fmtShort = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+        const giorniNomi = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+        const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const num = (v) => parseFloat(v) || 0;
+        const kmA = (a) => num(a.distanza);
+        const fmtN = (n, d) => n.toLocaleString('it-IT', {minimumFractionDigits: d, maximumFractionDigits: d});
+        const fmtData = (s) => { const p = s.slice(0,10).split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
+        const fmtOre = (h) => { const tm = Math.round(h * 60); return `${Math.floor(tm/60)} h ${String(tm%60).padStart(2,'0')} m`; };
+        const nomeMese = (k) => `${mesiNomi[parseInt(k.slice(5,7))-1]} ${k.slice(0,4)}`;
 
-        const dati2019 = rawData.filter(a => new Date(a.data).getFullYear() >= 2019);
-        const maxDist = rawData.reduce((a,b) => parseFloat(a.distanza) > parseFloat(b.distanza) ? a : b);
-        const minDist = rawData.reduce((a,b) => parseFloat(a.distanza) < parseFloat(b.distanza) ? a : b);
-        const maxMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) > parseFloat(b.media) ? a : b);
-        const minMedia = rawData.filter(a => parseFloat(a.media) > 0).reduce((a,b) => parseFloat(a.media) < parseFloat(b.media) ? a : b);
-        const maxTempo = rawData.reduce((a,b) => parseFloat(a.tempo) > parseFloat(b.tempo) ? a : b);
-        const conDislivello = dati2019.filter(a => a.dislivello && a.dislivello > 0);
-        const maxDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello > b.dislivello ? a : b) : null;
-        const minDislivello = conDislivello.length ? conDislivello.reduce((a,b) => a.dislivello < b.dislivello ? a : b) : null;
-
-        let pAnni = {}, pMesi = {};
-        rawData.forEach(a => {
-            const y = new Date(a.data).getFullYear();
-            if (!pAnni[y]) pAnni[y] = { km: 0, dislivello: 0, count: 0 };
-            pAnni[y].km += parseFloat(a.distanza) || 0;
-            if (y >= 2019) pAnni[y].dislivello += a.dislivello || 0;
-            pAnni[y].count++;
-            const d = new Date(a.data);
-            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            if (!pMesi[k]) pMesi[k] = { km: 0, dislivello: 0, count: 0 };
-            pMesi[k].km += parseFloat(a.distanza) || 0;
-            if (d.getFullYear() >= 2019) pMesi[k].dislivello += a.dislivello || 0;
-            pMesi[k].count++;
-        });
-
-        const annoBestKm = Object.keys(pAnni).reduce((a,b) => pAnni[a].km > pAnni[b].km ? a : b);
-        const annoMaxUscite = Object.keys(pAnni).reduce((a,b) => pAnni[a].count > pAnni[b].count ? a : b);
-        const meseBestKm = Object.keys(pMesi).reduce((a,b) => pMesi[a].km > pMesi[b].km ? a : b);
-        const [mBY, mBM] = meseBestKm.split('-');
-        const nomeMeseBestKm = new Date(parseInt(mBY), parseInt(mBM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
-        const anniConDislivello = Object.keys(pAnni).filter(y => pAnni[y].dislivello > 0);
-        const annoMaxDislivello = anniConDislivello.length ? anniConDislivello.reduce((a,b) => pAnni[a].dislivello > pAnni[b].dislivello ? a : b) : null;
-        const mesiConDislivello = Object.keys(pMesi).filter(m => pMesi[m].dislivello > 0);
-        const meseMaxDislivello = mesiConDislivello.length ? mesiConDislivello.reduce((a,b) => pMesi[a].dislivello > pMesi[b].dislivello ? a : b) : null;
-
-        let pSett = {};
-        rawData.forEach(a => {
-            const d = new Date(a.data);
-            const startOfYear = new Date(d.getFullYear(), 0, 1);
-            const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-            const k = `${d.getFullYear()}-W${String(weekNum).padStart(2,'0')}`;
-            if (!pSett[k]) pSett[k] = { km: 0, count: 0, year: d.getFullYear(), week: weekNum };
-            pSett[k].km += parseFloat(a.distanza) || 0;
-            pSett[k].count++;
-        });
-        const settBestKm = Object.keys(pSett).reduce((a,b) => pSett[a].km > pSett[b].km ? a : b);
-        const settMaxUscite = Object.keys(pSett).reduce((a,b) => pSett[a].count > pSett[b].count ? a : b);
-
+        // ---- Settimane lunedì-domenica + strisce (calcolo storico, NON modificare) ----
         const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
             const d = new Date(dateStr);
@@ -823,221 +802,224 @@
         }
         tutteStrisce.push({ len: curLen, start: curStart, end: settimaneAssolute[settimaneAssolute.length-1] });
         tutteStrisce.sort((a,b) => b.len - a.len);
-        window._top5_strisce = tutteStrisce.slice(0, 5);
         const settOggi = getAbsWeek(oggi.toISOString());
         let strisciaAttuale = 0, sw = settOggi;
         const setSet = new Set(settimaneAssolute);
         while (setSet.has(sw)) { strisciaAttuale++; sw--; }
+        // ---- fine calcolo strisce ----
 
-        const giorni = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
-        let pGiorni = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
-        rawData.forEach(a => { pGiorni[new Date(a.data).getDay()]++; });
-        const giornoCampione = Object.keys(pGiorni).reduce((a,b) => pGiorni[a] > pGiorni[b] ? a : b);
-        let pMesiAnno = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0};
-        rawData.forEach(a => { pMesiAnno[new Date(a.data).getMonth()]++; });
-        const meseCampione = Object.keys(pMesiAnno).reduce((a,b) => pMesiAnno[a] > pMesiAnno[b] ? a : b);
+        const labSett = (k) => `${getMondayFromAbs(+k)} – ${getSundayFromAbs(+k)}`;
+        const kSett = (a) => getAbsWeek(a.data);
+        const kMese = (a) => a.data.slice(0,7);
+        const kAnno = (a) => a.data.slice(0,4);
+        const subNome = (a) => a.nome ? esc(a.nome) : '';
+        const subNomeKm = (a) => [subNome(a), fmtN(kmA(a),1) + ' km'].filter(Boolean).join(' · ');
 
-        const totUscite = rawData.length;
-        const totKmGen = rawData.reduce((s,a) => s + (parseFloat(a.distanza) || 0), 0);
-        const mediaKmUscita = totUscite > 0 ? (totKmGen / totUscite) : 0;
-        const mediaUsciteMese = Object.keys(pMesi).length > 0 ? (totUscite / Object.keys(pMesi).length) : 0;
+        // classifica di singole attività
+        const perAttivita = (arr, keyFn, valFn, subFn = subNome, desc = true) =>
+            [...arr].sort((a,b) => desc ? keyFn(b) - keyFn(a) : keyFn(a) - keyFn(b)).slice(0,5)
+                .map(a => ({ t: fmtData(a.data), sub: subFn(a), val: valFn(a), act: a }));
+        // classifica di gruppi (settimane / mesi / anni)
+        const perGruppo = (arr, keyFn, valFn, labelFn, fmtVal) => {
+            const m = {};
+            arr.forEach(a => { const k = keyFn(a); m[k] = (m[k] || 0) + valFn(a); });
+            return Object.keys(m).map(k => ({ k, v: m[k] })).sort((x,y) => y.v - x.v).slice(0,5)
+                .map(o => ({ t: labelFn(o.k), val: fmtVal(o.v) }));
+        };
+        const elenco = (arr) => arr.map(a => ({ t: fmtData(a.data), sub: subNome(a), val: `${fmtN(kmA(a),1)} km`, act: a }));
+        const fascia = (min, max, inclMax) => rawData.filter(a => kmA(a) >= min && (max === null || (inclMax ? kmA(a) <= max : kmA(a) < max)));
 
-        function actRow(emoji, titolo, attivita, valore, top5tipo) {
-            if (!attivita) return '';
-            const data = fmt(attivita.data);
-            const nome = attivita.nome ? ` — ${attivita.nome}` : '';
-            return `<div class="rank-item">
-                <div class="rank-info" style="cursor:pointer;" data-act="${attivita.id}" data-titolo="${titolo}">
-                    <span>${emoji} ${titolo}<br><small style="color:#888;font-weight:400;">${data}${nome}</small></span>
-                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-top5="${top5tipo}" data-titolo="${titolo}">TOP 5</button></span>
-                </div>
-            </div>`;
-        }
-
-        function statRow(emoji, titolo, valore, statTipo) {
-            return `<div class="rank-item">
-                <div class="rank-info" style="cursor:pointer;" data-stat="${statTipo}" data-titolo="${titolo}">
-                    <span>${emoji} ${titolo}</span>
-                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px;">${valore} <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" data-stat="${statTipo}" data-titolo="${titolo}">TOP 5</button></span>
-                </div>
-            </div>`;
-        }
-
-        let html = '';
-        html += '<div class="card"><div class="record-section-title">DISTANZA</div>';
-        html += actRow('&#127942;', 'Giro piu lungo', maxDist, `${parseFloat(maxDist.distanza).toFixed(1)} km`, 'dist_max');
-        html += actRow('&#128138;', 'Giro piu corto', minDist, `${parseFloat(minDist.distanza).toFixed(1)} km`, 'dist_min');
-        html += '</div>';
-        html += '<div class="card"><div class="record-section-title">VELOCITA</div>';
-        html += actRow('&#9889;', 'Media piu alta', maxMedia, `${parseFloat(maxMedia.media).toFixed(2)} km/h`, 'media_max');
-        html += actRow('&#128034;', 'Media piu bassa', minMedia, `${parseFloat(minMedia.media).toFixed(2)} km/h`, 'media_min');
-        html += '</div>';
-        html += '<div class="card"><div class="record-section-title">TEMPO IN SELLA</div>';
-        html += actRow('&#9201;', 'Uscita piu lunga', maxTempo, formattaTempo(parseFloat(maxTempo.tempo)), 'tempo_max');
-        html += '</div>';
-        if (maxDislivello) {
-            html += '<div class="card"><div class="record-section-title">DISLIVELLO</div>';
-            html += actRow('&#127956;', 'Piu dislivello', maxDislivello, `${maxDislivello.dislivello.toFixed(0)} m`, 'disliv_max');
-            html += actRow('&#127958;', 'Meno dislivello', minDislivello, `${minDislivello.dislivello.toFixed(0)} m`, 'disliv_min');
-            html += '</div>';
-        }
-        const conCadenza = rawData.filter(a => a.cadenza && a.cadenza > 0);
-        const maxCadenza = conCadenza.length ? conCadenza.reduce((a,b) => a.cadenza > b.cadenza ? a : b) : null;
-        if (maxCadenza) {
-            window._top5_cadenza = [...conCadenza].sort((a,b) => b.cadenza - a.cadenza).slice(0,5);
-            html += '<div class="card"><div class="record-section-title">CADENZA</div>';
-            html += actRow('&#129354;', 'Cadenza piu alta', maxCadenza, `${Math.round(maxCadenza.cadenza)} rpm`, 'cadenza_max');
-            html += '</div>';
-        }
-        html += '<div class="card"><div class="record-section-title">STATISTICHE ANNI</div>';
-        html += statRow('&#127942;', 'Anno con piu km', `${annoBestKm} — ${pAnni[annoBestKm].km.toFixed(0)} km`, 'anni_km');
-        html += statRow('&#128336;', 'Anno con piu uscite', `${annoMaxUscite} — ${pAnni[annoMaxUscite].count} uscite`, 'anni_uscite');
-        if (annoMaxDislivello) html += statRow('&#127956;', 'Anno con piu dislivello', `${annoMaxDislivello} — ${pAnni[annoMaxDislivello].dislivello.toFixed(0)} m`, 'anni_dislivello');
-        html += '</div>';
-        html += '<div class="card"><div class="record-section-title">STATISTICHE MESI</div>';
-        html += statRow('&#127942;', 'Mese con piu km', `${nomeMeseBestKm} — ${pMesi[meseBestKm].km.toFixed(0)} km`, 'mesi_km');
-        if (meseMaxDislivello) {
-            const [mDY, mDM] = meseMaxDislivello.split('-');
-            const nomeMeseDislivello = new Date(parseInt(mDY), parseInt(mDM)-1, 1).toLocaleDateString('it-IT', {month:'long', year:'numeric'});
-            html += statRow('&#127956;', 'Mese con piu dislivello', `${nomeMeseDislivello} — ${pMesi[meseMaxDislivello].dislivello.toFixed(0)} m`, 'mesi_dislivello');
-        }
-        html += '</div>';
-        html += '<div class="card"><div class="record-section-title">STATISTICHE SETTIMANE</div>';
-        html += statRow('&#127942;', 'Settimana con piu km', `Sett. ${pSett[settBestKm].week} del ${pSett[settBestKm].year} — ${pSett[settBestKm].km.toFixed(0)} km`, 'sett_km');
-        html += statRow('&#128336;', 'Settimana con piu uscite', `Sett. ${pSett[settMaxUscite].week} del ${pSett[settMaxUscite].year} — ${pSett[settMaxUscite].count} uscite`, 'sett_uscite');
-        html += '</div>';
-        html += '<div class="card"><div class="record-section-title">MEDIE GENERALI</div>';
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128200; Media km per uscita</span><span style="color:var(--primary);">${mediaKmUscita.toFixed(1)} km</span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Media uscite al mese</span><span style="color:var(--primary);">${mediaUsciteMese.toFixed(1)} uscite</span></div></div>`;
-        html += '</div>';
-
-        function recordFascia(titolo, minKm, maxKm) {
-            const fascia = rawData.filter(a => parseFloat(a.distanza) >= minKm && parseFloat(a.distanza) <= maxKm && a.dislivello !== undefined && new Date(a.data).getFullYear() >= 2019);
-            if (!fascia.length) return '';
-            const pianura = fascia.filter(a => (a.dislivello || 0) < 1000);
-            const collina = fascia.filter(a => (a.dislivello || 0) >= 1000 && (a.dislivello || 0) < 2000);
-            const montagna = fascia.filter(a => (a.dislivello || 0) >= 2000);
-            const bestTempo = (arr) => arr.length ? arr.reduce((a,b) => parseFloat(a.tempo) < parseFloat(b.tempo) ? a : b) : null;
-            const bP = bestTempo(pianura), bC = bestTempo(collina), bM = bestTempo(montagna);
-            if (!bP && !bC && !bM) return '';
-            const rigaFascia = (best, arr, emoji, label, sottoLabel, fasciaKey) => {
-                if (!best) return '';
-                const key = `_top5_${fasciaKey}`;
-                window[key] = arr.slice().sort((a,b) => parseFloat(a.tempo) - parseFloat(b.tempo)).slice(0,5);
-                return `<div class="rank-item"><div class="rank-info">
-                    <span style="cursor:pointer;" onclick="apriAttivita(${best.id})">${emoji} ${label} <small style="color:#888;">${sottoLabel}</small><br><small style="color:#888;font-weight:400;">${new Date(best.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${best.nome?' — '+best.nome:''}</small></span>
-                    <span style="color:var(--primary); display:flex; align-items:center; gap:6px; flex-direction:column; align-items:flex-end;">
-                        <span onclick="apriAttivita(${best.id})" style="cursor:pointer;">${formattaTempo(parseFloat(best.tempo))}<br><small>${parseFloat(best.distanza).toFixed(1)}km | ${(best.dislivello||0).toFixed(0)}m</small></span>
-                        <button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" class="btn-top5-fascia" data-key="${key}" data-label="${label} ${titolo}">TOP 5</button>
-                    </span>
-                </div></div>`;
-            };
-            let rows = '';
-            rows += rigaFascia(bP, pianura, '&#127963;', 'Pianura', '&lt;1000m dislivello', `${minKm}_${maxKm}_p`);
-            rows += rigaFascia(bC, collina, '&#9968;', 'Collinare', '1000-2000m', `${minKm}_${maxKm}_c`);
-            rows += rigaFascia(bM, montagna, '&#127956;', 'Montagna', '&gt;2000m', `${minKm}_${maxKm}_m`);
-            return `<div class="card"><div class="record-section-title">RECORD ${titolo} (tempo migliore)</div>${rows}</div>`;
-        }
-
-        html += recordFascia('50-60 KM', 50, 60);
-        html += recordFascia('100-110 KM', 100, 110);
-
-        let finestre4gg = [];
-        const dateMap = {};
-        rawData.forEach(a => { const giorno = a.data.slice(0, 10); dateMap[giorno] = (dateMap[giorno] || 0) + (parseFloat(a.distanza) || 0); });
-        const dateOrdinate = Object.keys(dateMap).sort();
-        for (let i = 0; i < dateOrdinate.length; i++) {
-            const d0 = new Date(dateOrdinate[i]);
-            const d3 = new Date(d0); d3.setDate(d0.getDate() + 3);
-            let sumFin = 0, lastD = null;
-            for (let k = i; k < dateOrdinate.length; k++) {
-                const dk = new Date(dateOrdinate[k]);
-                if (dk > d3) break;
-                sumFin += dateMap[dateOrdinate[k]]; lastD = dateOrdinate[k];
+        // finestre mobili di N giorni (qualsiasi intervallo consecutivo, non solo settimane di calendario)
+        const finestreMobili = (N) => {
+            const dayKm = {};
+            rawData.forEach(a => { const g = a.data.slice(0,10); dayKm[g] = (dayKm[g] || 0) + kmA(a); });
+            const toNum = (g) => Math.floor(Date.UTC(+g.slice(0,4), +g.slice(5,7)-1, +g.slice(8,10)) / 86400000);
+            const fmtGN = (n) => new Date(n * 86400000).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'});
+            const giorni = Object.keys(dayKm).map(g => ({ n: toNum(g), km: dayKm[g] })).sort((a,b) => a.n - b.n);
+            const fin = [];
+            for (let i = 0; i < giorni.length; i++) {
+                let s = 0;
+                for (let k = i; k < giorni.length && giorni[k].n < giorni[i].n + N; k++) s += giorni[k].km;
+                fin.push({ from: giorni[i].n, to: giorni[i].n + N - 1, km: s });
             }
-            if (sumFin > 0) finestre4gg.push({ km: sumFin, dal: dateOrdinate[i], al: lastD || dateOrdinate[i] });
-        }
-        finestre4gg.sort((a, b) => b.km - a.km);
-        const top5_4gg = [];
-        for (const f of finestre4gg) {
-            const overlaps = top5_4gg.some(t => f.dal <= t.al && f.al >= t.dal);
-            if (!overlaps) top5_4gg.push(f);
-            if (top5_4gg.length >= 5) break;
-        }
-        const max4gg = top5_4gg[0] ? top5_4gg[0].km : 0;
-        const max4ggData = top5_4gg[0] ? `${top5_4gg[0].dal.split('-').reverse().join('/')} – ${top5_4gg[0].al.split('-').reverse().join('/')}` : '';
+            fin.sort((a,b) => b.km - a.km);
+            const top = [];
+            for (const f of fin) {
+                if (!top.some(t => f.from <= t.to && f.to >= t.from)) top.push(f);
+                if (top.length >= 5) break;
+            }
+            return top.map(f => ({ t: `dal ${fmtGN(f.from)} al ${fmtGN(f.to)}`, val: `${fmtN(f.km,0)} km` }));
+        };
 
-        html += '<div class="card"><div class="record-section-title">CURIOSITA</div>';
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128197; Giorno piu pedalato</span><span style="color:var(--primary);">${giorni[giornoCampione]} — ${pGiorni[giornoCampione]} uscite</span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#127793; Mese piu pedalato</span><span style="color:var(--primary);">${mesiNomi[meseCampione]} — ${pMesiAnno[meseCampione]} uscite</span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia sett. consecutive</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span>${maxStriscia} sett.<br><small style="color:#888;font-weight:400;">dal ${getMondayFromAbs(maxStart)} al ${getSundayFromAbs(maxEnd)}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-strisce">TOP 5</button></span></div></div>`;
-        html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Striscia attuale</span><span style="color:var(--primary);">${strisciaAttuale > 0 ? strisciaAttuale + ' sett.<br><small style="color:#888;font-weight:400;">dal ' + getMondayFromAbs(settOggi - strisciaAttuale + 1) + '</small>' : '—'}</span></div></div>`;
-        if (max4gg > 0) {
-            window._top5_4gg = top5_4gg;
-            html += `<div class="rank-item"><div class="rank-info"><span>&#128293; Max km in 4 giorni</span><span style="color:var(--primary); display:flex; align-items:center; gap:6px;"><span><b>${Math.round(max4gg)} km</b><br><small style="color:#888;font-weight:400;">${max4ggData}</small></span><button style="background:var(--primary);color:white;border:none;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;" id="btn-top5-4gg">TOP 5</button></span></div></div>`;
-        }
+        const R = (emoji, titolo, entries, extra) => Object.assign({ emoji, titolo, entries }, extra || {});
+        const dati2019 = rawData.filter(a => parseInt(a.data.slice(0,4)) >= 2019 && a.dislivello && a.dislivello > 0);
+        const conCad = rawData.filter(a => a.cadenza && a.cadenza > 0);
+        const conMedia = rawData.filter(a => num(a.media) > 0);
+        const velVal = (a) => `${num(a.media).toFixed(2)} km/h`;
+        const cadVal = (a) => `${fmtN(a.cadenza,1)} rpm`;
+        const cadKey = (a) => a.cadenza;
+
+        const CATEGORIE = {
+            dist: () => {
+                const l100 = fascia(100, null).sort((a,b) => kmA(b) - kmA(a));
+                const l150 = fascia(150, null).sort((a,b) => kmA(b) - kmA(a));
+                return {
+                    titolo: 'DISTANZA', nota: '',
+                    recs: [
+                        R('🏆', 'Giro più lungo', perAttivita(rawData, kmA, a => `${fmtN(kmA(a),1)} km`)),
+                        R('💯', 'Uscite ≥100 km', elenco(l100), { tutte: true, val: `${l100.length} uscite` }),
+                        R('🚀', 'Uscite ≥150 km', elenco(l150), { tutte: true, val: `${l150.length} uscite` }),
+                        R('📅', 'Settimana con più km', perGruppo(rawData, kSett, kmA, labSett, v => `${fmtN(v,0)} km`)),
+                        R('🗓️', 'Mese con più km', perGruppo(rawData, kMese, kmA, nomeMese, v => `${fmtN(v,0)} km`)),
+                        R('🏅', 'Anno con più km', perGruppo(rawData, kAnno, kmA, k => k, v => `${fmtN(v,0)} km`)),
+                        R('🔄', 'Max km in 7 giorni mobili', finestreMobili(7))
+                    ]
+                };
+            },
+            vel: () => ({
+                titolo: 'VELOCITÀ', nota: '',
+                recs: [
+                    R('⚡', 'Media più alta in assoluto', perAttivita(conMedia, a => num(a.media), velVal, subNomeKm)),
+                    R('🚴', 'Media più alta su uscite 30–49,9 km', perAttivita(fascia(30, 50).filter(a => num(a.media) > 0), a => num(a.media), velVal, subNomeKm)),
+                    R('🚴', 'Media più alta su uscite 50–99,9 km', perAttivita(fascia(50, 100).filter(a => num(a.media) > 0), a => num(a.media), velVal, subNomeKm)),
+                    R('🚴', 'Media più alta su uscite ≥100 km', perAttivita(fascia(100, null).filter(a => num(a.media) > 0), a => num(a.media), velVal, subNomeKm)),
+                    R('🎯', 'Miglior media su uscite 50–60 km', perAttivita(fascia(50, 60, true).filter(a => num(a.media) > 0), a => num(a.media), velVal, subNomeKm)),
+                    R('🎯', 'Miglior media su uscite 100–110 km', perAttivita(fascia(100, 110, true).filter(a => num(a.media) > 0), a => num(a.media), velVal, subNomeKm))
+                ]
+            }),
+            tempo: () => ({
+                titolo: 'TEMPO', nota: '',
+                recs: [
+                    R('⏱️', 'Uscita più lunga', perAttivita(rawData, a => num(a.tempo), a => formattaTempo(num(a.tempo)), subNomeKm)),
+                    R('📅', 'Settimana con più ore in sella', perGruppo(rawData, kSett, a => num(a.tempo), labSett, fmtOre)),
+                    R('🗓️', 'Mese con più ore in sella', perGruppo(rawData, kMese, a => num(a.tempo), nomeMese, fmtOre)),
+                    R('🏅', 'Anno con più ore in sella', perGruppo(rawData, kAnno, a => num(a.tempo), k => k, fmtOre))
+                ]
+            }),
+            disliv: () => ({
+                titolo: 'DISLIVELLO', nota: 'Dislivello considerato dal 2019',
+                recs: [
+                    R('🏔️', 'Più dislivello in un’uscita', perAttivita(dati2019, a => a.dislivello, a => `${fmtN(a.dislivello,0)} m`, subNomeKm)),
+                    R('📈', 'Maggior densità di salita (min 20 km)', perAttivita(dati2019.filter(a => kmA(a) >= 20), a => a.dislivello / kmA(a), a => `${fmtN(a.dislivello / kmA(a),1)} m D+/km`, a => [subNome(a), `${fmtN(kmA(a),1)} km · ${fmtN(a.dislivello,0)} m`].filter(Boolean).join(' · '))),
+                    R('📅', 'Settimana con più dislivello', perGruppo(dati2019, kSett, a => a.dislivello, labSett, v => `${fmtN(v,0)} m`)),
+                    R('🗓️', 'Mese con più dislivello', perGruppo(dati2019, kMese, a => a.dislivello, nomeMese, v => `${fmtN(v,0)} m`)),
+                    R('🏅', 'Anno con più dislivello', perGruppo(dati2019, kAnno, a => a.dislivello, k => k, v => `${fmtN(v,0)} m`))
+                ]
+            }),
+            cad: () => {
+                const s = {}, n = {};
+                conCad.forEach(a => { const y = a.data.slice(0,4); s[y] = (s[y] || 0) + a.cadenza; n[y] = (n[y] || 0) + 1; });
+                const anniCad = Object.keys(s).map(y => ({ y, v: s[y] / n[y], n: n[y] })).sort((a,b) => b.v - a.v).slice(0,5)
+                    .map(o => ({ t: o.y, sub: `${o.n} uscite con dato`, val: `${fmtN(o.v,1)} rpm` }));
+                return {
+                    titolo: 'CADENZA', nota: 'Solo attività con dato di cadenza',
+                    recs: [
+                        R('🦵', 'Cadenza media più alta', perAttivita(conCad, cadKey, cadVal, subNomeKm)),
+                        R('🦵', 'Cadenza media più alta su uscite 30–49,9 km', perAttivita(fascia(30, 50).filter(a => a.cadenza > 0), cadKey, cadVal, subNomeKm)),
+                        R('🦵', 'Cadenza media più alta su uscite 50–99,9 km', perAttivita(fascia(50, 100).filter(a => a.cadenza > 0), cadKey, cadVal, subNomeKm)),
+                        R('🦵', 'Cadenza media più alta su uscite ≥100 km', perAttivita(fascia(100, null).filter(a => a.cadenza > 0), cadKey, cadVal, subNomeKm)),
+                        R('🏅', 'Anno con cadenza media più alta', anniCad)
+                    ]
+                };
+            },
+            cost: () => ({
+                titolo: 'COSTANZA', nota: '',
+                recs: [
+                    R('🔥', 'Striscia più lunga di settimane consecutive', tutteStrisce.slice(0,5).map(s => ({ t: `dal ${getMondayFromAbs(s.start)} al ${getSundayFromAbs(s.end)}`, val: `${s.len} sett.` }))),
+                    R('⏳', 'Striscia attuale', [], {
+                        val: strisciaAttuale > 0 ? `${strisciaAttuale} sett.` : '—',
+                        sub: strisciaAttuale > 0 ? `dal ${getMondayFromAbs(settOggi - strisciaAttuale + 1)}` : ''
+                    }),
+                    R('📅', 'Settimana con più uscite', perGruppo(rawData, kSett, () => 1, labSett, v => `${v} uscite`)),
+                    R('🗓️', 'Mese con più uscite', perGruppo(rawData, kMese, () => 1, nomeMese, v => `${v} uscite`)),
+                    R('🏅', 'Anno con più uscite', perGruppo(rawData, kAnno, () => 1, k => k, v => `${v} uscite`))
+                ]
+            }),
+            cur: () => {
+                const perGiorno = {}, perMeseAnno = {};
+                rawData.forEach(a => {
+                    const g = new Date(a.data.slice(0,10) + 'T00:00:00Z').getUTCDay();
+                    perGiorno[g] = (perGiorno[g] || 0) + 1;
+                    const m = parseInt(a.data.slice(5,7)) - 1;
+                    perMeseAnno[m] = (perMeseAnno[m] || 0) + 1;
+                });
+                const classifica = (obj, nomi) => Object.keys(obj).map(k => ({ k, v: obj[k] })).sort((a,b) => b.v - a.v).slice(0,5)
+                    .map(o => ({ t: nomi[+o.k], val: `${o.v} uscite` }));
+                const totKm = rawData.reduce((s,a) => s + kmA(a), 0);
+                const primo = rawData.reduce((m,a) => a.data < m ? a.data : m, rawData[0].data);
+                const mesiTot = (oggi.getFullYear() - parseInt(primo.slice(0,4))) * 12 + (oggi.getMonth() - (parseInt(primo.slice(5,7)) - 1)) + 1;
+                const n100 = fascia(100, null).length, n150 = fascia(150, null).length;
+                return {
+                    titolo: 'CURIOSITÀ', nota: '',
+                    recs: [
+                        R('📆', 'Giorno della settimana più pedalato', classifica(perGiorno, giorniNomi)),
+                        R('🌱', 'Mese dell’anno più pedalato', classifica(perMeseAnno, mesiNomi)),
+                        R('🔥', 'Max km in 4 giorni', finestreMobili(4)),
+                        R('📏', 'Media km per uscita', [], { val: `${fmtN(totKm / rawData.length,1)} km` }),
+                        R('📊', 'Media uscite per mese', [], { val: `${fmtN(rawData.length / Math.max(1, mesiTot),1)} uscite` }),
+                        R('💯', 'Numero di uscite ≥100 km', [], { val: `${n100}` }),
+                        R('🚀', 'Numero di uscite ≥150 km', [], { val: `${n150}` })
+                    ]
+                };
+            }
+        };
+
+        const def = CATEGORIE[cat]();
+        window._recList = def.recs;
+        let html = `<div class="card"><div class="record-section-title">${def.titolo}</div>`;
+        def.recs.forEach((d, i) => {
+            const best = d.entries[0];
+            const val = d.val !== undefined ? d.val : (best ? best.val : '—');
+            let sub = d.sub || '';
+            if (d.val === undefined && best) sub = best.t + (best.sub ? ' — ' + best.sub : '');
+            const click = d.entries.length > 0;
+            html += `<div class="rank-item"${click ? ` data-rec="${i}" style="cursor:pointer;"` : ''}>
+                <div class="rank-info">
+                    <span>${d.emoji} ${d.titolo}${sub ? `<br><small style="color:#888;font-weight:400;">${sub}</small>` : ''}</span>
+                    <span style="color:var(--primary); text-align:right;">${val}${click ? ' <small style="color:#bbb;">&#8250;</small>' : ''}</span>
+                </div></div>`;
+        });
         html += '</div>';
-
+        if (def.nota) html += `<div style="font-size:0.7em; color:#888; text-align:center; margin-bottom:10px;">${def.nota}</div>`;
         c.innerHTML = html;
+        c.onclick = (e) => {
+            const r = e.target.closest('[data-rec]');
+            if (r) apriTop5Record(parseInt(r.dataset.rec));
+        };
+    }
 
-        c.querySelectorAll('[data-act]').forEach(el => {
-            el.addEventListener('click', (e) => { if (e.target.closest('button')) return; apriAttivita(parseInt(el.dataset.act)); });
-        });
-        c.querySelectorAll('button[data-top5]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const tipo = btn.dataset.top5, titolo = btn.dataset.titolo;
-                let righe = '';
-                if (tipo === 'dist_max') righe = [...rawData].sort((a,b) => b.distanza - a.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
-                else if (tipo === 'dist_min') righe = [...rawData].sort((a,b) => a.distanza - b.distanza).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.distanza).toFixed(1)} km`).join('\n');
-                else if (tipo === 'media_max') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
-                else if (tipo === 'media_min') righe = [...rawData].filter(a => a.media > 0).sort((a,b) => a.media - b.media).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${parseFloat(a.media).toFixed(2)} km/h`).join('\n');
-                else if (tipo === 'tempo_max') righe = [...rawData].sort((a,b) => b.tempo - a.tempo).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${formattaTempo(parseFloat(a.tempo))}`).join('\n');
-                else if (tipo === 'disliv_max') righe = [...dati2019].filter(a => a.dislivello > 0).sort((a,b) => b.dislivello - a.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
-                else if (tipo === 'disliv_min') righe = [...dati2019].filter(a => a.dislivello > 0).sort((a,b) => a.dislivello - b.dislivello).slice(0,5).map((a,i) => `${i+1}. ${fmtShort(a.data)}: ${a.dislivello.toFixed(0)} m`).join('\n');
-                else if (tipo === 'cadenza_max') righe = (window._top5_cadenza || []).map((a,i) => `${i+1}. ${fmtShort(a.data)}${a.nome?' — '+a.nome:''}: ${Math.round(a.cadenza)} rpm`).join('\n');
-                alert(`TOP 5 — ${titolo}\n\n${righe}`);
-            });
-        });
-        c.querySelectorAll('button[data-stat]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const statTipo = btn.dataset.stat, titolo = btn.dataset.titolo;
-                let righe = '';
-                if (statTipo === 'anni_km') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].km - pAnni[a].km).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].km.toFixed(0)} km`).join('\n');
-                else if (statTipo === 'anni_uscite') righe = Object.keys(pAnni).sort((a,b) => pAnni[b].count - pAnni[a].count).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].count} uscite`).join('\n');
-                else if (statTipo === 'anni_dislivello') righe = Object.keys(pAnni).filter(k => pAnni[k].dislivello > 0).sort((a,b) => pAnni[b].dislivello - pAnni[a].dislivello).slice(0,5).map((k,i) => `${i+1}. ${k}: ${pAnni[k].dislivello.toFixed(0)} m`).join('\n');
-                else if (statTipo === 'mesi_km') righe = Object.keys(pMesi).sort((a,b) => pMesi[b].km - pMesi[a].km).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].km.toFixed(0)} km`; }).join('\n');
-                else if (statTipo === 'mesi_dislivello') righe = Object.keys(pMesi).filter(k => pMesi[k].dislivello > 0).sort((a,b) => pMesi[b].dislivello - pMesi[a].dislivello).slice(0,5).map((k,i) => { const [y,m] = k.split('-'); return `${i+1}. ${mesiNomi[parseInt(m)-1]} ${y}: ${pMesi[k].dislivello.toFixed(0)} m`; }).join('\n');
-                else if (statTipo === 'sett_km') righe = Object.keys(pSett).sort((a,b) => pSett[b].km - pSett[a].km).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].km.toFixed(0)} km`).join('\n');
-                else if (statTipo === 'sett_uscite') righe = Object.keys(pSett).sort((a,b) => pSett[b].count - pSett[a].count).slice(0,5).map((k,i) => `${i+1}. Sett. ${pSett[k].week} del ${pSett[k].year}: ${pSett[k].count} uscite`).join('\n');
-                alert(`TOP 5 — ${titolo}\n\n${righe}`);
-            });
-        });
-        c.querySelectorAll('.btn-top5-fascia').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const arr = window[btn.dataset.key] || [], label = btn.dataset.label;
-                const righe = arr.map((a,i) => `${i+1}. ${new Date(a.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}${a.nome?' — '+a.nome:''}: ${formattaTempo(parseFloat(a.tempo))} (${parseFloat(a.distanza).toFixed(1)} km)`).join('\n');
-                alert(`TOP 5 — ${label}\n\n${righe}`);
-            });
-        });
-        const btnStrisce = c.querySelector('#btn-top5-strisce');
-        if (btnStrisce) {
-            btnStrisce.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const righe = (window._top5_strisce || []).map((s, i) => `${i+1}. ${getMondayFromAbs(s.start)} – ${getSundayFromAbs(s.end)}: ${s.len} sett.`).join('\n');
-                alert(`TOP 5 — Strisce settimane consecutive\n\n${righe}`);
-            });
-        }
-        const btn4gg = c.querySelector('#btn-top5-4gg');
-        if (btn4gg) {
-            btn4gg.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const righe = (window._top5_4gg || []).map((f, i) => `${i+1}. ${f.dal.split('-').reverse().join('/')} – ${f.al.split('-').reverse().join('/')}: ${Math.round(f.km)} km`).join('\n');
-                alert(`TOP 5 — Max km in 4 giorni\n\n${righe}`);
-            });
-        }
+    function apriTop5Record(i) {
+        const d = (window._recList || [])[i];
+        if (!d || !d.entries.length) return;
+        const lista = d.tutte ? d.entries : d.entries.slice(0,5);
+        document.getElementById('gruppo-modal-title').textContent = d.tutte ? `${d.titolo} (${lista.length})` : `TOP 5 — ${d.titolo}`;
+        const medaglie = ['🥇','🥈','🥉','4.','5.'];
+        document.getElementById('gruppo-modal-list').innerHTML = lista.map((e, k) => {
+            const pos = d.tutte ? `${k+1}.` : medaglie[k];
+            const strava = (e.act && e.act.strava_id)
+                ? `<button class="btn-strava-mini" onclick="apriStrava('${e.act.strava_id}')">STRAVA</button>` : '';
+            return `<div class="rank-item" style="display:flex; align-items:center; gap:8px;">
+                <div style="min-width:28px; font-weight:900; font-size:0.9em;">${pos}</div>
+                <div style="flex:1; font-size:0.82em; font-weight:800; line-height:1.3;">${e.t}${e.sub ? `<br><small style="color:#888; font-weight:400;">${e.sub}</small>` : ''}</div>
+                <div style="color:var(--primary); font-weight:800; font-size:0.85em; text-align:right;">${e.val}</div>
+                ${strava}
+            </div>`;
+        }).join('');
+        document.getElementById('gruppo-modal-overlay').classList.add('active');
+    }
+
+    function apriStrava(stravaId) {
+        const webUrl = 'https://www.strava.com/activities/' + stravaId;
+        const appUrl = 'strava://activities/' + stravaId;
+        let tornato = false;
+        document.addEventListener('visibilitychange', function onHide() {
+            if (document.hidden) { tornato = true; }
+            document.removeEventListener('visibilitychange', onHide);
+        }, { once: true });
+        window.location.href = appUrl;
+        setTimeout(function () {
+            if (!tornato) { window.open(webUrl, '_blank'); }
+        }, 800);
     }
 
     async function salvaManuale() {
