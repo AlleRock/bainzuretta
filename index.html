@@ -159,6 +159,7 @@
             <input type="number" step="0.01" id="in-dist" placeholder="KM" style="margin-bottom:10px;">
             <input type="text" id="in-time" placeholder="HH:MM:SS" style="margin-bottom:15px;">
             <button class="btn-add" id="btn-save" onclick="salvaManuale()">SALVA</button>
+            <button class="btn-add" id="btn-annulla" onclick="annullaModifica()" style="display:none; background:#888; margin-top:8px;">ANNULLA MODIFICA</button>
         </div>
         <div class="card" style="text-align:center;">
             <div id="strava-section"></div>
@@ -264,6 +265,7 @@
     const STRAVA_SCOPE = 'activity:read_all';
 
     let rawData = [];
+    let editingId = null; // id dell'attivita' manuale in modifica: resta in rawData finche' non si preme AGGIORNA
     const oggi = new Date();
     const currY = oggi.getFullYear();
     let myTarget = parseInt(localStorage.getItem('bainzuretta_target_' + currY)) || 5000;
@@ -348,73 +350,174 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'refresh_token', refresh_token: stravaToken.refresh_token })
             });
-            if (!resp.ok) return false;
+            if (resp.status === 400 || resp.status === 401 || resp.status === 403) return false; // token non piu' valido
+            if (!resp.ok) return 'api';
             const data = await resp.json();
             stravaToken = { ...stravaToken, access_token: data.access_token, refresh_token: data.refresh_token, expires_at: data.expires_at };
             saveStravaToken(stravaToken);
             return true;
-        } catch { return false; }
+        } catch { return 'rete'; }
     }
 
     async function getValidToken() {
+        window._stravaErrTipo = null;
         if (!stravaToken) return null;
         if (stravaToken.expires_at && Date.now() / 1000 > stravaToken.expires_at - 300) {
             const ok = await refreshStravaToken();
+            if (ok === 'rete' || ok === 'api') { window._stravaErrTipo = ok; return null; } // problema temporaneo: il token NON viene cancellato
             if (!ok) { clearStravaToken(); aggiornaStravaSection(); return null; }
         }
         return stravaToken.access_token;
     }
 
+    class StravaErr extends Error { constructor(tipo) { super(tipo); this.tipo = tipo; } }
+
+    function msgErroreStrava(e) {
+        const t = e && e.tipo;
+        if (t === 'auth') return 'Strava: sessione scaduta o non valida, riconnetti Strava';
+        if (t === 'limite') return 'Strava: limite richieste raggiunto, riprova tra qualche minuto';
+        if (t === 'rete') return 'Nessuna connessione a Strava, riprova piu\' tardi';
+        if (t === 'api') return 'Risposta di Strava non valida';
+        return 'Errore sincronizzazione';
+    }
+
+    async function stravaPagina(token, page, after) {
+        let url = `https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`;
+        if (after > 0) url += `&after=${after}`;
+        let res;
+        try { res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } }); }
+        catch { throw new StravaErr('rete'); }
+        if (res.status === 401 || res.status === 403) throw new StravaErr('auth');
+        if (res.status === 429) throw new StravaErr('limite');
+        if (!res.ok) throw new StravaErr('api');
+        let data;
+        try { data = await res.json(); } catch { throw new StravaErr('api'); }
+        if (!Array.isArray(data)) throw new StravaErr('api');
+        return data;
+    }
+
+    const TIPI_BICI = ['Ride', 'VirtualRide', 'EBikeRide', 'MountainBikeRide'];
+
+    function attivitaDaStrava(act) {
+        const distKm = act.distance / 1000;
+        const oreDec = act.moving_time / 3600;
+        const media = oreDec > 0 ? distKm / oreDec : 0;
+        return {
+            id: act.id, strava_id: act.id, data: act.start_date_local,
+            distanza: parseFloat(distKm.toFixed(2)),
+            tempo: parseFloat(oreDec.toFixed(4)),
+            media: parseFloat(media.toFixed(2)),
+            nome: act.name || '',
+            dislivello: act.total_elevation_gain || 0,
+            cadenza: act.average_cadence || 0
+        };
+    }
+
     async function sincronizzaStrava(mostraFeedback = true) {
         const btn = document.getElementById('btn-sync-strava');
+        if (window._stravaBusy) { if (mostraFeedback) showToast('Sincronizzazione gia\' in corso'); return; }
         if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> SINCRONIZZAZIONE...'; }
         const token = await getValidToken();
         if (!token) {
-            if (mostraFeedback) showToast('Riconnetti Strava');
+            if (mostraFeedback) showToast(window._stravaErrTipo ? msgErroreStrava({ tipo: window._stravaErrTipo }) : 'Riconnetti Strava');
             if (btn) { btn.disabled = false; btn.innerHTML = 'SINCRONIZZA STRAVA'; }
             return;
         }
+        window._stravaBusy = true;
         try {
             const existingStravaIds = new Set(rawData.filter(a => a.strava_id).map(a => String(a.strava_id)));
             let afterTimestamp = 0;
             const stravaActs = rawData.filter(a => a.strava_id).sort((a, b) => new Date(b.data) - new Date(a.data));
             if (stravaActs.length > 0) afterTimestamp = Math.floor(new Date(stravaActs[0].data).getTime() / 1000);
             let nuove = [];
+            let errSync = null;
             let page = 1;
-            while (true) {
-                let apiUrl = `https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`;
-                if (afterTimestamp > 0) apiUrl += `&after=${afterTimestamp}`;
-                const res = await fetch(apiUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!res.ok) break;
-                const activities = await res.json();
-                if (!activities.length) break;
-                for (const act of activities) {
-                    if (!['Ride', 'VirtualRide', 'EBikeRide', 'MountainBikeRide'].includes(act.type)) continue;
-                    if (existingStravaIds.has(String(act.id))) continue;
-                    const distKm = act.distance / 1000;
-                    const oreDec = act.moving_time / 3600;
-                    const media = oreDec > 0 ? distKm / oreDec : 0;
-                    nuove.push({
-                        id: act.id, strava_id: act.id, data: act.start_date_local,
-                        distanza: parseFloat(distKm.toFixed(2)),
-                        tempo: parseFloat(oreDec.toFixed(4)),
-                        media: parseFloat(media.toFixed(2)),
-                        nome: act.name || '',
-                        dislivello: act.total_elevation_gain || 0,
-                        cadenza: act.average_cadence || 0
-                    });
+            try {
+                while (true) {
+                    const activities = await stravaPagina(token, page, afterTimestamp);
+                    if (!activities.length) break;
+                    for (const act of activities) {
+                        if (!TIPI_BICI.includes(act.type)) continue;
+                        if (existingStravaIds.has(String(act.id))) continue;
+                        nuove.push(attivitaDaStrava(act));
+                    }
+                    if (activities.length < 100) break;
+                    page++;
                 }
-                if (activities.length < 100) break;
-                page++;
-            }
+            } catch (e) { errSync = e; }
             rawData = [...rawData, ...nuove].sort((a, b) => new Date(b.data) - new Date(a.data));
             localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
             aggiornaStats(); popolaAnniArchivio();
-            if (mostraFeedback) showToast(nuove.length > 0 ? `${nuove.length} nuove attivita' importate!` : 'Gia\' aggiornato!', 4000);
+            if (mostraFeedback) {
+                if (errSync) showToast(msgErroreStrava(errSync) + (nuove.length ? ` (${nuove.length} importate prima dell'errore)` : ''), 5000);
+                else showToast(nuove.length > 0 ? `${nuove.length} nuove attivita' importate!` : 'Gia\' aggiornato!', 4000);
+            }
         } catch(e) {
-            if (mostraFeedback) showToast('Errore sincronizzazione');
+            if (mostraFeedback) showToast(msgErroreStrava(e));
         } finally {
+            window._stravaBusy = false;
             if (btn) { btn.disabled = false; btn.innerHTML = 'SINCRONIZZA STRAVA'; }
+        }
+    }
+
+    // Riscarica le attivita' degli ultimi N giorni: aggiorna quelle gia' presenti (chiave = strava_id), aggiunge le nuove
+    // e, dopo conferma, rimuove quelle che su Strava non esistono piu'. Se qualcosa va storto prima della fine
+    // del download non viene modificato nulla.
+    async function risincronizzaStrava(giorni = 60) {
+        if (window._stravaBusy) { showToast('Sincronizzazione gia\' in corso'); return; }
+        const btn = document.getElementById('btn-resync-strava');
+        const testoBtn = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> RISINCRONIZZAZIONE...'; }
+        window._stravaBusy = true;
+        try {
+            const token = await getValidToken();
+            if (!token) { showToast(window._stravaErrTipo ? msgErroreStrava({ tipo: window._stravaErrTipo }) : 'Riconnetti Strava'); return; }
+            const after = Math.floor(Date.now() / 1000) - giorni * 86400;
+            const scaricate = [];
+            let page = 1;
+            while (true) {
+                const acts = await stravaPagina(token, page, after);
+                if (!acts.length) break;
+                acts.forEach(act => { if (TIPI_BICI.includes(act.type)) scaricate.push(attivitaDaStrava(act)); });
+                if (acts.length < 100) break;
+                page++;
+            }
+
+            const diverso = (x, y) => typeof y === 'string' ? (x || '') !== y : Math.abs((Number(x) || 0) - y) > 1e-6;
+            const CAMPI = ['data', 'distanza', 'tempo', 'media', 'nome', 'dislivello', 'cadenza'];
+            const perId = new Map(rawData.filter(a => a.strava_id).map(a => [String(a.strava_id), a]));
+            const idsStrava = new Set(scaricate.map(a => String(a.strava_id)));
+            let nuove = 0, aggiornate = 0, rimosse = 0;
+            scaricate.forEach(n => {
+                const ex = perId.get(String(n.strava_id));
+                if (!ex) { rawData.push(n); nuove++; return; }
+                if (CAMPI.some(c => diverso(ex[c], n[c]))) { CAMPI.forEach(c => { ex[c] = n[c]; }); aggiornate++; }
+            });
+
+            // Attivita' locali che Strava non restituisce piu'. Si guardano solo quelle dopo il primo giorno della finestra
+            // (margine di 24h: le date locali sono etichettate Z) e mai se Strava non ha restituito nulla.
+            const limite = (after + 86400) * 1000;
+            const sparite = scaricate.length === 0 ? [] : rawData.filter(a => a.strava_id && !idsStrava.has(String(a.strava_id)) && new Date(a.data).getTime() >= limite);
+            if (sparite.length) {
+                const righe = sparite.slice(0, 8).map(a => `• ${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'})} ${a.nome || ''} (${(parseFloat(a.distanza) || 0).toFixed(1)} km)`).join('\n');
+                const altre = sparite.length > 8 ? `\n…e altre ${sparite.length - 8}` : '';
+                if (confirm(`Queste ${sparite.length} attivita' non risultano piu' su Strava:\n\n${righe}${altre}\n\nRimuoverle anche da Bainzuretta?`)) {
+                    const daTogliere = new Set(sparite.map(a => a.id));
+                    rawData = rawData.filter(a => !daTogliere.has(a.id));
+                    rimosse = sparite.length;
+                }
+            }
+
+            rawData.sort((a, b) => new Date(b.data) - new Date(a.data));
+            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
+            aggiornaStats(); popolaAnniArchivio();
+            const esito = [nuove && `${nuove} nuove`, aggiornate && `${aggiornate} aggiornate`, rimosse && `${rimosse} rimosse`].filter(Boolean).join(', ');
+            showToast(`Ultimi ${giorni} giorni: ${esito || 'tutto gia\' allineato'}`, 4500);
+        } catch (e) {
+            showToast(msgErroreStrava(e), 5000);
+        } finally {
+            window._stravaBusy = false;
+            if (btn) { btn.disabled = false; btn.innerHTML = testoBtn; }
         }
     }
 
@@ -425,6 +528,7 @@
             section.innerHTML = `
                 <div class="strava-status ok">Connesso a Strava${name ? ' come <b>' + name + '</b>' : ''}</div>
                 <button class="btn-sync" id="btn-sync-strava" onclick="sincronizzaStrava(true)">SINCRONIZZA STRAVA</button>
+                <button class="btn-sync" id="btn-resync-strava" onclick="risincronizzaStrava(60)" style="background:transparent; border:2px solid #FC4C02; color:#FC4C02;">RISINCRONIZZA ULTIMI 60 GIORNI</button>
                 <button onclick="disconnettiStrava()" style="background:transparent; color:#aaa; border:none; font-size:10px; cursor:pointer; margin-bottom:8px;">Disconnetti</button>
             `;
         } else {
@@ -551,6 +655,14 @@
         else { sel.innerHTML = '<option>Nessun dato</option>'; }
     }
 
+    // ---- SETTIMANE: unica definizione (lunedi-domenica) ----
+    // Le date Strava sono ore locali etichettate "Z": si leggono in UTC cosi' un'uscita vicino alla mezzanotte non cambia settimana.
+    const MS_GIORNO = 86400000;
+    function numGiorno(dateStr) { const d = new Date(dateStr); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / MS_GIORNO); }
+    function numLunedi(numG) { return numG - ((numG + 3) % 7); } // il 01/01/1970 era un giovedi
+    function lunediSettimana(dateStr) { return new Date(numLunedi(numGiorno(dateStr)) * MS_GIORNO).toISOString().slice(0, 10); }
+    function fmtGiornoNum(n) { return new Date(n * MS_GIORNO).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', timeZone:'UTC'}); }
+
     // ---- HELPER RAGGRUPPAMENTO (NUOVO) ----
 
     const mesiNomiBreve = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
@@ -574,10 +686,7 @@
     function gruppaSett(lista) {
         const gruppi = {};
         lista.forEach(a => {
-            const d = new Date(a.data);
-            const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
-            const lun = new Date(d); lun.setDate(d.getDate() - day); lun.setHours(0,0,0,0);
-            const k = lun.toISOString().slice(0,10);
+            const k = lunediSettimana(a.data);
             if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0, items: [] };
             gruppi[k].km += parseFloat(a.distanza) || 0;
             const med = parseFloat(a.media) || 0;
@@ -640,9 +749,9 @@
         const vista = document.getElementById('vista-diario').value;
         const c = document.getElementById('lista-diario'); c.innerHTML = '';
         const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKmD = 0, tOreD = 0, tDisD = 0;
-        lista.forEach(a => { tKmD += parseFloat(a.distanza); tOreD += (parseFloat(a.distanza) / parseFloat(a.media)); tDisD += parseFloat(a.dislivello) || 0; });
-        let medPondD = tOreD > 0 ? (tKmD / tOreD).toFixed(2) : '0.00';
+        let tKmD = 0, tKmValD = 0, tOreD = 0, tDisD = 0;
+        lista.forEach(a => { const dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0; tKmD += dist; if (dist > 0 && med > 0) { tKmValD += dist; tOreD += dist / med; } tDisD += parseFloat(a.dislivello) || 0; });
+        let medPondD = tOreD > 0 ? (tKmValD / tOreD).toFixed(2) : '0.00';
         let disStrD = tDisD > 0 ? `<br>Dislivello: <b>${Math.round(tDisD).toLocaleString('it-IT')} m</b>` : '';
         document.getElementById('recap-diario').innerHTML = `<div class="archive-recap">Nel <b>${currY}</b> (al giorno ${doyOggi}):<br><b>${tKmD.toFixed(1)} KM</b> in <b>${lista.length} attivita'</b><br>Media Ponderata: <b>${medPondD} km/h</b>${disStrD}</div>`;
 
@@ -681,12 +790,13 @@
         const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
         let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
-        let tKm = 0, tOre = 0, tDis = 0, nAtt = filtrati.length;
+        let tKm = 0, tKmVal = 0, tOre = 0, tDis = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
-            tKm += parseFloat(a.distanza); tOre += (parseFloat(a.distanza) / parseFloat(a.media));
+            const dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
+            tKm += dist; if (dist > 0 && med > 0) { tKmVal += dist; tOre += dist / med; }
             tDis += parseFloat(a.dislivello) || 0;
         });
-        let medPond = tOre > 0 ? (tKm / tOre).toFixed(2) : '0.00';
+        let medPond = tOre > 0 ? (tKmVal / tOre).toFixed(2) : '0.00';
         let disStr = tDis > 0 ? `<br>Dislivello: <b>${Math.round(tDis).toLocaleString('it-IT')} m</b>` : '';
         recapCont.innerHTML = `<div class="archive-recap">Nel <b>${annoScelto}</b> (al giorno ${doyOggi}):<br><b>${tKm.toFixed(1)} KM</b> in <b>${nAtt} attivita'</b><br>Media Ponderata: <b>${medPond} km/h</b>${disStr}</div>`;
 
@@ -723,23 +833,24 @@
         rawData.forEach(a => {
             let dt = new Date(a.data), y = dt.getFullYear();
             if (m === 'dislivello' && y < 2019) return;
-            if(!p[y]) p[y] = { d:0, tSum:0, mSum:0, c:0, dis:0, tot:0 };
+            if(!p[y]) p[y] = { d:0, dW:0, tSum:0, mSum:0, c:0, dis:0, tot:0 };
             p[y].tot += parseFloat(a.distanza) || 0;
             if(getDOY(dt) <= doyOggi) {
                 let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
-                p[y].d += dist; p[y].mSum += med; p[y].c++; p[y].tSum += (med > 0 ? dist / med : 0);
+                p[y].d += dist; p[y].mSum += med; p[y].c++;
+                if (dist > 0 && med > 0) { p[y].dW += dist; p[y].tSum += dist / med; }
                 if (y >= 2019) p[y].dis += a.dislivello || 0;
             }
         });
         let s = Object.keys(p).sort((a,b) => {
             if(m==='distanza') return p[b].d - p[a].d;
-            if(m==='ponderata') return (p[b].d / (p[b].tSum || 1)) - (p[a].d / (p[a].tSum || 1));
+            if(m==='ponderata') return (p[b].dW / (p[b].tSum || 1)) - (p[a].dW / (p[a].tSum || 1));
             if(m==='dislivello') return p[b].dis - p[a].dis;
             return (p[b].mSum / (p[b].c || 1)) - (p[a].mSum / (p[a].c || 1));
         });
-        let maxVal = s.length ? Math.max(...s.map(y => { if(m==='distanza') return p[y].d; if(m==='ponderata') return (p[y].d / (p[y].tSum || 1)); if(m==='dislivello') return p[y].dis; return (p[y].mSum / (p[y].c || 1)); })) : 1;
+        let maxVal = s.length ? Math.max(...s.map(y => { if(m==='distanza') return p[y].d; if(m==='ponderata') return (p[y].dW / (p[y].tSum || 1)); if(m==='dislivello') return p[y].dis; return (p[y].mSum / (p[y].c || 1)); })) : 1;
         s.forEach((y, i) => {
-            let val = m==='distanza' ? p[y].d : m==='ponderata' ? (p[y].d / (p[y].tSum || 1)) : m==='dislivello' ? p[y].dis : (p[y].mSum / (p[y].c || 1));
+            let val = m==='distanza' ? p[y].d : m==='ponderata' ? (p[y].dW / (p[y].tSum || 1)) : m==='dislivello' ? p[y].dis : (p[y].mSum / (p[y].c || 1));
             let unit = m==='distanza' ? ' km' : m==='dislivello' ? ' m' : ' km/h';
             let displayVal = m==='dislivello' ? Math.round(val).toLocaleString('it-IT') + unit : val.toFixed(2) + unit;
             let isCurrentYear = parseInt(y) === currY;
@@ -1022,6 +1133,16 @@
         }, 800);
     }
 
+    function resetFormManuale() {
+        editingId = null;
+        document.getElementById('in-dist').value = '';
+        document.getElementById('in-time').value = '';
+        document.getElementById('in-date').valueAsDate = oggi;
+        document.getElementById('form-title').innerText = '+ AGGIUNGI ATTIVITA\' MANUALE';
+        document.getElementById('btn-save').innerText = 'SALVA';
+        document.getElementById('btn-annulla').style.display = 'none';
+    }
+
     async function salvaManuale() {
         const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
         if(!d || isNaN(k)) return;
@@ -1029,26 +1150,31 @@
         if(tInput.includes(':')) { let p = tInput.split(':'); tDec = parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0); }
         else { tDec = parseFloat(tInput) || 0; }
         let med = tDec > 0 ? (k / tDec) : 0;
-        rawData.push({ id: Date.now(), data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med });
+        const campi = { data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med };
+        const idx = editingId !== null ? rawData.findIndex(x => x.id === editingId) : -1;
+        if (idx >= 0) rawData[idx] = { ...rawData[idx], ...campi };
+        else rawData.push({ id: Date.now(), ...campi });
         localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-        showToast('Attivita\' salvata!');
+        showToast(idx >= 0 ? 'Attivita\' aggiornata!' : 'Attivita\' salvata!');
         aggiornaStats(); popolaAnniArchivio();
-        document.getElementById('in-dist').value = '';
-        document.getElementById('in-time').value = '';
-        document.getElementById('in-date').valueAsDate = oggi;
-        document.getElementById('form-title').innerText = '+ AGGIUNGI ATTIVITA\' MANUALE';
-        document.getElementById('btn-save').innerText = 'SALVA';
+        resetFormManuale();
     }
 
     function preparaModifica(id) {
         const a = rawData.find(x => x.id === id); if(!a) return;
         vaiA('home');
+        editingId = id;
         document.getElementById('form-title').innerText = 'MODIFICA ATTIVITA\'';
         document.getElementById('btn-save').innerText = 'AGGIORNA';
+        document.getElementById('btn-annulla').style.display = 'block';
         document.getElementById('in-date').value = a.data.split('T')[0];
         document.getElementById('in-dist').value = a.distanza;
         document.getElementById('in-time').value = formattaTempo(a.tempo);
-        rawData = rawData.filter(x => x.id !== id);
+    }
+
+    function annullaModifica() {
+        resetFormManuale();
+        showToast('Modifica annullata');
     }
 
     function disegnaSfida() {
@@ -1056,40 +1182,23 @@
         const recap = document.getElementById('sfida-recap');
         container.innerHTML = '';
 
-        const quotaSettimana = myTarget / 52;
+        // Solo i giorni effettivi dell'anno: le righe a cavallo d'anno vengono tagliate al 01/01 e al 31/12
+        const giorniAnno = (currY % 4 === 0 && (currY % 100 !== 0 || currY % 400 === 0)) ? 366 : 365;
+        const quotaGiorno = myTarget / giorniAnno;
+        const primoGiorno = Math.floor(Date.UTC(currY, 0, 1) / MS_GIORNO);
+        const ultimoGiorno = Math.floor(Date.UTC(currY, 11, 31) / MS_GIORNO);
+        const giornoOggi = Math.floor(Date.UTC(oggi.getFullYear(), oggi.getMonth(), oggi.getDate()) / MS_GIORNO);
+        const lunPrimo = numLunedi(primoGiorno);
+        const lunUltimo = numLunedi(ultimoGiorno);
+        const lunOggi = numLunedi(giornoOggi);
 
-        // Settimana corrente (numero ISO)
-        function getISOWeek(d) {
-            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            const day = date.getUTCDay() || 7;
-            date.setUTCDate(date.getUTCDate() + 4 - day);
-            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-        }
-
-        function getLunFromWeek(year, week) {
-            // Lunedì della settimana ISO
-            const jan4 = new Date(year, 0, 4);
-            const dayOfWeek = (jan4.getDay() + 6) % 7;
-            const firstMon = new Date(jan4);
-            firstMon.setDate(jan4.getDate() - dayOfWeek);
-            const lun = new Date(firstMon);
-            lun.setDate(firstMon.getDate() + (week - 1) * 7);
-            return lun;
-        }
-
-        const settimanaCorrente = getISOWeek(oggi);
-
-        // Mappa km per settimana ISO dell'anno corrente
         const kmPerSett = {};
         rawData.filter(a => new Date(a.data).getFullYear() === currY).forEach(a => {
-            const d = new Date(a.data);
-            const w = getISOWeek(d);
-            if (!kmPerSett[w]) kmPerSett[w] = 0;
-            kmPerSett[w] += parseFloat(a.distanza) || 0;
+            const lun = Math.min(Math.max(numLunedi(numGiorno(a.data)), lunPrimo), lunUltimo);
+            kmPerSett[lun] = (kmPerSett[lun] || 0) + (parseFloat(a.distanza) || 0);
         });
 
-        recap.innerHTML = `Obiettivo: <b>${myTarget.toLocaleString('it-IT')} km</b> · Quota sett.: <b>${quotaSettimana.toFixed(1)} km</b>`;
+        recap.innerHTML = `Obiettivo: <b>${myTarget.toLocaleString('it-IT')} km</b> · Quota sett.: <b>${(quotaGiorno * 7).toFixed(1)} km</b>`;
 
         // Header colonne
         container.innerHTML = `<div class="sfida-header-row">
@@ -1099,35 +1208,37 @@
             <span class="sfida-km" style="min-width:80px; text-align:right;">Fatto</span>
         </div>`;
 
-        for (let w = settimanaCorrente; w >= 1; w--) {
-            const lun = getLunFromWeek(currY, w);
-            const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
-            const kmFatti = kmPerSett[w] || 0;
-            const isCurrent = (w === settimanaCorrente);
+        const lunPartenza = Math.min(lunOggi, lunUltimo);
+        let numRiga = (lunPartenza - lunPrimo) / 7 + 1;
+        for (let lun = lunPartenza; lun >= lunPrimo; lun -= 7, numRiga--) {
+            const da = Math.max(lun, primoGiorno), a = Math.min(lun + 6, ultimoGiorno);
+            const quota = quotaGiorno * (a - da + 1);
+            const kmFatti = kmPerSett[lun] || 0;
+            const isCurrent = (lun === lunOggi);
 
             let classeKm, testoKm, deltaHtml = '';
             if (isCurrent && kmFatti === 0) {
                 classeKm = 'grigio';
                 testoKm = '—';
-            } else if (kmFatti >= quotaSettimana) {
+            } else if (kmFatti >= quota) {
                 classeKm = 'verde';
-                const delta = kmFatti - quotaSettimana;
+                const delta = kmFatti - quota;
                 testoKm = kmFatti.toFixed(1) + ' km';
                 deltaHtml = `<span style="font-weight:400; color:#2e7d32;"> +${delta.toFixed(1)}</span>`;
             } else {
                 classeKm = 'rosso';
-                const delta = kmFatti - quotaSettimana;
+                const delta = kmFatti - quota;
                 testoKm = kmFatti.toFixed(1) + ' km';
                 deltaHtml = `<span style="font-weight:400; color:#c62828;"> ${delta.toFixed(1)}</span>`;
             }
 
-            const dateLabel = `${lun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})} – ${dom.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})}`;
+            const dateLabel = `${fmtGiornoNum(da)} – ${fmtGiornoNum(a)}`;
             const currentStyle = isCurrent ? 'border-color: var(--primary);' : '';
 
             container.innerHTML += `<div class="sfida-row" style="${currentStyle}">
-                <span class="sfida-week-num">${w}</span>
+                <span class="sfida-week-num">${numRiga}</span>
                 <span class="sfida-dates">${dateLabel}</span>
-                <span class="sfida-quota">${quotaSettimana.toFixed(1)}</span>
+                <span class="sfida-quota">${quota.toFixed(1)}</span>
                 <span class="sfida-km ${classeKm}" style="min-width:80px;">${testoKm}${deltaHtml}</span>
             </div>`;
         }
@@ -1238,7 +1349,9 @@
     }
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => reg.unregister()); });
+        // Disregistra solo i service worker di Bainzuretta (stesso scope di questa pagina), non quelli delle altre app sullo stesso origin
+        const mioScope = location.pathname.replace(/[^/]*$/, '');
+        navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => { if (new URL(reg.scope).pathname === mioScope) reg.unregister(); }); });
     }
 </script>
 </body>
