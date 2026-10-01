@@ -1,6 +1,6 @@
 # 🚴 Bainzuretta
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-v7.0-orange?style=flat-square&logo=github)](https://allerock.github.io/bainzuretta/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-v8.4-orange?style=flat-square&logo=github)](https://allerock.github.io/bainzuretta/)
 [![PWA](https://img.shields.io/badge/PWA-Ready-brightgreen?style=flat-square&logo=progressive-web-apps)](https://allerock.github.io/bainzuretta/)
 [![Strava API](https://img.shields.io/badge/Strava-Integrated-FC4C02?style=flat-square&logo=strava)](https://www.strava.com/)
 
@@ -29,21 +29,22 @@ Nata come strumento personale e indipendente, Bainzuretta si interfaccia nativam
 * **Confronto Omogeneo YTD:** L'archivio mostra le statistiche degli anni passati calcolate esattamente *fino al giorno dell'anno corrente* (Year-To-Date), permettendo un confronto reale sul tuo stato di forma rispetto al passato.
 
 ### 🏁 La Sfida
-* Suddivisione del target annuale in 52 quote settimanali costanti.
-* Visualizzazione tabellare delle settimane passate e di quella corrente con indicazione dei chilometri fatti e del delta (positivo o negativo) rispetto alla quota richiesta.
+* Il target annuale è suddiviso sui giorni effettivi dell'anno (365 o 366): ogni riga ha una quota proporzionale ai giorni che contiene. Le settimane a cavallo d'anno vengono tagliate al 1° gennaio e al 31 dicembre.
+* Visualizzazione tabellare delle settimane (lunedì-domenica) passate e di quella corrente con indicazione dei chilometri fatti e del delta (positivo o negativo) rispetto alla quota richiesta.
 
 ### 🏆 Ranking & Record Storici
 * **Classifiche Interannuali:** Classifica tutti gli anni registrati in base a 4 metriche selezionabili: *Distanza Totale*, *Media Ponderata*, *Media Semplice* o *Dislivello Totale* (calcolato dal 2019 in poi).
-* **Il Muro dei Record:** Sezione dedicata ai primati di sempre:
-  * Giro più lungo / più corto, media più alta / più bassa, uscita più lunga per tempo, picco di cadenza (*rpm*).
-  * Anno, mese e settimana con più chilometri o uscite.
-  * **Record per Fascia e Terreno:** Monitoraggio dei tempi migliori sulle distanze classiche (*50-60 KM* e *100-110 KM*) categorizzati automaticamente per dislivello in *Pianura* (<1000m), *Collinare* (1000-2000m) e *Montagna* (>2000m).
-  * **Curiosità Algoritmiche:** Analisi del giorno della settimana e del mese dell'anno statisticamente più pedalati; calcolo della striscia massima (e attuale) di settimane consecutive in sella; calcolo del record assoluto di chilometri percorsi in una finestra mobile di 4 giorni.
-  * Finestre pop-up dedicate per consultare le **Top 5** di ogni singolo record.
+* **Il Muro dei Record:** pagina dedicata ai primati di sempre, con un menu a tendina fisso per scegliere la categoria (l'ultima scelta viene ricordata): **Distanza, Velocità, Tempo, Dislivello, Cadenza, Costanza, Curiosità**.
+  * Ogni record mostra il miglior risultato; un tocco apre la finestra con la **Top 5**.
+  * Per i record legati a una singola attività ogni voce della Top 5 ha il tasto **STRAVA** per aprire l'uscita corrispondente (app di Strava, con ripiego sul sito).
+  * Giro più lungo, uscite ≥100 e ≥150 km (con elenco consultabile), migliori medie per fascia di distanza, uscita più lunga, più dislivello, densità di salita (m D+/km su uscite ≥20 km), cadenze medie più alte.
+  * Settimana, mese e anno con più km, ore in sella, dislivello o uscite; massimo di km in 7 giorni mobili e in 4 giorni.
+  * Striscia massima e attuale di settimane consecutive in sella, giorno della settimana e mese dell'anno più pedalati, medie storiche.
 
 ### 💾 Sicurezza e Portabilità dei Dati
 * **Integrazione Strava:** Connessione sicura tramite OAuth2. Il *Client Secret* viene richiesto al primo accesso e salvato esclusivamente all'interno del browser dell'utente (nessun server di terze parti memorizza le tue chiavi).
-* **Manutenzione Dati:** Possibilità di inserire, modificare o eliminare attività manualmente.
+* **Manutenzione Dati:** Possibilità di inserire, modificare (con annullamento) o eliminare attività manualmente.
+* **Risincronizzazione:** il tasto *Risincronizza ultimi 60 giorni* riscarica le attività recenti da Strava, aggiornando quelle già presenti (la chiave è `strava_id`) e proponendo, dopo conferma, la rimozione di quelle cancellate su Strava.
 * **Backup Totale:** Funzioni native per esportare l'intero database storico in formato `JSON` e reimportarlo su qualsiasi dispositivo.
 * **Stampa Report:** Generazione al volo di una pagina di riepilogo annuale stampabile o salvabile direttamente in `PDF` con grafiche pulite e tabelle dettagliate.
 
