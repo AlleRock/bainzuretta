@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bainzuretta-v84'; // Record storici con categorie - bump cache
+const CACHE_NAME = 'bainzuretta-v85'; // Record per categoria, Sfida su 365 giorni, risincronizzazione Strava - bump cache
 const ASSETS = [
     './',
     './index.html',
