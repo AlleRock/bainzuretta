@@ -1748,9 +1748,10 @@
     }
 
     if ('serviceWorker' in navigator) {
-        // Disregistra solo i service worker di Bainzuretta (stesso scope di questa pagina), non quelli delle altre app sullo stesso origin
-        const mioScope = location.pathname.replace(/[^/]*$/, '');
-        navigator.serviceWorker.getRegistrations().then(regs => { regs.forEach(reg => { if (new URL(reg.scope).pathname === mioScope) reg.unregister(); }); });
+        // PWA: la rete ha priorita' sugli HTML in cache, così gli aggiornamenti
+        // non restano bloccati su versioni precedenti. Scope solo Bainzuretta.
+        navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
+            .catch(err => console.warn('Service worker Bainzuretta non disponibile:', err));
     }
 </script>
 </body>

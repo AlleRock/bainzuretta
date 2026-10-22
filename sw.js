@@ -1,72 +1,80 @@
-const CACHE_NAME = 'bainzuretta-v85'; // Record per categoria, Sfida su 365 giorni, risincronizzazione Strava - bump cache
-const ASSETS = [
-    './',
-    './index.html',
-    'https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png'
-];
-// 1. Installazione: Salviamo gli asset fondamentali nella cache
-self.addEventListener('install', e => {
-    e.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log('[Service Worker] Caching app shell');
-            // Usiamo allSettled o un ciclo per evitare che il fallimento di un singolo URL blocchi tutto
-            return Promise.allSettled(
-                ASSETS.map(url => cache.add(url).catch(err => console.log(`Errore cache su: ${url}`, err)))
-            );
-        })
-    );
-    self.skipWaiting();
+/* Bainzuretta — service worker PWA
+ * v86: aggiornamenti online prioritari, consultazione offline e cache isolata.
+ * Non intercetta le API Strava, l'autorizzazione OAuth o richieste di altre app.
+ */
+const CACHE_PREFIX = 'bainzuretta-';
+const CACHE_NAME = 'bainzuretta-v86';
+const APP_URL = new URL('./index.html', self.registration.scope).href;
+const APP_PATH = new URL(self.registration.scope).pathname;
+const APP_SHELL = ['./index.html', './manifest.json', './icona.png'];
+
+self.addEventListener('install', (event) => {
+    event.waitUntil((async () => {
+        const cache = await caches.open(CACHE_NAME);
+        // La pagina e' indispensabile per la navigazione offline.
+        await cache.add(new Request(APP_URL, { cache: 'reload' }));
+        // Un manifest o un'icona non disponibili non devono bloccare l'aggiornamento.
+        await Promise.allSettled(APP_SHELL.slice(1).map(file => cache.add(file)));
+        await self.skipWaiting();
+    })());
 });
-// 2. Attivazione: Pulizia delle vecchie cache per evitare conflitti
-self.addEventListener('activate', e => {
-    e.waitUntil(
-        caches.keys().then(keys => {
-            return Promise.all(
-                keys.map(key => {
-                    if (key !== CACHE_NAME) {
-                        console.log('[Service Worker] Rimozione vecchia cache:', key);
-                        return caches.delete(key);
-                    }
-                })
-            );
-        })
-    );
-    self.clients.claim();
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil((async () => {
+        const names = await caches.keys();
+        await Promise.all(names
+            .filter(name => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME)
+            .map(name => caches.delete(name)));
+        // Non cancellare mai le cache create da altre app GitHub Pages.
+        await self.clients.claim();
+    })());
 });
-// 3. Fetch: Strategia Cache-First con fallback intelligente per iOS e richieste Strava
-self.addEventListener('fetch', e => {
-    const url = new URL(e.request.url);
-    // Gestione speciale per la pagina di navigazione principale (ignora i parametri query come ?code= di Strava)
-    if (e.request.mode === 'navigate' || (url.origin === self.location.origin && (url.pathname.endsWith('.html') || url.pathname === '/'))) {
-        e.respondWith(
-            caches.match('./').then(response => {
-                return response || caches.match('./index.html') || caches.match('./Bainzuretta 77.4.html') || fetch(e.request);
-            })
-        );
+
+self.addEventListener('fetch', (event) => {
+    const request = event.request;
+    if (request.method !== 'GET') return;
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return;
+
+    const isHome = url.pathname === APP_PATH || url.pathname === APP_PATH + 'index.html';
+    const isOAuth = ['code', 'state', 'error', 'error_description'].some(key => url.searchParams.has(key));
+
+    // Il ritorno da Strava va SEMPRE in rete: non mostrare una copia offline
+    // al posto della risposta OAuth, e non conservare i codici nell'archivio.
+    if (isHome && isOAuth) return;
+
+    if (request.mode === 'navigate' && isHome) {
+        event.respondWith((async () => {
+            try {
+                // Prima la rete: a ogni apertura si prova a scaricare l'HTML aggiornato.
+                const response = await fetch(request, { cache: 'no-store' });
+                if (response.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put(APP_URL, response.clone()).catch(() => {});
+                }
+                return response;
+            } catch (_) {
+                // Offline: mantieni utilizzabili diario e statistiche locali.
+                return (await caches.match(APP_URL)) || Response.error();
+            }
+        })());
         return;
     }
-    // Strategia standard: Cerca in cache, se manca vai in rete
-    e.respondWith(
-        caches.match(e.request).then(cachedResponse => {
-            if (cachedResponse) {
-                return cachedResponse;
+
+    // Manifest e icona locali: cache come ripiego in assenza di rete.
+    const localAssets = [APP_PATH + 'manifest.json', APP_PATH + 'icona.png'];
+    if (localAssets.includes(url.pathname)) {
+        event.respondWith((async () => {
+            try {
+                const response = await fetch(request);
+                if (response.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put(request, response.clone()).catch(() => {});
+                }
+                return response;
+            } catch (_) {
+                return (await caches.match(request)) || Response.error();
             }
-            // Se la risorsa non è in cache, proviamo a prenderla dalla rete
-            return fetch(e.request).then(networkResponse => {
-                // Se è un font di Google o un'immagine esterna, salviamola dinamicamente nella cache per la prossima volta offline
-                if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(e.request, responseToCache);
-                    });
-                }
-                return networkResponse;
-            }).catch(() => {
-                // Se siamo TOTALMENTE offline e la risorsa manca, restituiamo un'immagine vuota o testo per evitare il crash su iOS
-                if (e.request.headers.get('accept').includes('image')) {
-                    return caches.match('https://raw.githubusercontent.com/AlleRock/bainzuretta/main/icona.png');
-                }
-            });
-        })
-    );
+        })());
+    }
 });
