@@ -165,7 +165,7 @@
             <div id="strava-section"></div>
             <button onclick="esportaJSON()" style="background:#444; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">BACKUP JSON</button>
             <input type="file" id="json-input" accept=".json" style="display:none;">
-            <button onclick="document.getElementById('json-input').click()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
+            <button onclick="avviaImportJSON()" style="background:#888; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">IMPORTA JSON</button>
             <button onclick="esportaPDF()" style="background:#1a1a2e; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px; margin-bottom: 5px;">&#128196; PDF RIEPILOGO ANNO</button>
             <button onclick="pulisciTutto()" style="background:#ff3b30; color:white; border:none; padding:10px; border-radius:10px; width:100%; font-weight:bold; font-size: 11px;">RESET DATI</button>
         </div>
@@ -278,6 +278,169 @@
     };
     const doyOggi = getDOY(oggi);
 
+    // Correzioni mirate: testo sicuro, date civili e archivi compatibili.
+    const ARCHIVIO_BACKUP_KEY = 'bainzuretta_raw_import_backup';
+    const STRAVA_SYNC_PENDING_KEY = 'bainzuretta_strava_sync_pending';
+    let archivioPronto = true;
+
+    function escHTML(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function partiDataCivile(value) {
+        if (typeof value !== 'string') throw new Error('Data non valida');
+        const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.exec(value);
+        if (!m) throw new Error('Data non valida (richiesto YYYY-MM-DD o ISO)');
+        const y = Number(m[1]), mo = Number(m[2]), day = Number(m[3]);
+        const check = new Date(m[1] + '-' + m[2] + '-' + m[3] + 'T00:00:00Z');
+        if (!Number.isFinite(check.getTime()) || check.getUTCFullYear() !== y || check.getUTCMonth() + 1 !== mo || check.getUTCDate() !== day || Number(m[4] || 0) > 23 || Number(m[5] || 0) > 59 || Number(m[6] || 0) > 59 || !Number.isFinite(Date.parse(value))) throw new Error('Data impossibile');
+        return { y, mo, day, h: Number(m[4] || 0), min: Number(m[5] || 0), sec: Number(m[6] || 0), ms: Number(((m[7] || '') + '000').slice(0, 3)), giornoUTC: check.getTime() };
+    }
+
+    // La data dell'uscita e' quella locale fornita dall'archivio, non il fuso del dispositivo.
+    function dataCalendario(value) {
+        const p = partiDataCivile(value);
+        const d = new Date(0);
+        d.setFullYear(p.y, p.mo - 1, p.day);
+        d.setHours(p.h, p.min, p.sec, p.ms);
+        return d;
+    }
+
+    function dataInputLocale(d) {
+        return String(d.getFullYear()).padStart(4, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function numeroArchivio(value, campo) {
+        if (typeof value === 'string') {
+            value = value.trim();
+            if (!/^[+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$/.test(value)) throw new Error(campo + ': numero non valido');
+            value = Number(value.replace(',', '.'));
+        }
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error(campo + ': richiesto numero finito non negativo');
+        return value;
+    }
+
+    function idArchivio(value, campo, soloNumerico = false) {
+        if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) return value;
+        if (typeof value === 'string' && value.length <= 128) {
+            if (/^[0-9]+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0) return Number(value);
+            if (!soloNumerico && /^[A-Za-z0-9_-]+$/.test(value)) return value;
+        }
+        throw new Error(campo + ': identificatore non valido');
+    }
+
+    function normalizzaAttivita(a) {
+        if (!a || typeof a !== 'object' || Array.isArray(a)) throw new Error('Attivita non valida');
+        const n = { ...a };
+        n.id = idArchivio(a.id, 'id');
+        partiDataCivile(a.data);
+        n.distanza = numeroArchivio(a.distanza, 'distanza');
+        const haTempo = a.tempo !== undefined && a.tempo !== null;
+        const haMedia = a.media !== undefined && a.media !== null;
+        n.tempo = haTempo ? numeroArchivio(a.tempo, 'tempo') : 0;
+        n.media = haMedia ? numeroArchivio(a.media, 'media') : 0;
+        if (!haTempo && n.media > 0) n.tempo = n.distanza / n.media;
+        if (!haMedia && n.tempo > 0) n.media = n.distanza / n.tempo;
+        if (!Number.isFinite(n.tempo) || !Number.isFinite(n.media)) throw new Error('Durata o media fuori intervallo');
+        if (a.strava_id !== undefined && a.strava_id !== null && a.strava_id !== '') n.strava_id = idArchivio(a.strava_id, 'strava_id', true);
+        else delete n.strava_id;
+        if (a.nome != null && typeof a.nome !== 'string') throw new Error('nome: richiesto testo');
+        if (a.nome === null) n.nome = '';
+        for (const campo of ['dislivello', 'cadenza']) {
+            if (a[campo] !== undefined && a[campo] !== null) n[campo] = numeroArchivio(a[campo], campo);
+        }
+        if (a.data_utc !== undefined) {
+            if (typeof a.data_utc !== 'string' || !/Z$|[+-]\d{2}:\d{2}$/.test(a.data_utc)) throw new Error('data_utc non valida');
+            partiDataCivile(a.data_utc);
+        }
+        return n;
+    }
+
+    function validaArchivio(value) {
+        if (!Array.isArray(value)) throw new Error('Il file deve contenere una lista di attivita Bainzuretta');
+        const ids = new Set(), stravaIds = new Set();
+        return value.map((a, i) => {
+            try {
+                const n = normalizzaAttivita(a), id = String(n.id);
+                if (ids.has(id)) throw new Error('id duplicato');
+                if (n.strava_id && stravaIds.has(String(n.strava_id))) throw new Error('strava_id duplicato');
+                ids.add(id); if (n.strava_id) stravaIds.add(String(n.strava_id));
+                return n;
+            } catch (e) { throw new Error('Attivita ' + (i + 1) + ': ' + e.message); }
+        });
+    }
+
+    function scriviArchivio(next, backup = false) {
+        // Prima la scrittura persistente: se fallisce, lo stato corrente resta disponibile.
+        const serializzato = JSON.stringify(next);
+        if (backup) {
+            const precedente = localStorage.getItem('bainzuretta_raw');
+            if (precedente !== null) {
+                let valido = false;
+                try { validaArchivio(JSON.parse(precedente)); valido = true; } catch (e) { if (archivioPronto) throw e; }
+                if (valido) localStorage.setItem(ARCHIVIO_BACKUP_KEY, precedente);
+                else localStorage.setItem('bainzuretta_raw_danneggiato', precedente);
+            }
+        }
+        localStorage.setItem('bainzuretta_raw', serializzato);
+        rawData = next;
+        archivioPronto = true;
+    }
+
+    function erroreArchivio(e) {
+        if (e && (e.name === 'QuotaExceededError' || e.name === 'SecurityError')) return 'Salvataggio non riuscito: memoria del browser piena o non disponibile. Archivio precedente conservato.';
+        return e && e.message ? e.message : 'Archivio non valido';
+    }
+
+    function aggiornaVisteArchivio() {
+        aggiornaStats(); popolaAnniArchivio();
+        const attiva = document.querySelector('.page.active');
+        if (attiva && attiva.id !== 'home') vaiA(attiva.id);
+    }
+
+    function controllaArchivioPronto() {
+        if (archivioPronto) return true;
+        showToast('Archivio non leggibile: usa IMPORTA JSON per recuperarlo. I dati salvati non sono stati cancellati.', 6000);
+        return false;
+    }
+
+    function caricaArchivio() {
+        try {
+            const s = localStorage.getItem('bainzuretta_raw');
+            rawData = s !== null ? validaArchivio(JSON.parse(s)) : [];
+            archivioPronto = true;
+        } catch (e) {
+            rawData = []; archivioPronto = false;
+            try {
+                const backup = localStorage.getItem(ARCHIVIO_BACKUP_KEY);
+                if (backup) {
+                    const recuperato = validaArchivio(JSON.parse(backup));
+                    if (confirm('L\'archivio attuale non e\' leggibile. Ripristinare la copia precedente all\'ultima importazione (' + recuperato.length + ' attivita)?')) {
+                        scriviArchivio(recuperato);
+                        showToast('Archivio precedente recuperato', 5000);
+                        return;
+                    }
+                }
+            } catch (_) { /* Il dato originale resta salvato. */ }
+            alert('Archivio non leggibile. Nessun dato e\' stato cancellato.\n\n' + erroreArchivio(e) + '\n\nUsa IMPORTA JSON per caricare una copia valida.');
+        }
+    }
+
+    document.addEventListener('click', e => {
+        const target = e.target && e.target.closest ? e.target.closest('[data-bz-action]') : null;
+        if (!target) return;
+        e.stopPropagation();
+        const id = target.getAttribute('data-bz-id');
+        switch (target.getAttribute('data-bz-action')) {
+            case 'apri-attivita': apriAttivita(id); break;
+            case 'modifica-attivita': preparaModifica(id); break;
+            case 'elimina-attivita': eliminaAttivita(id); break;
+            case 'apri-gruppo': mostraGruppoAttivita(target.getAttribute('data-bz-key')); break;
+            case 'apri-anno': apriArchivioAnno(Number(target.getAttribute('data-bz-year'))); break;
+            case 'apri-strava': apriStrava(id); break;
+        }
+    });
+
     function showToast(msg, duration = 3000) {
         const t = document.getElementById('toast');
         t.innerText = msg;
@@ -286,85 +449,119 @@
     }
 
     function loadStravaToken() {
-        try { const raw = localStorage.getItem('bainzuretta_strava'); return raw ? JSON.parse(raw) : null; } catch { return null; }
+        try {
+            const raw = localStorage.getItem('bainzuretta_strava');
+            const t = raw ? JSON.parse(raw) : null;
+            return t && typeof t === 'object' && typeof t.access_token === 'string' ? t : null;
+        } catch { return null; }
     }
     function saveStravaToken(t) { localStorage.setItem('bainzuretta_strava', JSON.stringify(t)); }
     function clearStravaToken() { localStorage.removeItem('bainzuretta_strava'); stravaToken = null; }
+    function segretoStrava() { return window._stravaSecret || localStorage.getItem('bainzuretta_strava_secret') || ''; }
 
     function stravaLogin() {
-        localStorage.setItem('bainzuretta_strava_pending', '1');
-        const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&approval_prompt=auto&scope=${STRAVA_SCOPE}`;
-        window.location.href = url;
+        try {
+            const bytes = new Uint8Array(32);
+            window.crypto.getRandomValues(bytes);
+            const state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+            localStorage.setItem('bainzuretta_strava_pending', JSON.stringify({ state, createdAt: Date.now() }));
+            const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&approval_prompt=auto&scope=${encodeURIComponent(STRAVA_SCOPE)}&state=${state}`;
+            window.location.href = url;
+        } catch { showToast('Impossibile avviare la connessione: memoria del browser o generatore sicuro non disponibile.', 6000); }
+    }
+
+    async function richiestaTokenStrava(body) {
+        let resp;
+        try { resp = await fetch('https://www.strava.com/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+        catch { throw new StravaErr('rete'); }
+        let data;
+        try { data = await resp.json(); } catch { throw new StravaErr('api'); }
+        if (!resp.ok) {
+            if (resp.status === 429) throw new StravaErr('limite');
+            if (data && Array.isArray(data.errors) && data.errors.some(e => e && (e.field === 'client_secret' || e.field === 'client_id'))) throw new StravaErr('secret');
+            throw new StravaErr(resp.status === 400 || resp.status === 401 || resp.status === 403 ? 'auth' : 'api');
+        }
+        if (!data || typeof data.access_token !== 'string' || !data.access_token || typeof data.refresh_token !== 'string' || !data.refresh_token || !Number.isFinite(Number(data.expires_at)) || Number(data.expires_at) <= 0) throw new StravaErr('api');
+        return data;
     }
 
     async function stravaExchangeCode(code) {
-        try {
-            const secret = window._stravaSecret || localStorage.getItem('bainzuretta_strava_secret') || '';
-            const resp = await fetch('https://www.strava.com/oauth/token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'authorization_code', code })
-            });
-            if (!resp.ok) return null;
-            return await resp.json();
-        } catch { return null; }
+        const secret = segretoStrava();
+        if (!secret) throw new StravaErr('secret');
+        return richiestaTokenStrava({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'authorization_code', code });
     }
 
-    function showStravaSecretPrompt(code) {
-        const secret = prompt('Bainzuretta e\' un\'app personale.\n\nPer completare la connessione Strava inserisci il tuo Client Secret\n(lo trovi su strava.com/settings/api).\n\nViene salvato solo sul tuo dispositivo, mai inviato a terzi.');
-        if (!secret) { showToast('Connessione annullata'); return; }
-        window._stravaSecret = secret;
-        localStorage.setItem('bainzuretta_strava_secret', secret);
-        stravaExchangeCode(code).then(tokenData => {
-            if (tokenData && tokenData.access_token) {
-                saveStravaToken(tokenData); stravaToken = tokenData;
-                aggiornaStravaSection(); sincronizzaStrava(true);
-                showToast('Connesso a Strava!');
-            } else { showToast('Errore - controlla il Client Secret'); }
-        });
+    async function completaConnessioneStrava(code, scope) {
+        const tokenData = await stravaExchangeCode(code);
+        const scopes = String(tokenData.scope || scope || '').split(/[\s,]+/);
+        if (!scopes.includes('activity:read_all')) throw new StravaErr('scope');
+        tokenData.scope = tokenData.scope || scope;
+        saveStravaToken(tokenData); stravaToken = tokenData;
+        aggiornaStravaSection();
+        showToast('Connesso a Strava!');
+        await sincronizzaStrava(true);
+    }
+
+    async function showStravaSecretPrompt(code, scope) {
+        // Solo prima connessione senza segreto: mai durante riapertura, sync o rinnovo.
+        const secret = prompt('Bainzuretta e\' un\'app personale.\n\nPer la prima connessione inserisci il tuo Client Secret Strava\n(strava.com/settings/api).\n\nResta memorizzato su questo dispositivo e viene inviato a Strava per collegamento e rinnovo dei token.');
+        if (!secret || !secret.trim()) { showToast('Connessione annullata'); return; }
+        try {
+            localStorage.setItem('bainzuretta_strava_secret', secret.trim());
+            window._stravaSecret = secret.trim();
+            await completaConnessioneStrava(code, scope);
+        } catch (e) { showToast(msgErroreStrava(e), 6000); }
     }
 
     async function handleStravaCallback() {
         const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        const error = params.get('error');
-        window.history.replaceState({}, '', window.location.pathname);
-        if (error || !code) return;
-        localStorage.removeItem('bainzuretta_strava_pending');
-        showToast('Connessione a Strava in corso...');
-        const tokenData = await stravaExchangeCode(code);
-        if (tokenData && tokenData.access_token) {
-            saveStravaToken(tokenData); stravaToken = tokenData;
-            aggiornaStravaSection(); await sincronizzaStrava(true);
-            showToast('Connesso a Strava!');
-        } else {
-            showStravaSecretPrompt(code);
+        const code = params.get('code'), error = params.get('error'), state = params.get('state'), scope = params.get('scope') || '';
+        for (const key of ['code', 'error', 'error_description', 'state', 'scope']) params.delete(key);
+        const rest = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + (window.location.hash || ''));
+        let pending = null;
+        try { pending = JSON.parse(localStorage.getItem('bainzuretta_strava_pending') || 'null'); } catch {}
+        if (!pending || typeof pending.state !== 'string' || !state || state !== pending.state || !Number.isFinite(pending.createdAt) || Date.now() - pending.createdAt < 0 || Date.now() - pending.createdAt > 30 * 60 * 1000) {
+            showToast('Risposta Strava non verificabile o collegamento scaduto. Premi CONNETTI CON STRAVA per riprovare.', 7000);
+            return;
         }
+        localStorage.removeItem('bainzuretta_strava_pending');
+        if (error) {
+            showToast(error === 'access_denied' ? 'Autorizzazione Strava annullata o negata. Nessuna modifica ai dati.' : 'Strava non ha completato l\'autorizzazione. Riprova la connessione.', 6000);
+            return;
+        }
+        if (!code) { showToast('Strava non ha restituito il codice di autorizzazione.', 6000); return; }
+        const granted = scope;
+        if (!String(granted).split(/[\s,]+/).includes('activity:read_all')) { showToast(msgErroreStrava({ tipo: 'scope' }), 7000); return; }
+        showToast('Connessione a Strava in corso...');
+        try {
+            if (!segretoStrava()) { await showStravaSecretPrompt(code, granted); return; }
+            await completaConnessioneStrava(code, granted);
+        } catch (e) { showToast(msgErroreStrava(e), 6000); }
     }
 
+    let stravaRefreshInFlight = null;
     async function refreshStravaToken() {
-        const secret = window._stravaSecret || localStorage.getItem('bainzuretta_strava_secret') || '';
-        try {
-            const resp = await fetch('https://www.strava.com/oauth/token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'refresh_token', refresh_token: stravaToken.refresh_token })
-            });
-            if (resp.status === 400 || resp.status === 401 || resp.status === 403) return false; // token non piu' valido
-            if (!resp.ok) return 'api';
-            const data = await resp.json();
-            stravaToken = { ...stravaToken, access_token: data.access_token, refresh_token: data.refresh_token, expires_at: data.expires_at };
-            saveStravaToken(stravaToken);
-            return true;
-        } catch { return 'rete'; }
+        if (stravaRefreshInFlight) return stravaRefreshInFlight;
+        stravaRefreshInFlight = (async () => {
+            const secret = segretoStrava();
+            if (!secret) return 'secret';
+            try {
+                const data = await richiestaTokenStrava({ client_id: STRAVA_CLIENT_ID, client_secret: secret, grant_type: 'refresh_token', refresh_token: stravaToken.refresh_token });
+                const next = { ...stravaToken, access_token: data.access_token, refresh_token: data.refresh_token, expires_at: data.expires_at };
+                saveStravaToken(next); stravaToken = next;
+                return true;
+            } catch (e) { return e && e.tipo === 'auth' ? false : (e && e.tipo || 'storage'); }
+        })();
+        try { return await stravaRefreshInFlight; } finally { stravaRefreshInFlight = null; }
     }
 
     async function getValidToken() {
         window._stravaErrTipo = null;
         if (!stravaToken) return null;
-        if (stravaToken.expires_at && Date.now() / 1000 > stravaToken.expires_at - 300) {
+        if (stravaToken.expires_at && Date.now() / 1000 > Number(stravaToken.expires_at) - 300) {
             const ok = await refreshStravaToken();
-            if (ok === 'rete' || ok === 'api') { window._stravaErrTipo = ok; return null; } // problema temporaneo: il token NON viene cancellato
+            if (ok !== true && ok !== false) { window._stravaErrTipo = ok; return null; }
             if (!ok) { clearStravaToken(); aggiornaStravaSection(); return null; }
         }
         return stravaToken.access_token;
@@ -374,6 +571,10 @@
 
     function msgErroreStrava(e) {
         const t = e && e.tipo;
+        if (t === 'scope') return 'Strava: manca il permesso per leggere tutte le attivita. Riconnetti e concedi activity:read_all';
+        if (t === 'secret') return 'Strava: Client Secret assente o non valido. La chiave salvata non e stata cancellata';
+        if (t === 'storage') return 'Impossibile salvare i dati nel browser';
+        if (e && (e.name === 'QuotaExceededError' || e.name === 'SecurityError')) return erroreArchivio(e);
         if (t === 'auth') return 'Strava: sessione scaduta o non valida, riconnetti Strava';
         if (t === 'limite') return 'Strava: limite richieste raggiunto, riprova tra qualche minuto';
         if (t === 'rete') return 'Nessuna connessione a Strava, riprova piu\' tardi';
@@ -381,9 +582,10 @@
         return 'Errore sincronizzazione';
     }
 
-    async function stravaPagina(token, page, after) {
+    async function stravaPagina(token, page, after, before = 0) {
         let url = `https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`;
         if (after > 0) url += `&after=${after}`;
+        if (before > 0) url += `&before=${before}`;
         let res;
         try { res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } }); }
         catch { throw new StravaErr('rete'); }
@@ -402,7 +604,7 @@
         const distKm = act.distance / 1000;
         const oreDec = act.moving_time / 3600;
         const media = oreDec > 0 ? distKm / oreDec : 0;
-        return {
+        const a = {
             id: act.id, strava_id: act.id, data: act.start_date_local,
             distanza: parseFloat(distKm.toFixed(2)),
             tempo: parseFloat(oreDec.toFixed(4)),
@@ -411,59 +613,100 @@
             dislivello: act.total_elevation_gain || 0,
             cadenza: act.average_cadence || 0
         };
+        // Metadato additivo: gli archivi precedenti, privi di data_utc, restano validi.
+        if (act.start_date) a.data_utc = act.start_date;
+        return normalizzaAttivita(a);
+    }
+
+    function afterIncrementaleStrava() {
+        const lista = rawData.filter(a => a.strava_id).sort((a, b) => dataCalendario(b.data) - dataCalendario(a.data));
+        if (!lista.length) return 0;
+        const ultimo = lista[0];
+        if (ultimo.data_utc) return Math.max(0, Math.floor(Date.parse(ultimo.data_utc) / 1000) - 86400);
+        // Per lo storico senza UTC non inventiamo un fuso: riprendiamo dal giorno precedente.
+        return Math.max(0, Math.floor(partiDataCivile(ultimo.data).giornoUTC / 1000) - 86400);
+    }
+
+    function pianoSyncStrava() {
+        const atleta = stravaToken && stravaToken.athlete ? String(stravaToken.athlete.id || '') : '';
+        const now = Math.floor(Date.now() / 1000);
+        try {
+            const p = JSON.parse(localStorage.getItem(STRAVA_SYNC_PENDING_KEY) || 'null');
+            if (p && p.version === 1 && p.atleta === atleta && Number.isSafeInteger(p.after) && Number.isSafeInteger(p.before) && p.after >= 0 && p.after < p.before && p.before <= now + 60) return p;
+        } catch {}
+        const p = { version: 1, atleta, after: afterIncrementaleStrava(), before: now + 1 };
+        localStorage.setItem(STRAVA_SYNC_PENDING_KEY, JSON.stringify(p));
+        return p;
+    }
+
+    function assegnaIdNuovoStrava(a, occupati) {
+        // Nessun identificatore esistente viene cambiato in caso di collisione con un manuale.
+        if (occupati.has(String(a.id))) {
+            let id = 'strava_' + a.strava_id, n = 1;
+            while (occupati.has(id)) id = 'strava_' + a.strava_id + '_' + n++;
+            a.id = id;
+        }
+        occupati.add(String(a.id));
+        return a;
     }
 
     async function sincronizzaStrava(mostraFeedback = true) {
+        if (!controllaArchivioPronto()) return;
         const btn = document.getElementById('btn-sync-strava');
         if (window._stravaBusy) { if (mostraFeedback) showToast('Sincronizzazione gia\' in corso'); return; }
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> SINCRONIZZAZIONE...'; }
-        const token = await getValidToken();
-        if (!token) {
-            if (mostraFeedback) showToast(window._stravaErrTipo ? msgErroreStrava({ tipo: window._stravaErrTipo }) : 'Riconnetti Strava');
-            if (btn) { btn.disabled = false; btn.innerHTML = 'SINCRONIZZA STRAVA'; }
-            return;
-        }
         window._stravaBusy = true;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> SINCRONIZZAZIONE...'; }
         try {
-            const existingStravaIds = new Set(rawData.filter(a => a.strava_id).map(a => String(a.strava_id)));
-            let afterTimestamp = 0;
-            const stravaActs = rawData.filter(a => a.strava_id).sort((a, b) => new Date(b.data) - new Date(a.data));
-            if (stravaActs.length > 0) afterTimestamp = Math.floor(new Date(stravaActs[0].data).getTime() / 1000);
-            let nuove = [];
-            let errSync = null;
+            const token = await getValidToken();
+            if (!token) { if (mostraFeedback) showToast(window._stravaErrTipo ? msgErroreStrava({ tipo: window._stravaErrTipo }) : 'Riconnetti Strava'); return; }
+            const piano = pianoSyncStrava();
+            const seen = new Set(rawData.filter(a => a.strava_id).map(a => String(a.strava_id)));
+            const nuove = [];
             let page = 1;
-            try {
-                while (true) {
-                    const activities = await stravaPagina(token, page, afterTimestamp);
-                    if (!activities.length) break;
-                    for (const act of activities) {
-                        if (!TIPI_BICI.includes(act.type)) continue;
-                        if (existingStravaIds.has(String(act.id))) continue;
-                        nuove.push(attivitaDaStrava(act));
-                    }
-                    if (activities.length < 100) break;
-                    page++;
+            while (true) {
+                const activities = await stravaPagina(token, page, piano.after, piano.before);
+                if (!activities.length) break;
+                for (const act of activities) {
+                    if (!TIPI_BICI.includes(act.type)) continue;
+                    const a = attivitaDaStrava(act), key = String(a.strava_id);
+                    if (seen.has(key)) continue;
+                    seen.add(key); nuove.push(a);
                 }
-            } catch (e) { errSync = e; }
-            rawData = [...rawData, ...nuove].sort((a, b) => new Date(b.data) - new Date(a.data));
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats(); popolaAnniArchivio();
-            if (mostraFeedback) {
-                if (errSync) showToast(msgErroreStrava(errSync) + (nuove.length ? ` (${nuove.length} importate prima dell'errore)` : ''), 5000);
-                else showToast(nuove.length > 0 ? `${nuove.length} nuove attivita' importate!` : 'Gia\' aggiornato!', 4000);
+                if (activities.length < 100) break;
+                page++;
             }
-        } catch(e) {
-            if (mostraFeedback) showToast(msgErroreStrava(e));
+            // Nessun commit parziale: in caso d'errore si riusa lo stesso intervallo al prossimo tentativo.
+            const giaPresenti = new Set(rawData.filter(a => a.strava_id).map(a => String(a.strava_id)));
+            const daAggiungere = nuove.filter(a => !giaPresenti.has(String(a.strava_id)));
+            if (daAggiungere.length) {
+                const occupati = new Set(rawData.map(a => String(a.id)));
+                daAggiungere.forEach(a => assegnaIdNuovoStrava(a, occupati));
+                const next = [...rawData, ...daAggiungere].sort((a, b) => dataCalendario(b.data) - dataCalendario(a.data));
+                scriviArchivio(next);
+            }
+            localStorage.removeItem(STRAVA_SYNC_PENDING_KEY);
+            aggiornaVisteArchivio();
+            if (mostraFeedback) showToast(daAggiungere.length > 0 ? `${daAggiungere.length} nuove attivita' importate!` : 'Gia\' aggiornato!', 4000);
+        } catch (e) {
+            if (mostraFeedback) showToast(msgErroreStrava(e) + ' Nessuna attivita persa: il prossimo tentativo riprendera l\'intervallo incompleto.', 7000);
         } finally {
             window._stravaBusy = false;
             if (btn) { btn.disabled = false; btn.innerHTML = 'SINCRONIZZA STRAVA'; }
         }
     }
 
-    // Riscarica le attivita' degli ultimi N giorni: aggiorna quelle gia' presenti (chiave = strava_id), aggiunge le nuove
-    // e, dopo conferma, rimuove quelle che su Strava non esistono piu'. Se qualcosa va storto prima della fine
-    // del download non viene modificato nulla.
+    function attivitaInternaFinestra(a, after, before) {
+        if (a.data_utc) {
+            const t = Date.parse(a.data_utc) / 1000;
+            return t > after && t < before;
+        }
+        // In assenza del fuso remoto, eliminiamo solo giorni sicuramente interni alla finestra.
+        const giorno = partiDataCivile(a.data).giornoUTC / 1000;
+        return giorno - 14 * 3600 > after && giorno + 86400 + 12 * 3600 < before;
+    }
+
     async function risincronizzaStrava(giorni = 60) {
+        if (!controllaArchivioPronto()) return;
         if (window._stravaBusy) { showToast('Sincronizzazione gia\' in corso'); return; }
         const btn = document.getElementById('btn-resync-strava');
         const testoBtn = btn ? btn.innerHTML : '';
@@ -472,50 +715,50 @@
         try {
             const token = await getValidToken();
             if (!token) { showToast(window._stravaErrTipo ? msgErroreStrava({ tipo: window._stravaErrTipo }) : 'Riconnetti Strava'); return; }
-            const after = Math.floor(Date.now() / 1000) - giorni * 86400;
-            const scaricate = [];
+            const before = Math.floor(Date.now() / 1000) + 1;
+            const after = before - 1 - giorni * 86400;
+            const scaricateMap = new Map();
             let page = 1;
             while (true) {
-                const acts = await stravaPagina(token, page, after);
+                const acts = await stravaPagina(token, page, after, before);
                 if (!acts.length) break;
-                acts.forEach(act => { if (TIPI_BICI.includes(act.type)) scaricate.push(attivitaDaStrava(act)); });
+                acts.forEach(act => { if (TIPI_BICI.includes(act.type)) { const a = attivitaDaStrava(act); scaricateMap.set(String(a.strava_id), a); } });
                 if (acts.length < 100) break;
                 page++;
             }
-
+            const scaricate = [...scaricateMap.values()];
             const diverso = (x, y) => typeof y === 'string' ? (x || '') !== y : Math.abs((Number(x) || 0) - y) > 1e-6;
-            const CAMPI = ['data', 'distanza', 'tempo', 'media', 'nome', 'dislivello', 'cadenza'];
-            const perId = new Map(rawData.filter(a => a.strava_id).map(a => [String(a.strava_id), a]));
+            const CAMPI = ['data', 'data_utc', 'distanza', 'tempo', 'media', 'nome', 'dislivello', 'cadenza'];
+            let next = rawData.map(a => ({ ...a }));
+            const occupati = new Set(next.map(a => String(a.id)));
+            const perId = new Map(next.filter(a => a.strava_id).map(a => [String(a.strava_id), a]));
             const idsStrava = new Set(scaricate.map(a => String(a.strava_id)));
             let nuove = 0, aggiornate = 0, rimosse = 0;
             scaricate.forEach(n => {
                 const ex = perId.get(String(n.strava_id));
-                if (!ex) { rawData.push(n); nuove++; return; }
-                if (CAMPI.some(c => diverso(ex[c], n[c]))) { CAMPI.forEach(c => { ex[c] = n[c]; }); aggiornate++; }
+                if (!ex) { assegnaIdNuovoStrava(n, occupati); next.push(n); perId.set(String(n.strava_id), n); nuove++; return; }
+                if (CAMPI.some(c => n[c] !== undefined && diverso(ex[c], n[c]))) {
+                    CAMPI.forEach(c => { if (n[c] !== undefined) ex[c] = n[c]; }); aggiornate++;
+                }
             });
-
-            // Attivita' locali che Strava non restituisce piu'. Si guardano solo quelle dopo il primo giorno della finestra
-            // (margine di 24h: le date locali sono etichettate Z) e mai se Strava non ha restituito nulla.
-            const limite = (after + 86400) * 1000;
-            const sparite = scaricate.length === 0 ? [] : rawData.filter(a => a.strava_id && !idsStrava.has(String(a.strava_id)) && new Date(a.data).getTime() >= limite);
+            const sparite = scaricate.length === 0 ? [] : next.filter(a => a.strava_id && !idsStrava.has(String(a.strava_id)) && attivitaInternaFinestra(a, after, before));
             if (sparite.length) {
-                const righe = sparite.slice(0, 8).map(a => `• ${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'})} ${a.nome || ''} (${(parseFloat(a.distanza) || 0).toFixed(1)} km)`).join('\n');
+                const righe = sparite.slice(0, 8).map(a => `• ${dataCalendario(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'})} ${a.nome || ''} (${(parseFloat(a.distanza) || 0).toFixed(1)} km)`).join('\n');
                 const altre = sparite.length > 8 ? `\n…e altre ${sparite.length - 8}` : '';
                 if (confirm(`Queste ${sparite.length} attivita' non risultano piu' su Strava:\n\n${righe}${altre}\n\nRimuoverle anche da Bainzuretta?`)) {
-                    const daTogliere = new Set(sparite.map(a => a.id));
-                    rawData = rawData.filter(a => !daTogliere.has(a.id));
-                    rimosse = sparite.length;
+                    const daTogliere = new Set(sparite.map(a => String(a.id)));
+                    next = next.filter(a => !daTogliere.has(String(a.id))); rimosse = sparite.length;
                 }
             }
-
-            rawData.sort((a, b) => new Date(b.data) - new Date(a.data));
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats(); popolaAnniArchivio();
+            if (nuove || aggiornate || rimosse) {
+                next.sort((a, b) => dataCalendario(b.data) - dataCalendario(a.data));
+                scriviArchivio(next);
+            }
+            aggiornaVisteArchivio();
             const esito = [nuove && `${nuove} nuove`, aggiornate && `${aggiornate} aggiornate`, rimosse && `${rimosse} rimosse`].filter(Boolean).join(', ');
             showToast(`Ultimi ${giorni} giorni: ${esito || 'tutto gia\' allineato'}`, 4500);
-        } catch (e) {
-            showToast(msgErroreStrava(e), 5000);
-        } finally {
+        } catch (e) { showToast(msgErroreStrava(e), 6000); }
+        finally {
             window._stravaBusy = false;
             if (btn) { btn.disabled = false; btn.innerHTML = testoBtn; }
         }
@@ -524,9 +767,9 @@
     function aggiornaStravaSection() {
         const section = document.getElementById('strava-section');
         if (stravaToken) {
-            const name = stravaToken.athlete ? stravaToken.athlete.firstname : '';
+            const name = stravaToken.athlete && typeof stravaToken.athlete.firstname === 'string' ? stravaToken.athlete.firstname : '';
             section.innerHTML = `
-                <div class="strava-status ok">Connesso a Strava${name ? ' come <b>' + name + '</b>' : ''}</div>
+                <div class="strava-status ok">Connesso a Strava${name ? ' come <b>' + escHTML(name) + '</b>' : ''}</div>
                 <button class="btn-sync" id="btn-sync-strava" onclick="sincronizzaStrava(true)">SINCRONIZZA STRAVA</button>
                 <button class="btn-sync" id="btn-resync-strava" onclick="risincronizzaStrava(60)" style="background:transparent; border:2px solid #FC4C02; color:#FC4C02;">RISINCRONIZZA ULTIMI 60 GIORNI</button>
                 <button onclick="disconnettiStrava()" style="background:transparent; color:#aaa; border:none; font-size:10px; cursor:pointer; margin-bottom:8px;">Disconnetti</button>
@@ -542,24 +785,51 @@
         }
     }
 
-    function disconnettiStrava() {
-        if (!confirm('Disconnettere Strava? I dati gia\' importati rimarranno.')) return;
-        clearStravaToken(); aggiornaStravaSection(); showToast('Disconnesso da Strava');
+    async function disconnettiStrava() {
+        if (window._stravaBusy) { showToast('Attendi la fine della sincronizzazione'); return; }
+        const scelta = prompt('DISCONNESSIONE STRAVA\n\n1 = Disconnetti solo questo dispositivo\n2 = Revoca anche l\'autorizzazione su Strava\n\nLe attivita importate e il Client Secret salvato restano disponibili.\nAnnulla per uscire.', '1');
+        if (scelta === null) return;
+        const opzione = scelta.trim();
+        if (opzione !== '1' && opzione !== '2') { showToast('Scegli 1 oppure 2'); return; }
+        if (opzione === '2') {
+            if (!confirm('Revocare l\'accesso di Bainzuretta su Strava? Per riconnetterti dovrai autorizzare nuovamente l\'app, senza reinserire il Client Secret gia salvato.')) return;
+            const secret = segretoStrava();
+            if (!secret || !stravaToken) { showToast('Revoca non disponibile. Puoi revocare Bainzuretta da strava.com/settings/apps.', 8000); return; }
+            window._stravaBusy = true;
+            try {
+                const token = stravaToken.refresh_token || stravaToken.access_token;
+                const resp = await fetch('https://www.strava.com/oauth/revoke', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Basic ' + btoa(STRAVA_CLIENT_ID + ':' + secret), 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ token, token_type_hint: stravaToken.refresh_token ? 'refresh_token' : 'access_token' }).toString()
+                });
+                if (!resp.ok) throw new Error('Revoca rifiutata da Strava');
+            } catch (e) {
+                showToast('Revoca non confermata (rete o risposta Strava). Credenziali locali conservate: verifica l\'autorizzazione da strava.com/settings/apps.', 9000);
+                return;
+            } finally { window._stravaBusy = false; }
+        }
+        try {
+            clearStravaToken();
+            localStorage.removeItem('bainzuretta_strava_pending');
+            aggiornaStravaSection();
+            showToast(opzione === '2' ? 'Autorizzazione Strava revocata. Dati e Client Secret conservati.' : 'Disconnesso da questo dispositivo. Autorizzazione Strava, dati e Client Secret conservati.', 6500);
+        } catch { showToast('Impossibile completare la disconnessione locale. Riprova.', 6000); }
     }
 
     window.onload = async () => {
         document.getElementById('main-header').innerText = 'Bainzuretta';
         document.querySelectorAll('.year-label').forEach(el => el.innerText = currY);
         document.getElementById('val-target-tot').innerText = myTarget;
-        document.getElementById('in-date').valueAsDate = oggi;
-        const s = localStorage.getItem('bainzuretta_raw');
-        if (s) rawData = JSON.parse(s);
+        document.getElementById('in-date').value = dataInputLocale(oggi);
+        caricaArchivio();
         const savedSecret = localStorage.getItem('bainzuretta_strava_secret');
         if (savedSecret) window._stravaSecret = savedSecret;
         stravaToken = loadStravaToken();
         aggiornaStravaSection(); aggiornaStats(); popolaAnniArchivio();
-        if (window.location.search.includes('code=')) { await handleStravaCallback(); }
-        else if (stravaToken) { sincronizzaStrava(false); }
+        const callbackParams = new URLSearchParams(window.location.search);
+        if (callbackParams.has('code') || callbackParams.has('error')) { await handleStravaCallback(); }
+        else if (stravaToken && archivioPronto) { sincronizzaStrava(false); }
     };
 
     function formattaTempo(oreDec) {
@@ -574,7 +844,7 @@
         let totK = 0, kY = 0, pAnni = {};
         rawData.forEach(a => {
             let dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
-            let y = new Date(a.data).getFullYear();
+            let y = dataCalendario(a.data).getFullYear();
             totK += dist; if(y === currY) kY += dist;
             if(!pAnni[y]) pAnni[y] = { mSum: 0, count: 0 };
             if(med > 0) { pAnni[y].mSum += med; pAnni[y].count++; }
@@ -650,7 +920,7 @@
 
     function popolaAnniArchivio() {
         const sel = document.getElementById('sel-anno-archivio');
-        const anni = [...new Set(rawData.map(a => new Date(a.data).getFullYear()))].filter(y => y !== currY).sort((a,b) => b-a);
+        const anni = [...new Set(rawData.map(a => dataCalendario(a.data).getFullYear()))].filter(y => y !== currY).sort((a,b) => b-a);
         if(anni.length > 0) { sel.innerHTML = anni.map(y => `<option value="${y}">${y}</option>`).join(''); disegnaArchivio(); }
         else { sel.innerHTML = '<option>Nessun dato</option>'; }
     }
@@ -658,7 +928,7 @@
     // ---- SETTIMANE: unica definizione (lunedi-domenica) ----
     // Le date Strava sono ore locali etichettate "Z": si leggono in UTC cosi' un'uscita vicino alla mezzanotte non cambia settimana.
     const MS_GIORNO = 86400000;
-    function numGiorno(dateStr) { const d = new Date(dateStr); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / MS_GIORNO); }
+    function numGiorno(dateStr) { return Math.floor(partiDataCivile(dateStr).giornoUTC / MS_GIORNO); }
     function numLunedi(numG) { return numG - ((numG + 3) % 7); } // il 01/01/1970 era un giovedi
     function lunediSettimana(dateStr) { return new Date(numLunedi(numGiorno(dateStr)) * MS_GIORNO).toISOString().slice(0, 10); }
     function fmtGiornoNum(n) { return new Date(n * MS_GIORNO).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', timeZone:'UTC'}); }
@@ -670,7 +940,7 @@
     function gruppaMesi(lista) {
         const gruppi = {};
         lista.forEach(a => {
-            const d = new Date(a.data);
+            const d = dataCalendario(a.data);
             const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             if (!gruppi[k]) gruppi[k] = { km: 0, ore: 0, count: 0, dislivello: 0, items: [] };
             gruppi[k].km += parseFloat(a.distanza) || 0;
@@ -707,7 +977,7 @@
         const medaglie = { 1: ['g-oro', '&#129351;'], 2: ['g-argento', '&#129352;'], 3: ['g-bronzo', '&#129353;'] };
         const [rankClass, rankIcon] = medaglie[rank] || ['', ''];
         const medagliaHtml = rankIcon ? `<span class="gruppo-medaglia">${rankIcon}</span>` : '';
-        return `<div class="gruppo-item ${rankClass}" style="cursor:pointer;" onclick="mostraGruppoAttivita('${g.key}')">
+        return `<div class="gruppo-item ${rankClass}" style="cursor:pointer;" data-bz-action="apri-gruppo" data-bz-key="${escHTML(g.key)}">
             ${medagliaHtml}
             <div class="gruppo-header"><span>${label}</span><span>${g.km.toFixed(1)} km</span></div>
             <div class="gruppo-sub">
@@ -721,13 +991,13 @@
     function mostraGruppoAttivita(key) {
         const dati = gruppiAttivitaMap[key];
         if (!dati) return;
-        const lista = [...dati.items].sort((a,b) => new Date(b.data) - new Date(a.data));
+        const lista = [...dati.items].sort((a,b) => dataCalendario(b.data) - dataCalendario(a.data));
         document.getElementById('gruppo-modal-title').textContent = dati.label;
         const cont = document.getElementById('gruppo-modal-list');
         cont.innerHTML = lista.map(a => {
             let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
             let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-            return `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
+            return `<div class="rank-item" style="cursor:pointer;" data-bz-action="apri-attivita" data-bz-id="${escHTML(a.id)}"><div class="rank-info"><span>${dataCalendario(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
         }).join('');
         document.getElementById('gruppo-modal-overlay').classList.add('active');
     }
@@ -748,7 +1018,7 @@
     function disegnaDiario() {
         const vista = document.getElementById('vista-diario').value;
         const c = document.getElementById('lista-diario'); c.innerHTML = '';
-        const lista = rawData.filter(a => new Date(a.data).getFullYear() === currY).sort((a,b) => new Date(b.data) - new Date(a.data));
+        const lista = rawData.filter(a => dataCalendario(a.data).getFullYear() === currY).sort((a,b) => dataCalendario(b.data) - dataCalendario(a.data));
         let tKmD = 0, tKmValD = 0, tOreD = 0, tDisD = 0;
         lista.forEach(a => { const dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0; tKmD += dist; if (dist > 0 && med > 0) { tKmValD += dist; tOreD += dist / med; } tDisD += parseFloat(a.dislivello) || 0; });
         let medPondD = tOreD > 0 ? (tKmValD / tOreD).toFixed(2) : '0.00';
@@ -758,9 +1028,9 @@
         if (vista === 'attivita') {
             lista.forEach(a => {
                 let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
-                let editBtn = !a.strava_id ? `<button class="btn-edit" onclick="preparaModifica(${a.id})">&#9999;</button>` : '';
+                let editBtn = !a.strava_id ? `<button class="btn-edit" data-bz-action="modifica-attivita" data-bz-id="${escHTML(a.id)}">&#9999;</button>` : '';
                 let rigaDati = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${formattaTempo(a.tempo)}</b> | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-                c.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" onclick="event.stopPropagation();eliminaAttivita(${a.id})">X</button></div></div></div>`;
+                c.innerHTML += `<div class="rank-item" style="cursor:pointer;" data-bz-action="apri-attivita" data-bz-id="${escHTML(a.id)}"><div class="rank-info"><span>${dataCalendario(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${rigaDati} <small style="color:#bbb;">&#9432;</small></span><div style="display:flex; gap:2px;">${editBtn}<button class="btn-del" data-bz-action="elimina-attivita" data-bz-id="${escHTML(a.id)}">X</button></div></div></div>`;
             });
         } else if (vista === 'mese') {
             const gruppiMese = gruppaMesi(lista);
@@ -789,7 +1059,7 @@
         if(isNaN(annoScelto)) return;
         const listaCont = document.getElementById('lista-archivio'), recapCont = document.getElementById('recap-archivio');
         listaCont.innerHTML = '';
-        let filtrati = rawData.filter(a => { let d = new Date(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => new Date(b.data) - new Date(a.data));
+        let filtrati = rawData.filter(a => { let d = dataCalendario(a.data); return d.getFullYear() === annoScelto && getDOY(d) <= doyOggi; }).sort((a,b) => dataCalendario(b.data) - dataCalendario(a.data));
         let tKm = 0, tKmVal = 0, tOre = 0, tDis = 0, nAtt = filtrati.length;
         filtrati.forEach(a => {
             const dist = parseFloat(a.distanza) || 0, med = parseFloat(a.media) || 0;
@@ -804,7 +1074,7 @@
             filtrati.forEach(a => {
                 let badge = a.strava_id ? '<span class="strava-badge">STRAVA</span> ' : '';
                 let riga = `<b>${parseFloat(a.distanza).toFixed(1)}</b>km | <b>${parseFloat(a.media).toFixed(1)}</b>km/h`;
-                listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" onclick="apriAttivita(${a.id})"><div class="rank-info"><span>${new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
+                listaCont.innerHTML += `<div class="rank-item" style="cursor:pointer;" data-bz-action="apri-attivita" data-bz-id="${escHTML(a.id)}"><div class="rank-info"><span>${dataCalendario(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})}</span><span style="color:var(--primary);">${badge}${riga} <small style="color:#bbb;">&#9432;</small></span></div></div>`;
             });
         } else if (vista === 'mese') {
             const gruppiMeseArch = gruppaMesi(filtrati);
@@ -831,7 +1101,7 @@
         container.innerHTML = '';
         let p = {};
         rawData.forEach(a => {
-            let dt = new Date(a.data), y = dt.getFullYear();
+            let dt = dataCalendario(a.data), y = dt.getFullYear();
             if (m === 'dislivello' && y < 2019) return;
             if(!p[y]) p[y] = { d:0, dW:0, tSum:0, mSum:0, c:0, dis:0, tot:0 };
             p[y].tot += parseFloat(a.distanza) || 0;
@@ -855,7 +1125,7 @@
             let displayVal = m==='dislivello' ? Math.round(val).toLocaleString('it-IT') + unit : val.toFixed(2) + unit;
             let isCurrentYear = parseInt(y) === currY;
             let linkStyle = !isCurrentYear ? 'cursor:pointer;' : '';
-            let linkHint = !isCurrentYear ? ` onclick="apriArchivioAnno(${y})" title="Apri in Archivio"` : '';
+            let linkHint = !isCurrentYear ? ` data-bz-action="apri-anno" data-bz-year="${escHTML(y)}" title="Apri in Archivio"` : '';
             let totAnnoHtml = (m === 'distanza' && !isCurrentYear) ? ` <span style="color:#1565c0; font-weight:600;">${Math.round(p[y].tot).toLocaleString('it-IT')} km</span>` : '';
             container.innerHTML += `<div class="rank-item" style="${linkStyle}"${linkHint}><div class="rank-info"><span>${i+1}. ${y}${!isCurrentYear ? ' <small style="color:#aaa;">&#8599;</small>' : ''}</span><span style="color:var(--primary)">${displayVal}${totAnnoHtml}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${maxVal > 0 ? (val/maxVal)*100 : 0}%"></div></div></div>`;
         });
@@ -889,7 +1159,7 @@
         // ---- Settimane lunedì-domenica + strisce (calcolo storico, NON modificare) ----
         const MONDAY_ANCHOR = new Date('1970-01-05T00:00:00Z').getTime();
         const getAbsWeek = (dateStr) => {
-            const d = new Date(dateStr);
+            const d = new Date(partiDataCivile(dateStr).giornoUTC);
             const dayUTC = d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1;
             const mondayUTC = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dayUTC);
             return Math.floor((mondayUTC - MONDAY_ANCHOR) / (7 * 24 * 60 * 60 * 1000));
@@ -913,7 +1183,7 @@
         }
         tutteStrisce.push({ len: curLen, start: curStart, end: settimaneAssolute[settimaneAssolute.length-1] });
         tutteStrisce.sort((a,b) => b.len - a.len);
-        const settOggi = getAbsWeek(oggi.toISOString());
+        const settOggi = getAbsWeek(dataInputLocale(oggi));
         let strisciaAttuale = 0, sw = settOggi;
         const setSet = new Set(settimaneAssolute);
         while (setSet.has(sw)) { strisciaAttuale++; sw--; }
@@ -1108,7 +1378,7 @@
         document.getElementById('gruppo-modal-list').innerHTML = lista.map((e, k) => {
             const pos = d.tutte ? `${k+1}.` : medaglie[k];
             const strava = (e.act && e.act.strava_id)
-                ? `<button class="btn-strava-mini" onclick="apriStrava('${e.act.strava_id}')">STRAVA</button>` : '';
+                ? `<button class="btn-strava-mini" data-bz-action="apri-strava" data-bz-id="${escHTML(e.act.strava_id)}">STRAVA</button>` : '';
             return `<div class="rank-item" style="display:flex; align-items:center; gap:8px;">
                 <div style="min-width:28px; font-weight:900; font-size:0.9em;">${pos}</div>
                 <div style="flex:1; font-size:0.82em; font-weight:800; line-height:1.3;">${e.t}${e.sub ? `<br><small style="color:#888; font-weight:400;">${e.sub}</small>` : ''}</div>
@@ -1120,6 +1390,7 @@
     }
 
     function apriStrava(stravaId) {
+        try { stravaId = idArchivio(stravaId, 'strava_id', true); } catch { showToast('Identificatore Strava non valido'); return; }
         const webUrl = 'https://www.strava.com/activities/' + stravaId;
         const appUrl = 'strava://activities/' + stravaId;
         let tornato = false;
@@ -1137,33 +1408,61 @@
         editingId = null;
         document.getElementById('in-dist').value = '';
         document.getElementById('in-time').value = '';
-        document.getElementById('in-date').valueAsDate = oggi;
+        document.getElementById('in-date').value = dataInputLocale(oggi);
         document.getElementById('form-title').innerText = '+ AGGIUNGI ATTIVITA\' MANUALE';
         document.getElementById('btn-save').innerText = 'SALVA';
         document.getElementById('btn-annulla').style.display = 'none';
     }
 
     async function salvaManuale() {
-        const d = document.getElementById('in-date').value, k = parseFloat(document.getElementById('in-dist').value);
-        if(!d || isNaN(k)) return;
-        let tInput = document.getElementById('in-time').value, tDec = 0;
-        if(tInput.includes(':')) { let p = tInput.split(':'); tDec = parseInt(p[0]) + (parseInt(p[1])/60) + (p[2]?parseInt(p[2])/3600:0); }
-        else { tDec = parseFloat(tInput) || 0; }
-        let med = tDec > 0 ? (k / tDec) : 0;
-        const campi = { data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med };
-        const idx = editingId !== null ? rawData.findIndex(x => x.id === editingId) : -1;
-        if (idx >= 0) rawData[idx] = { ...rawData[idx], ...campi };
-        else rawData.push({ id: Date.now(), ...campi });
-        localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-        showToast(idx >= 0 ? 'Attivita\' aggiornata!' : 'Attivita\' salvata!');
+        if (!controllaArchivioPronto()) return;
+        let modificata = false;
+        try {
+            const d = document.getElementById('in-date').value.trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error('Seleziona una data valida');
+            partiDataCivile(d);
+            const k = numeroArchivio(document.getElementById('in-dist').value, 'Distanza');
+            const tInput = document.getElementById('in-time').value.trim();
+            let tDec = 0;
+            if (tInput.includes(':')) {
+                const parti = /^(\d+):(\d{1,2})(?::(\d{1,2}))?$/.exec(tInput);
+                if (!parti || Number(parti[2]) > 59 || Number(parti[3] || 0) > 59) throw new Error('Durata non valida: usa HH:MM oppure HH:MM:SS, con minuti e secondi da 00 a 59');
+                tDec = Number(parti[1]) + Number(parti[2]) / 60 + Number(parti[3] || 0) / 3600;
+            } else if (tInput !== '') {
+                tDec = numeroArchivio(tInput, 'Durata');
+            }
+            tDec = numeroArchivio(tDec, 'Durata');
+            const med = tDec > 0 ? k / tDec : 0;
+            const campi = { data: new Date(d).toISOString(), distanza: k, tempo: tDec, media: med };
+            const next = rawData.slice();
+            if (editingId !== null) {
+                const idx = rawData.findIndex(a => String(a.id) === String(editingId));
+                if (idx < 0) throw new Error('L\'attivita da modificare non e piu presente. Premi ANNULLA MODIFICA prima di aggiungerne una nuova');
+                if (rawData[idx].strava_id) throw new Error('Questa attivita proviene da Strava: modificala su Strava');
+                next[idx] = { ...rawData[idx], ...campi };
+                modificata = true;
+            } else {
+                let id = Date.now();
+                while (rawData.some(a => String(a.id) === String(id))) id++;
+                next.push({ id, ...campi });
+            }
+            // Le stesse regole dell'importazione e dell'avvio, prima di qualunque scrittura.
+            const valido = validaArchivio(next);
+            scriviArchivio(valido);
+        } catch (e) {
+            showToast('Attivita non salvata: ' + erroreArchivio(e), 7000);
+            return;
+        }
+        showToast(modificata ? 'Attivita\' aggiornata!' : 'Attivita\' salvata!');
         aggiornaStats(); popolaAnniArchivio();
         resetFormManuale();
     }
 
     function preparaModifica(id) {
-        const a = rawData.find(x => x.id === id); if(!a) return;
+        if (!controllaArchivioPronto()) return;
+        const a = rawData.find(x => String(x.id) === String(id)); if(!a) return;
         vaiA('home');
-        editingId = id;
+        editingId = a.id;
         document.getElementById('form-title').innerText = 'MODIFICA ATTIVITA\'';
         document.getElementById('btn-save').innerText = 'AGGIORNA';
         document.getElementById('btn-annulla').style.display = 'block';
@@ -1193,7 +1492,7 @@
         const lunOggi = numLunedi(giornoOggi);
 
         const kmPerSett = {};
-        rawData.filter(a => new Date(a.data).getFullYear() === currY).forEach(a => {
+        rawData.filter(a => dataCalendario(a.data).getFullYear() === currY).forEach(a => {
             const lun = Math.min(Math.max(numLunedi(numGiorno(a.data)), lunPrimo), lunUltimo);
             kmPerSett[lun] = (kmPerSett[lun] || 0) + (parseFloat(a.distanza) || 0);
         });
@@ -1246,7 +1545,7 @@
 
     function esportaPDF() {
         const anno = currY;
-        const datiAnno = rawData.filter(a => new Date(a.data).getFullYear() === anno);
+        const datiAnno = rawData.filter(a => dataCalendario(a.data).getFullYear() === anno);
         if (!datiAnno.length) { showToast('Nessun dato per ' + anno); return; }
         const totKm = datiAnno.reduce((s,a) => s + parseFloat(a.distanza), 0);
         const totOre = datiAnno.reduce((s,a) => s + parseFloat(a.tempo), 0);
@@ -1254,20 +1553,20 @@
         const nUscite = datiAnno.length;
         const mesiNomi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
         let pMesi = {};
-        datiAnno.forEach(a => { const m = new Date(a.data).getMonth(); if (!pMesi[m]) pMesi[m] = { km: 0, count: 0 }; pMesi[m].km += parseFloat(a.distanza); pMesi[m].count++; });
+        datiAnno.forEach(a => { const m = dataCalendario(a.data).getMonth(); if (!pMesi[m]) pMesi[m] = { km: 0, count: 0 }; pMesi[m].km += parseFloat(a.distanza); pMesi[m].count++; });
         const top5Dist = [...datiAnno].sort((a,b) => b.distanza - a.distanza).slice(0,5);
         const top5Media = [...datiAnno].filter(a => a.media > 0).sort((a,b) => b.media - a.media).slice(0,5);
-        const datiAnnoOrd = [...datiAnno].sort((a,b) => new Date(a.data) - new Date(b.data));
+        const datiAnnoOrd = [...datiAnno].sort((a,b) => dataCalendario(a.data) - dataCalendario(b.data));
         const conCadenzaAnno = datiAnno.filter(a => a.cadenza && a.cadenza > 0);
         const maxCadAnno = conCadenzaAnno.length ? conCadenzaAnno.reduce((a,b) => a.cadenza > b.cadenza ? a : b) : null;
-        const fmt = (dateStr) => new Date(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const fmt = (dateStr) => dataCalendario(dateStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const righeAttivita = datiAnnoOrd.map((a,i) => {
             const cad = (a.cadenza && a.cadenza > 0) ? Math.round(a.cadenza) + ' rpm' : '—';
             const dis = (a.dislivello && a.dislivello > 0) ? Math.round(a.dislivello) + ' m' : '—';
-            return `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${formattaTempo(parseFloat(a.tempo))}</td><td>${parseFloat(a.media).toFixed(2)} km/h</td><td>${dis}</td><td>${cad}</td></tr>`;
+            return `<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${escHTML(a.nome||'—')}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${formattaTempo(parseFloat(a.tempo))}</td><td>${parseFloat(a.media).toFixed(2)} km/h</td><td>${dis}</td><td>${cad}</td></tr>`;
         }).join('');
-        const cadRecordHtml = maxCadAnno ? `<h2>Record Cadenza ${anno}</h2><p style="font-size:.85em;">&#129354; Cadenza più alta: <b>${Math.round(maxCadAnno.cadenza)} rpm</b> — ${fmt(maxCadAnno.data)}${maxCadAnno.nome?' ('+maxCadAnno.nome+')':''}</p>` : '';
-        const contenuto = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:20px;color:#111}h1{color:#fb8c00;border-bottom:3px solid #fb8c00;padding-bottom:10px}h2{color:#fb8c00;margin-top:30px;font-size:1em;text-transform:uppercase;letter-spacing:1px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.stat-box{background:#fff8f0;border:1px solid #fb8c00;border-radius:10px;padding:15px;text-align:center}.stat-box .val{font-size:1.8em;font-weight:900;color:#fb8c00}.stat-box .lab{font-size:.75em;color:#888;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#fb8c00;color:white;padding:8px;text-align:left;font-size:.85em}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:.85em}tr:nth-child(even){background:#fff8f0}.footer{margin-top:40px;text-align:center;color:#aaa;font-size:.75em;border-top:1px solid #eee;padding-top:15px}</style></head><body><h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1><div class="stats-grid"><div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1})}</div><div class="lab">km totali</div></div><div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div><div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div><div class="stat-box"><div class="val">${(totKm/nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div><div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre%1)*60)}m</div><div class="lab">ore in sella</div></div><div class="stat-box"><div class="val">${(totKm/40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div></div><h2>Top 5 Uscite per Distanza</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>${top5Dist.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}</table><h2>Top 5 Uscite per Velocita</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>${top5Media.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${a.nome||'—'}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}</table><h2>Statistiche Mensili</h2><table><tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>${mesiNomi.map((nome,i)=>pMesi[i]?`<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km/pMesi[i].count).toFixed(1)}</td></tr>`:'').join('')}</table>${cadRecordHtml}<h2>Tutte le Attivita ${anno}</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Tempo</th><th>Media</th><th>Dislivello</th><th>Cadenza</th></tr>${righeAttivita}</table><div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div></body></html>`;
+        const cadRecordHtml = maxCadAnno ? `<h2>Record Cadenza ${anno}</h2><p style="font-size:.85em;">&#129354; Cadenza più alta: <b>${Math.round(maxCadAnno.cadenza)} rpm</b> — ${fmt(maxCadAnno.data)}${maxCadAnno.nome?' ('+escHTML(maxCadAnno.nome)+')':''}</p>` : '';
+        const contenuto = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:20px;color:#111}h1{color:#fb8c00;border-bottom:3px solid #fb8c00;padding-bottom:10px}h2{color:#fb8c00;margin-top:30px;font-size:1em;text-transform:uppercase;letter-spacing:1px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.stat-box{background:#fff8f0;border:1px solid #fb8c00;border-radius:10px;padding:15px;text-align:center}.stat-box .val{font-size:1.8em;font-weight:900;color:#fb8c00}.stat-box .lab{font-size:.75em;color:#888;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#fb8c00;color:white;padding:8px;text-align:left;font-size:.85em}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:.85em}tr:nth-child(even){background:#fff8f0}.footer{margin-top:40px;text-align:center;color:#aaa;font-size:.75em;border-top:1px solid #eee;padding-top:15px}</style></head><body><h1>&#128690; Bainzuretta — Riepilogo ${anno}</h1><div class="stats-grid"><div class="stat-box"><div class="val">${totKm.toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1})}</div><div class="lab">km totali</div></div><div class="stat-box"><div class="val">${nUscite}</div><div class="lab">uscite</div></div><div class="stat-box"><div class="val">${medPond.toFixed(2)}</div><div class="lab">km/h media pond.</div></div><div class="stat-box"><div class="val">${(totKm/nUscite).toFixed(1)}</div><div class="lab">km medi/uscita</div></div><div class="stat-box"><div class="val">${Math.floor(totOre)}h ${Math.round((totOre%1)*60)}m</div><div class="lab">ore in sella</div></div><div class="stat-box"><div class="val">${(totKm/40075).toFixed(3)}</div><div class="lab">giri del mondo</div></div></div><h2>Top 5 Uscite per Distanza</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Media</th></tr>${top5Dist.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${escHTML(a.nome||'—')}</td><td><b>${parseFloat(a.distanza).toFixed(1)} km</b></td><td>${parseFloat(a.media).toFixed(2)} km/h</td></tr>`).join('')}</table><h2>Top 5 Uscite per Velocita</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Media</th><th>Distanza</th></tr>${top5Media.map((a,i)=>`<tr><td>${i+1}</td><td>${fmt(a.data)}</td><td>${escHTML(a.nome||'—')}</td><td><b>${parseFloat(a.media).toFixed(2)} km/h</b></td><td>${parseFloat(a.distanza).toFixed(1)} km</td></tr>`).join('')}</table><h2>Statistiche Mensili</h2><table><tr><th>Mese</th><th>Km Totali</th><th>Uscite</th><th>Media km/uscita</th></tr>${mesiNomi.map((nome,i)=>pMesi[i]?`<tr><td>${nome}</td><td><b>${pMesi[i].km.toFixed(1)}</b></td><td>${pMesi[i].count}</td><td>${(pMesi[i].km/pMesi[i].count).toFixed(1)}</td></tr>`:'').join('')}</table>${cadRecordHtml}<h2>Tutte le Attivita ${anno}</h2><table><tr><th>#</th><th>Data</th><th>Nome</th><th>Distanza</th><th>Tempo</th><th>Media</th><th>Dislivello</th><th>Cadenza</th></tr>${righeAttivita}</table><div class="footer">Generato da Bainzuretta il ${new Date().toLocaleDateString('it-IT')} — allerock.github.io/bainzuretta</div></body></html>`;
         const a = document.createElement('a');
         a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(contenuto);
         a.download = `Bainzuretta_${anno}.html`;
@@ -1280,9 +1579,9 @@
     }
 
     function apriAttivita(id) {
-        const a = rawData.find(x => x.id == id);
+        const a = rawData.find(x => String(x.id) === String(id));
         if (!a) return;
-        const data = new Date(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const data = dataCalendario(a.data).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
         const nome = a.nome ? '\n"' + a.nome + '"' : '';
         const dis = a.dislivello ? '\nDislivello: ' + a.dislivello.toFixed(0) + ' m' : '';
         const cad = (a.cadenza && a.cadenza > 0) ? '\nCadenza: ' + Math.round(a.cadenza) + ' rpm' : '';
@@ -1305,18 +1604,64 @@
     }
 
     function esportaJSON() {
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
-        const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
+        if (!controllaArchivioPronto()) return;
+        try {
+            const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData));
+            const a = document.createElement('a'); a.href = dataStr; a.download = 'bainzuretta.json'; a.click();
+        } catch (e) { showToast('Esportazione non riuscita: ' + erroreArchivio(e), 6000); }
+    }
+
+    function ripristinaArchivioPrecedente() {
+        if (window._stravaBusy) { showToast('Attendi la fine della sincronizzazione'); return; }
+        try {
+            const s = localStorage.getItem(ARCHIVIO_BACKUP_KEY);
+            if (!s) { showToast('Nessuna copia precedente disponibile'); return; }
+            const precedente = validaArchivio(JSON.parse(s));
+            if (!confirm('Ripristinare l\'archivio precedente (' + precedente.length + ' attivita)? L\'archivio attuale verra conservato come copia di recupero.')) return;
+            scriviArchivio(precedente, true);
+            localStorage.removeItem(STRAVA_SYNC_PENDING_KEY);
+            aggiornaVisteArchivio();
+            showToast('Archivio precedente ripristinato', 5000);
+        } catch (e) { showToast('Recupero non riuscito: ' + erroreArchivio(e), 7000); }
+    }
+
+    function avviaImportJSON() {
+        if (window._stravaBusy) { showToast('Attendi la fine della sincronizzazione'); return; }
+        try {
+            if (localStorage.getItem(ARCHIVIO_BACKUP_KEY)) {
+                const scelta = prompt('IMPORTAZIONE JSON\n\n1 = Scegli un file JSON da importare\n2 = Recupera l\'archivio precedente all\'ultima importazione\n\nAnnulla per uscire.', '1');
+                if (scelta === null) return;
+                if (scelta.trim() === '2') { ripristinaArchivioPrecedente(); return; }
+                if (scelta.trim() !== '1') { showToast('Scegli 1 oppure 2'); return; }
+            }
+            const input = document.getElementById('json-input');
+            input.value = '';
+            input.click();
+        } catch (e) { showToast(erroreArchivio(e), 6000); }
     }
 
     document.getElementById('json-input').onchange = (e) => {
+        const input = e.target, file = input.files && input.files[0];
+        if (!file) return;
+        if (window._stravaBusy) { input.value = ''; showToast('Attendi la fine della sincronizzazione'); return; }
         const reader = new FileReader();
+        reader.onerror = () => { input.value = ''; showToast('Impossibile leggere il file. Archivio attuale conservato.', 6000); };
+        reader.onabort = () => { input.value = ''; showToast('Importazione annullata'); };
         reader.onload = (ev) => {
-            rawData = JSON.parse(new TextDecoder().decode(ev.target.result));
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            aggiornaStats(); popolaAnniArchivio(); showToast('Dati importati!');
+            try {
+                const testo = new TextDecoder('utf-8', { fatal: true }).decode(ev.target.result).replace(/^\uFEFF/, '');
+                const candidate = validaArchivio(JSON.parse(testo));
+                if (!confirm('Sostituire l\'archivio attuale (' + rawData.length + ' attivita) con il file selezionato (' + candidate.length + ' attivita)?\n\nLa copia precedente sara conservata per il recupero da IMPORTA JSON.')) return;
+                // La sincronizzazione potrebbe essere iniziata mentre il file veniva letto.
+                if (window._stravaBusy) { showToast('Attendi la fine della sincronizzazione e riprova'); return; }
+                scriviArchivio(candidate, true);
+                localStorage.removeItem(STRAVA_SYNC_PENDING_KEY);
+                aggiornaVisteArchivio(); showToast('Dati importati!');
+            } catch (err) { showToast('Importazione non riuscita: ' + erroreArchivio(err), 7000); }
+            finally { input.value = ''; }
         };
-        reader.readAsArrayBuffer(e.target.files[0]);
+        try { reader.readAsArrayBuffer(file); }
+        catch (err) { input.value = ''; showToast('Impossibile leggere il file: ' + erroreArchivio(err), 6000); }
     };
 
     function vaiA(id) {
@@ -1334,14 +1679,68 @@
     function apriArchivioAnno(anno) { const sel = document.getElementById('sel-anno-archivio'); sel.value = anno; vaiA('archivio'); }
 
     function eliminaAttivita(id) {
-        if(confirm('Elimina?')) {
-            rawData = rawData.filter(a => a.id !== id);
-            localStorage.setItem('bainzuretta_raw', JSON.stringify(rawData));
-            disegnaDiario(); aggiornaStats();
+        if (!controllaArchivioPronto()) return;
+        if (!rawData.some(a => String(a.id) === String(id))) { showToast('Attivita non trovata'); return; }
+        if (!confirm('Elimina?')) return;
+        try {
+            const next = rawData.filter(a => String(a.id) !== String(id));
+            const valido = validaArchivio(next);
+            scriviArchivio(valido);
+        } catch (e) {
+            showToast('Eliminazione non riuscita: ' + erroreArchivio(e), 7000);
+            return;
         }
+        if (editingId !== null && String(editingId) === String(id)) resetFormManuale();
+        disegnaDiario(); aggiornaStats(); popolaAnniArchivio();
     }
 
-    function pulisciTutto() { if(confirm('CANCELLARE TUTTO?')) { localStorage.clear(); location.reload(); } }
+    function pulisciTutto() {
+        if (window._stravaBusy || stravaRefreshInFlight) {
+            showToast('Attendi la fine dell\'operazione Strava prima di eseguire il reset.', 6000);
+            return;
+        }
+        const messaggio = 'RESET DATI BAINZURETTA\n\nVerranno eliminati da questo browser:\n- tutte le attivita manuali e importate;\n- gli obiettivi annuali e le preferenze;\n- i backup locali e le copie di recupero;\n- i token e il Client Secret Strava memorizzati.\n\nDopo il reset dovrai ricollegare Strava e reinserire il Client Secret. L\'autorizzazione remota e le attivita su Strava non verranno modificate. I dati delle altre applicazioni resteranno intatti.\n\nPer conservare le attivita, annulla e usa prima BACKUP JSON. Senza una copia esterna non potrai recuperarle dopo il reset.\n\nConfermi il reset?';
+        if (!confirm(messaggio)) return;
+        const rimossi = [];
+        try {
+            // Solo chiavi effettivamente usate da Bainzuretta, senza cancellare l'intero origin.
+            const chiavi = new Set([
+                'bainzuretta_raw', ARCHIVIO_BACKUP_KEY, 'bainzuretta_raw_danneggiato',
+                'bainzuretta_strava', 'bainzuretta_strava_secret', 'bainzuretta_strava_pending',
+                STRAVA_SYNC_PENDING_KEY, 'bainzuretta_record_cat'
+            ]);
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && /^bainzuretta_target_\d{4}$/.test(key)) chiavi.add(key);
+            }
+            // Leggere tutto prima di cancellare evita reset parziali se la lettura non e consentita.
+            const snapshot = [];
+            for (const key of chiavi) {
+                const value = localStorage.getItem(key);
+                if (value !== null) snapshot.push({ key, value });
+            }
+            for (const voce of snapshot) {
+                localStorage.removeItem(voce.key);
+                rimossi.push(voce);
+            }
+        } catch (e) {
+            let recuperati = true;
+            for (const voce of rimossi) {
+                try { localStorage.setItem(voce.key, voce.value); } catch (_) { recuperati = false; }
+            }
+            if (recuperati) showToast('Reset non riuscito. I dati precedenti sono stati ' + (rimossi.length ? 'ripristinati.' : 'conservati.'), 7000);
+            else alert('Reset incompleto: il browser ha impedito anche il ripristino di alcuni dati. ' + (archivioPronto ? 'L\'archivio in memoria e ancora disponibile. Non chiudere l\'app: usa BACKUP JSON per salvare le attivita prima di ricaricare.' : 'L\'archivio non era leggibile prima del reset. Non considerare completato il reset: conserva le copie esterne disponibili e usa IMPORTA JSON per recuperare un archivio valido.'));
+            return;
+        }
+        rawData = []; editingId = null; stravaToken = null; archivioPronto = true;
+        myTarget = 5000;
+        gruppiAttivitaMap = {};
+        window._recList = [];
+        delete window._stravaSecret;
+        window._stravaErrTipo = null;
+        try { location.reload(); }
+        catch (_) { alert('Reset completato. Ricarica la pagina per aggiornare la visualizzazione.'); }
+    }
 
     function cambiaObiettivo() {
         let n = prompt('Target per il ' + currY + ':', myTarget);
@@ -1356,3 +1755,4 @@
 </script>
 </body>
 </html>
+
