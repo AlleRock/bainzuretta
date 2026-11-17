@@ -1,0 +1,97 @@
+name: Bainzuretta iOS Simulator
+on:
+  push:
+    branches: [ios-native]
+    paths: ['ios/**', '.github/workflows/ios-simulator.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-simulator-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  simulator:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ios-native
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Xcode, SDK and simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -version | tee xcode-version.txt
+          version=$(xcodebuild -version | awk '/Xcode/{print $2}')
+          test "${version%%.*}" -ge 27 || { echo '::error::Xcode 27 o successivo richiesto.'; exit 1; }
+          xcodebuild -showsdks
+          xcrun simctl list devices available -j > simulator-devices.json
+          python3 ios/scripts/select-simulator.py >> "$GITHUB_ENV"
+      - name: Regenerate original JavaScript expectations
+        env:
+          TZ: Europe/Rome
+        run: |
+          node ios/scripts/web-oracle.cjs
+          git diff --exit-code -- ios/Tests/BainzurettaCoreTests/Fixtures/oracle.json
+      - name: Test OAuth broker with simulated Strava responses
+        run: node --test ios/backend/worker.test.mjs
+      - name: Swift core tests and JavaScript equivalence
+        env:
+          TZ: Europe/Rome
+        run: set -o pipefail; swift test --package-path ios 2>&1 | tee core-tests.log
+      - name: Verify deterministic project
+        run: |
+          python3 ios/scripts/generate-project.py
+          git diff --exit-code -- ios/Bainzuretta.xcodeproj
+      - name: Build and UI tests on iPhone Simulator
+        run: |
+          set -euo pipefail
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcodebuild test -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Test -resultBundlePath ios/build/UITests.xcresult CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
+      - name: Build Appetize simulator bundle
+        run: |
+          set -euo pipefail
+          xcodebuild build -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Release ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO 2>&1 | tee simulator-build.log
+          app=ios/build/Release/Build/Products/Release-iphonesimulator/Bainzuretta.app
+          test -d "$app"
+          xcrun vtool -show-build "$app/Bainzuretta" | tee simulator-platform.txt
+          grep -q IOSSIMULATOR simulator-platform.txt
+          xcrun lipo -verify_arch arm64 "$app/Bainzuretta"
+          xcrun simctl install "$SIMULATOR_ID" "$app"
+          xcrun simctl launch "$SIMULATOR_ID" it.allerock.Bainzuretta
+          xcrun simctl io "$SIMULATOR_ID" screenshot Bainzuretta-simulator.png
+          ditto -c -k --sequesterRsrc --keepParent "$app" Bainzuretta-iOS-Simulator.zip
+          python3 ios/scripts/verify-artifact.py Bainzuretta-iOS-Simulator.zip
+          shasum -a 256 Bainzuretta-iOS-Simulator.zip > Bainzuretta-iOS-Simulator.zip.sha256
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bainzuretta-iOS-Simulator
+          path: |
+            Bainzuretta-iOS-Simulator.zip
+            Bainzuretta-iOS-Simulator.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bainzuretta-test-results
+          path: |
+            *.log
+            xcode-version.txt
+            simulator-platform.txt
+            simulator-devices.json
+            Bainzuretta-simulator.png
+            ios/build/UITests.xcresult
+          retention-days: 14
+      - name: Summary
+        if: success()
+        run: |
+          echo '### Bainzuretta: build simulatore e test riusciti' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Scarica Bainzuretta-iOS-Simulator dagli Artifacts, estrai il pacchetto GitHub e carica Bainzuretta-iOS-Simulator.zip su Appetize.' >> "$GITHUB_STEP_SUMMARY"
+          echo "Simulatore testato: $SIMULATOR_NAME" >> "$GITHUB_STEP_SUMMARY"
+          cat Bainzuretta-iOS-Simulator.zip.sha256 >> "$GITHUB_STEP_SUMMARY"

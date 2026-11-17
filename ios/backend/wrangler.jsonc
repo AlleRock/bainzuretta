@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bainzuretta-strava",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-01",
+  "vars": { "STRAVA_CLIENT_ID": "210700" },
+  "observability": { "enabled": false }
+}

@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcresult
+*.zip
+.env
+.dev.vars
+node_modules/
+.wrangler/
