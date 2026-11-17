@@ -2,6 +2,8 @@
 
 Non occorrono Mac, Xcode sul PC o un abbonamento Apple Developer. Il codice viene compilato da GitHub su un Mac remoto; il simulatore viene poi mostrato nel browser da Appetize. Non si sta installando l'app sul tuo iPhone fisico.
 
+**Build verificata:** [apri l’esecuzione verde](https://github.com/AlleRock/bainzuretta/actions/runs/44160612164) oppure [scarica direttamente l’artifact](https://github.com/AlleRock/bainzuretta/actions/runs/44160612164/artifacts/14365995426). Testata su iPhone 18 Pro / iOS 27.0, con prova UI anche della Release. Puoi iniziare dal punto 2 usando questa build.
+
 ## 1. Trovare e avviare la compilazione
 
 1. Accedi a GitHub e apri [Bainzuretta → Actions](https://github.com/AlleRock/bainzuretta/actions).
@@ -18,11 +20,11 @@ Non occorrono Mac, Xcode sul PC o un abbonamento Apple Developer. Il codice vien
 1. Apri una esecuzione verde e scorri fino a **Artifacts**.
 2. Clicca **Bainzuretta-iOS-Simulator**. GitHub potrebbe richiederti di essere connesso.
 3. Windows scarica lo ZIP esterno dell'artifact. Aprilo o estrailo con Esplora file.
-4. All'interno trovi **Bainzuretta-iOS-Simulator.zip** e il file di controllo `.sha256`.
+4. All'interno trovi **Bainzuretta-iOS-Simulator.zip**, il file di controllo `.sha256` e una schermata PNG dell'app avviata.
 5. Il file da caricare su Appetize è **Bainzuretta-iOS-Simulator.zip**, senza estrarlo ulteriormente.
 6. Se lo apri per curiosità, contiene **Bainzuretta.app**, non file Swift. Non caricare lo ZIP del repository e non cercare un IPA.
 
-Gli artifact hanno una scadenza. Se non sono più disponibili, ripeti la compilazione. **Bainzuretta-test-results** contiene invece log, risultati dei test e schermate: non è l'app da caricare.
+Gli artifact hanno una scadenza. Se non sono più disponibili, ripeti la compilazione. **Bainzuretta-test-results** contiene log e risultati dei test; **Bainzuretta-screenshots** raccoglie le schermate reali dei test, apribili da Windows. Nessuno dei due è l'app da caricare.
 
 ## 3. Aprire Appetize
 
@@ -38,6 +40,8 @@ Gli artifact hanno una scadenza. Se non sono più disponibili, ripeti la compila
 La build è ARM64 Simulator, formato attualmente raccomandato da Appetize. Il runtime effettivamente usato nei test GitHub è registrato nei risultati. La disponibilità di iOS 27 sul tuo account Appetize va verificata lì: non viene dedotta dalla disponibilità su GitHub.
 
 ## 4. Prime operazioni
+
+L’app appena caricata parte con un archivio vuoto. Le schermate dei test possono mostrare attività sintetiche create automaticamente durante il collaudo: non sono incluse nel pacchetto e non provengono da Strava.
 
 - **HOME**: tocca l'obiettivo per modificarlo e leggere la legenda. Aggiungi un'attività manuale con data, km e durata. Il pulsante Annulla chiude la modifica senza salvarla.
 - **DIARIO**: cambia Attività/Mese/Settimana; tocca una riga per i dettagli. Scorri la riga lateralmente o tienila premuta per modificare/eliminare.
@@ -82,7 +86,7 @@ Se la build è rossa, apri la riga rossa nei job e copia soltanto le righe final
 
 ## Limiti del collaudo remoto
 
-Il formato del pacchetto viene controllato nel workflow e l'app viene installata/avviata nel simulatore Apple. Il caricamento effettivo nel tuo account Appetize, trasferimento JSON, ritorno OAuth, condivisione file, persistenza fra sessioni e servizi del sistema operativo richiedono il collaudo nel servizio. Il fuso del simulatore può differire da quello del PC: vicino alla mezzanotte controllare data e fuso prima di confrontare YTD e obiettivi. Il parametro URL Appetize `timezone` è documentato solo per Android; non viene presentato come una soluzione iOS già verificata.
+Il formato del pacchetto viene controllato nel workflow; la build Release viene installata nel simulatore Apple e deve superare una prova UI di navigazione, salvataggio e riapertura prima dell’upload. Il caricamento effettivo nel tuo account Appetize, trasferimento JSON, ritorno OAuth, condivisione file, persistenza fra sessioni e servizi del sistema operativo richiedono il collaudo nel servizio. Il fuso del simulatore può differire da quello del PC: vicino alla mezzanotte controllare data e fuso prima di confrontare YTD e obiettivi. Il parametro URL Appetize `timezone` è documentato solo per Android; non viene presentato come una soluzione iOS già verificata.
 
 Aptica e comportamento di un iPhone fisico non sono verificabili dal browser.
 

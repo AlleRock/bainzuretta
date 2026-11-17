@@ -39,7 +39,7 @@ Cambiare prima il placeholder `STRAVA_CLIENT_ID` in `wrangler.jsonc`. Le credenz
 
 ## Come funziona
 
-`POST /start` richiede chiave di abbinamento e restituisce URL Strava/state firmato. L'autenticazione usa ASWebAuthenticationSession, senza WebView dell'app. `GET /callback` valida state/scadenza/scope e rimanda al solo schema `bainzuretta://strava-callback`. `POST /exchange` richiede chiave, state e verificatore corrispondente alla prova SHA256; il segreto viene aggiunto soltanto sul server. `POST /refresh` rinnova i token. `POST /revoke` usa HTTP Basic con il segreto sul server per revocare l'autorizzazione. Nessun endpoint accetta URL di ritorno arbitrari; token e attività non sono conservati sul broker.
+`POST /start` richiede chiave di abbinamento e restituisce URL Strava/state firmato. L'autenticazione usa ASWebAuthenticationSession, senza WebView dell'app. `GET /callback` valida state/scadenza/scope e rimanda al solo schema `bainzuretta://strava-callback`. `POST /exchange` richiede chiave, state e verificatore corrispondente alla prova SHA256; il segreto viene aggiunto soltanto sul server. `POST /refresh` rinnova i token. `POST /revoke` usa HTTP Basic con il segreto sul server verso il nuovo endpoint Strava `/oauth/revoke`, raccomandato dalla documentazione dal 1 giugno 2026. Il vecchio `/oauth/deauthorize` non è usato. Nessun endpoint accetta URL di ritorno arbitrari; token e attività non sono conservati sul broker.
 
 La chiave di abbinamento protegge l'uso del broker personale. Non sostituisce un sistema multiutente: per distribuire pubblicamente l'app sarà necessario aggiungere gestione utenti e limiti server appropriati. Questa versione è per il progetto personale richiesto.
 

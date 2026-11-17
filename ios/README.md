@@ -9,6 +9,8 @@ Progetto Swift + SwiftUI, separato dalla PWA. Tutto il lavoro è nel ramo **ios-
 - [Configurazione Strava sicura](docs/STRAVA.md)
 - [Esiti effettivi e verifiche ancora necessarie](docs/VERIFICHE.md)
 
+**Prima build verificata:** [esecuzione riuscita](https://github.com/AlleRock/bainzuretta/actions/runs/44160612164) · [artifact simulatore](https://github.com/AlleRock/bainzuretta/actions/runs/44160612164/artifacts/14365995426). Superati 27 test distinti, più la ripetizione della prova di navigazione/salvataggio/riapertura sulla Release confezionata. iPhone 18 Pro / iOS 27.0, Xcode 27.1. Estrarre l’artifact GitHub per ottenere **Bainzuretta-iOS-Simulator.zip** pronto per il caricamento. Login Strava reale e sessione Appetize restano da collaudare con la configurazione personale.
+
 ## Struttura
 
 ```
