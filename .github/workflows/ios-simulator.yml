@@ -83,10 +83,20 @@ jobs:
           grep -q IOSSIMULATOR simulator-platform.txt
           xcrun lipo -verify_arch arm64 "$app/Bainzuretta"
           xcrun simctl terminate "$SIMULATOR_ID" it.allerock.Bainzuretta || true
+          xcrun simctl uninstall "$SIMULATOR_ID" it.allerock.Bainzuretta || true
           xcrun simctl install "$SIMULATOR_ID" "$app"
-          xcrun simctl launch "$SIMULATOR_ID" it.allerock.Bainzuretta
-          sleep 3
-          xcrun simctl io "$SIMULATOR_ID" screenshot Bainzuretta-simulator.png
+          products=ios/build/Build/Build/Products
+          python3 ios/scripts/prepare-release-ui-tests.py "$products"
+          xcodebuild test-without-building -xctestrun "$products/ReleaseSmoke.xctestrun" -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -resultBundlePath ios/build/ReleaseSmoke.xcresult -only-testing:BainzurettaUITests/BainzurettaUITests/testSixMenusAndManualActivityPersistence -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 2>&1 | tee release-smoke.log
+          xcrun xcresulttool export attachments --path ios/build/ReleaseSmoke.xcresult --output-path ios/build/release-screenshots
+          python3 - <<'PYTHON'
+          import json, pathlib, shutil
+          directory = pathlib.Path('ios/build/release-screenshots')
+          manifest = json.loads((directory / 'manifest.json').read_text())
+          home = [a for test in manifest for a in test['attachments'] if a.get('suggestedHumanReadableName', '').startswith('HOME_') and a['exportedFileName'].endswith('.png')]
+          assert len(home) == 1, 'Expected the HOME screenshot from the successful Release UI smoke test'
+          shutil.copyfile(directory / home[0]['exportedFileName'], 'Bainzuretta-simulator.png')
+          PYTHON
           ditto -c -k --sequesterRsrc --keepParent "$app" Bainzuretta-iOS-Simulator.zip
           python3 ios/scripts/verify-artifact.py Bainzuretta-iOS-Simulator.zip
           shasum -a 256 Bainzuretta-iOS-Simulator.zip > Bainzuretta-iOS-Simulator.zip.sha256
@@ -105,7 +115,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Bainzuretta-screenshots
-          path: ios/build/screenshots
+          path: |
+            ios/build/screenshots
+            ios/build/release-screenshots
           if-no-files-found: warn
           retention-days: 14
       - name: Upload verification evidence
@@ -122,7 +134,9 @@ jobs:
             Bainzuretta-simulator.png
             ios/build/UITests.xcresult
             ios/build/NativeTests.xcresult
+            ios/build/ReleaseSmoke.xcresult
             ios/build/screenshots
+            ios/build/release-screenshots
           retention-days: 14
       - name: Summary
         if: success()
