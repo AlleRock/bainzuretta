@@ -27,6 +27,7 @@ jobs:
           version=$(xcodebuild -version | awk '/Xcode/{print $2}')
           test "${version%%.*}" -ge 27 || { echo '::error::Xcode 27 o successivo richiesto.'; exit 1; }
           xcodebuild -showsdks
+          xcrun --sdk iphonesimulator --show-sdk-version > simulator-sdk-version.txt
           xcrun simctl list devices available -j > simulator-devices.json
           python3 ios/scripts/select-simulator.py >> "$GITHUB_ENV"
       - name: Regenerate original JavaScript expectations
@@ -45,12 +46,22 @@ jobs:
         run: |
           python3 ios/scripts/generate-project.py
           git diff --exit-code -- ios/Bainzuretta.xcodeproj
-      - name: Build and UI tests on iPhone Simulator
+      - name: Compile app and native test targets
+        run: |
+          set -euo pipefail
+          xcodebuild build-for-testing -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO 2>&1 | tee native-compile.log
+      - name: Boot iPhone Simulator
         run: |
           set -euo pipefail
           xcrun simctl boot "$SIMULATOR_ID" || true
-          xcrun simctl bootstatus "$SIMULATOR_ID" -b
-          xcodebuild test -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Test -resultBundlePath ios/build/UITests.xcresult ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
+          python3 - <<'PYTHON'
+          import os, subprocess
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', os.environ['SIMULATOR_ID'], '-b'], check=True, timeout=600)
+          PYTHON
+      - name: Run native unit and UI tests
+        run: |
+          set -euo pipefail
+          xcodebuild test-without-building -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Build -resultBundlePath ios/build/UITests.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
       - name: Export UI screenshots for Windows
         if: always()
         continue-on-error: true
@@ -61,14 +72,16 @@ jobs:
       - name: Build Appetize simulator bundle
         run: |
           set -euo pipefail
-          xcodebuild build -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Release ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO 2>&1 | tee simulator-build.log
-          app=ios/build/Release/Build/Products/Release-iphonesimulator/Bainzuretta.app
+          xcodebuild build -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Build ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO 2>&1 | tee simulator-build.log
+          app=ios/build/Build/Build/Products/Release-iphonesimulator/Bainzuretta.app
           test -d "$app"
           xcrun vtool -show-build "$app/Bainzuretta" | tee simulator-platform.txt
           grep -q IOSSIMULATOR simulator-platform.txt
           xcrun lipo -verify_arch arm64 "$app/Bainzuretta"
+          xcrun simctl terminate "$SIMULATOR_ID" it.allerock.Bainzuretta || true
           xcrun simctl install "$SIMULATOR_ID" "$app"
           xcrun simctl launch "$SIMULATOR_ID" it.allerock.Bainzuretta
+          sleep 3
           xcrun simctl io "$SIMULATOR_ID" screenshot Bainzuretta-simulator.png
           ditto -c -k --sequesterRsrc --keepParent "$app" Bainzuretta-iOS-Simulator.zip
           python3 ios/scripts/verify-artifact.py Bainzuretta-iOS-Simulator.zip
@@ -92,6 +105,7 @@ jobs:
             xcode-version.txt
             simulator-platform.txt
             simulator-devices.json
+            simulator-sdk-version.txt
             Bainzuretta-simulator.png
             ios/build/UITests.xcresult
             ios/build/screenshots

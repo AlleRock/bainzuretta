@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var disconnecting = false
     @State private var candidate: Archive?
     @State private var confirmImport = false
+    @State private var pastedData: Data?
     @State private var document: JSONDocument?
     @State private var filename = "bainzuretta"
     @State private var shared: SharedFile?
@@ -68,7 +69,9 @@ struct HomeView: View {
             .sheet(isPresented:$manual) { ManualActivityView().environment(store) }
             .sheet(isPresented:$goal) { GoalSettings().environment(store) }
             .sheet(isPresented:$configuration) { StravaSettings().environment(store) }
-            .sheet(isPresented:$pasting) { PasteBackupView { data in preview(data) } }
+            .sheet(isPresented:$pasting,onDismiss:{
+                if let data = pastedData { pastedData = nil; preview(data) }
+            }) { PasteBackupView { data in pastedData = data } }
             .sheet(item:$shared) { ShareFileView(url:$0.url).presentationDetents([.medium,.large]) }
             .fileExporter(isPresented:$exporting,document:document,contentType:.json,defaultFilename:filename) { result in if case .failure(let error) = result { store.report(error) } }
             .fileImporter(isPresented:$importing,allowedContentTypes:[.json],allowsMultipleSelection:false) { result in

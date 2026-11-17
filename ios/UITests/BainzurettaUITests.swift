@@ -22,6 +22,29 @@ import XCTest
         app.terminate(); app.launchArguments = ["-AppleLanguages","(it)","-AppleLocale","it_IT"]; app.launch()
         app.buttons["tab-DIARIO"].tap(); XCTAssertTrue(app.staticTexts["42,5 km"].firstMatch.waitForExistence(timeout:5))
     }
+    func testJSONImportConfirmationAndRepeatedImport() throws {
+        let app = app(), year = Calendar(identifier:.gregorian).component(.year,from:Date())
+        let bytes = try JSONSerialization.data(withJSONObject:[["id":"test-import","data":"\(year)-01-02","distanza":80.5,"tempo":3,"media":26.8333,"nome":"TEST importazione","cadenza":87,"dislivello":700]])
+        let text = try XCTUnwrap(String(data:bytes,encoding:.utf8))
+        for _ in 0..<2 {
+            app.buttons["tab-HOME"].tap()
+            let options = app.descendants(matching:.any)["backup-options"].firstMatch
+            for _ in 0..<6 { if options.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(options.isHittable); options.tap()
+            let paste = app.buttons["paste-backup"]
+            for _ in 0..<3 { if paste.isHittable { break }; app.swipeUp() }
+            paste.tap()
+            let field = app.textViews["backup-text"]
+            XCTAssertTrue(field.waitForExistence(timeout:5)); field.tap(); field.typeText(text)
+            app.buttons["Verifica"].tap()
+            let confirmation = app.alerts["Sostituire l’archivio?"]
+            XCTAssertTrue(confirmation.waitForExistence(timeout:5)); confirmation.buttons["Sostituisci"].tap()
+            app.buttons["tab-DIARIO"].tap()
+            XCTAssertTrue(app.buttons["activity-test-import"].waitForExistence(timeout:5))
+            XCTAssertEqual(app.buttons.matching(identifier:"activity-test-import").count,1)
+        }
+        capture("imported-json",app:app)
+    }
     func testEveryRecordCategoryAndTop5() {
         let app = app()
         app.buttons["add-manual"].tap()

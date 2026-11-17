@@ -51,6 +51,7 @@ struct ActivityRow: View {
                 }.font(.footnote).monospacedDigit().fixedSize(horizontal:false,vertical:true)
             }.padding(.vertical,4)
         }
+        .accessibilityIdentifier("activity-"+activity.id)
         .contextMenu {
             if editable {
                 if activity.stravaID == nil { Button("Modifica",systemImage:"pencil") { store.section = .home; store.editActivity = activity }.disabled(store.busy) }

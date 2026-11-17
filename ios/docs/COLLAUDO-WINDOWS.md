@@ -52,7 +52,7 @@ Con testo molto grande, la barra inferiore scorre orizzontalmente: tutte le sei 
 
 Prima esporta **BACKUP JSON** dalla Bainzuretta web e conserva quel file sul PC. Non incollarlo in chat: può contenere nomi, date e identificativi personali.
 
-Dentro l'app iOS scegli HOME → **Importa JSON**. Si apre il selettore File del simulatore, non quello di Windows. Se il servizio permette di trasferire un file nella cartella Documenti dell'app o in File, trasferisci lì il JSON e selezionalo. La semplice funzione Appetize per caricare foto/video non garantisce il trasferimento di un JSON generico: dipende dagli strumenti e dal piano del servizio.
+Dentro l'app iOS scegli HOME → **Importa JSON**. Si apre il selettore File del simulatore, non quello di Windows. Se il servizio permette di trasferire un file nella cartella Documenti dell'app o in File, trasferisci lì il JSON e selezionalo. Il pulsante standard **Upload File** di Appetize su iOS, secondo la documentazione consultata, accetta PNG, JPEG/JPG, GIF e MP4 e li invia alla libreria foto: **non trasferisce JSON**. Usare questa strada soltanto se il proprio account offre uno strumento separato per documenti; altrimenti usare l’alternativa seguente.
 
 Alternativa già inclusa:
 
@@ -82,6 +82,8 @@ Se la build è rossa, apri la riga rossa nei job e copia soltanto le righe final
 
 ## Limiti del collaudo remoto
 
-Il formato del pacchetto viene controllato nel workflow e l'app viene installata/avviata nel simulatore Apple. Il caricamento effettivo nel tuo account Appetize, trasferimento JSON, ritorno OAuth, condivisione file, persistenza fra sessioni e servizi del sistema operativo richiedono il collaudo nel servizio. Aptica e comportamento di un iPhone fisico non sono verificabili dal browser.
+Il formato del pacchetto viene controllato nel workflow e l'app viene installata/avviata nel simulatore Apple. Il caricamento effettivo nel tuo account Appetize, trasferimento JSON, ritorno OAuth, condivisione file, persistenza fra sessioni e servizi del sistema operativo richiedono il collaudo nel servizio. Il fuso del simulatore può differire da quello del PC: vicino alla mezzanotte controllare data e fuso prima di confrontare YTD e obiettivi. Il parametro URL Appetize `timezone` è documentato solo per Android; non viene presentato come una soluzione iOS già verificata.
 
-Fonti: [formato iOS Appetize](https://docs.appetize.io/platform/app-management/uploading-apps/ios), [esecuzione manuale GitHub Actions](https://docs.github.com/en/actions/how-tos/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow).
+Aptica e comportamento di un iPhone fisico non sono verificabili dal browser.
+
+Fonti: [trasferimento media Appetize](https://docs.appetize.io/features/media), [formato iOS Appetize](https://docs.appetize.io/platform/app-management/uploading-apps/ios), [esecuzione manuale GitHub Actions](https://docs.github.com/en/actions/how-tos/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow).

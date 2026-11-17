@@ -59,9 +59,10 @@ public struct FileArchive: Sendable {
                 try old.write(to: directory.appendingPathComponent("damaged-\(UUID().uuidString).json"), options: .atomic)
             }
         }
-        try data.write(to: file, options: .atomic)
         #if os(iOS)
-        try FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: file.path)
+        try data.write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        #else
+        try data.write(to: file, options: .atomic)
         #endif
     }
     public func reset() throws {
