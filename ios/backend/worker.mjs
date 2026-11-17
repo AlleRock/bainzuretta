@@ -49,6 +49,13 @@ export async function handle(request, env, upstream=fetch) {
       for(const [key,value] of Object.entries({client_id:env.STRAVA_CLIENT_ID,response_type:'code',redirect_uri:url.origin+'/callback',approval_prompt:'auto',scope:'activity:read_all',state})) auth.searchParams.set(key,value);
       return json({url:auth.href,state});
     }
+    if(url.pathname==='/revoke') {
+      if(typeof body.token!=='string'||!body.token||body.token.length>2048) return json({error:'input'},400);
+      let response;
+      try { response=await upstream('https://www.strava.com/oauth/revoke',{method:'POST',headers:{Authorization:'Basic '+btoa(env.STRAVA_CLIENT_ID+':'+env.STRAVA_CLIENT_SECRET),'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:body.token,token_type_hint:'refresh_token'}).toString()}); } catch { return json({error:'upstream'},502); }
+      if(!response.ok) return json({error:'revoke'},response.status===429?429:response.status>=500?502:401);
+      return json({revoked:true});
+    }
     let tokenBody;
     if(url.pathname==='/exchange') {
       const state=await verify(body.state,env);

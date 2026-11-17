@@ -51,8 +51,8 @@ public struct StravaRemote: Sendable {
         let distance = try Activity.number(act["distance"], field: "distance") / 1000
         let hours = try Activity.number(act["moving_time"], field: "moving_time") / 3600
         func fixed(_ n: Double, _ decimals: Int) -> JSONValue { .number(Double(Display.fixed(n, decimals))!) }
-        var f: [String: JSONValue] = ["id": id, "strava_id": id, "data": .string(date), "distanza": fixed(distance, 2), "tempo": fixed(hours, 4), "media": fixed(hours > 0 ? distance / hours : 0, 2), "nome": act["name"] ?? .string(""), "dislivello": act["total_elevation_gain"] ?? .number(0), "cadenza": act["average_cadence"] ?? .number(0)]
-        if let utc = act["start_date"] { f["data_utc"] = utc }
+        var f: [String: JSONValue] = ["id": id, "strava_id": id, "data": .string(date), "distanza": fixed(distance, 2), "tempo": fixed(hours, 4), "media": fixed(hours > 0 ? distance / hours : 0, 2), "nome": act["name"] ?? .string(""), "dislivello": (act["total_elevation_gain"] == .null ? .number(0) : act["total_elevation_gain"] ?? .number(0)), "cadenza": (act["average_cadence"] == .null ? .number(0) : act["average_cadence"] ?? .number(0))]
+        if let utc = act["start_date"], utc != .null && utc != .string("") && utc != .bool(false) && utc != .number(0) { f["data_utc"] = utc }
         return try Activity(fields: f)
     }
     public func download(token: String, window: SyncWindow) async throws -> [Activity] {
@@ -107,8 +107,12 @@ public enum StravaSync {
                 if resync {
                     let old = next[index]
                     var changes = a.fields; changes.removeValue(forKey: "id")
-                    a = try old.replacing(changes)
-                    if a != old { next[index] = a; updated += 1 }
+                    let changed = ["data", "data_utc", "distanza", "tempo", "media", "nome", "dislivello", "cadenza"].contains { key in
+                        guard let value = changes[key] else { return false }
+                        if let text = value.text { return (old.fields[key]?.text ?? "") != text }
+                        return abs((old.fields[key]?.double ?? 0) - (value.double ?? 0)) > 1e-6
+                    }
+                    if changed { next[index] = try old.replacing(changes); updated += 1 }
                 }
             } else {
                 if ids.contains(a.id) {

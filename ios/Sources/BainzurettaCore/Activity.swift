@@ -82,7 +82,7 @@ public struct Activity: Codable, Identifiable, Equatable, Sendable {
             if let value = f[key], value != .null { f[key] = .number(try Self.number(value, field: key)) }
         }
         if let utc = f["data_utc"] {
-            guard let s = utc.text, s.range(of: #"Z$|[+-]\d{2}:\d{2}$"#, options: .regularExpression) != nil else { throw ArchiveError.invalid("data_utc") }
+            guard let s = utc.text, s.range(of: #"Z$|[+-][0-9]{2}:[0-9]{2}$"#, options: .regularExpression) != nil else { throw ArchiveError.invalid("data_utc") }
             _ = try CivilDate(s)
         }
         fields = f
@@ -93,7 +93,7 @@ public struct Activity: Codable, Identifiable, Equatable, Sendable {
     public static func number(_ value: JSONValue?, field: String) throws -> Double {
         var n = value?.double
         if let s = value?.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-           s.range(of: #"^[+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$"#, options: .regularExpression) != nil {
+           s.range(of: #"^[+]?(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)(?:[eE][+-]?[0-9]+)?$"#, options: .regularExpression) != nil {
             n = Double(s.replacingOccurrences(of: ",", with: "."))
         }
         guard let n, n.isFinite, n >= 0 else { throw ArchiveError.invalid(field + ": richiesto numero finito non negativo") }
@@ -115,7 +115,7 @@ public struct Activity: Codable, Identifiable, Equatable, Sendable {
         let input = duration.trimmingCharacters(in: .whitespacesAndNewlines)
         let hours: Double
         if input.contains(":") {
-            guard input.range(of: #"^\d+:\d{1,2}(:\d{1,2})?$"#, options: .regularExpression) != nil else { throw ArchiveError.invalid("usa HH:MM:SS") }
+            guard input.range(of: #"^[0-9]+:[0-9]{1,2}(:[0-9]{1,2})?$"#, options: .regularExpression) != nil else { throw ArchiveError.invalid("usa HH:MM:SS") }
             let p = input.split(separator: ":").compactMap { Double($0) }
             guard p[1] < 60 && (p.count == 2 || p[2] < 60) else { throw ArchiveError.invalid("minuti o secondi superiori a 59") }
             hours = p[0] + p[1] / 60 + (p.count == 3 ? p[2] / 3600 : 0)

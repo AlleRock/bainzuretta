@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           xcrun simctl boot "$SIMULATOR_ID" || true
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
-          xcodebuild test -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Test -resultBundlePath ios/build/UITests.xcresult CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
+          xcodebuild test -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Test -resultBundlePath ios/build/UITests.xcresult ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
       - name: Build Appetize simulator bundle
         run: |
           set -euo pipefail

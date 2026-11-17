@@ -104,10 +104,10 @@ struct StravaToken: Codable {
     }
     func disconnect(revoke: Bool = false) async throws {
         if revoke {
-            let token = try await accessToken()
-            var request = URLRequest(url:URL(string:"https://www.strava.com/oauth/deauthorize")!); request.httpMethod = "POST"
-            request.setValue("Bearer "+token,forHTTPHeaderField:"Authorization")
-            let response = try await URLSessionTransport().send(request); _ = try response.checked()
+            guard let current = token else { throw StravaError.auth }
+            struct Revoked: Decodable { var revoked: Bool }
+            let response = try await broker("revoke",body:["token":current.refresh_token],as:Revoked.self)
+            guard response.revoked else { throw StravaError.response }
         }
         try secure.delete("token"); token = nil; update()
     }

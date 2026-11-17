@@ -14,7 +14,7 @@ final class ArchiveTests: XCTestCase {
         XCTAssertEqual(try ArchiveCodec.decode(Data([0xef,0xbb,0xbf]) + raw),list)
     }
     func testInvalidInputAndDuplicateIDsAreRejected() throws {
-        for date in ["2026-02-29","2026-13-01","2026-01-01T24:00:00Z","2026-01-01T12:60:00Z","bad"] { XCTAssertThrowsError(try activity(date:date)) }
+        for date in ["٢٠٢٦-01-01","2026-02-29","2026-13-01","2026-01-01T24:00:00Z","2026-01-01T12:60:00Z","bad"] { XCTAssertThrowsError(try activity(date:date)) }
         for number in [JSONValue.number(-1),.bool(true),.string(""),.string("NaN"),.string("-3")] {
             XCTAssertThrowsError(try Activity(fields:["id":.number(1),"data":.string("2026-01-01"),"distanza":number]))
         }
@@ -60,6 +60,23 @@ final class ArchiveTests: XCTestCase {
         XCTAssertEqual(weeks.first!.to,today.dayNumber); XCTAssertEqual(weeks.last!.from,try CivilDate("2024-01-01").dayNumber)
         let list = [try activity(1,date:"2023-03-01"),try activity(2,date:"2023-03-02")]
         XCTAssertEqual(Statistics.year(list,2023,ytd:60).map(\.id),["1"])
+    }
+    func testGoalPaceProjectionPercentAndArrival() throws {
+        let date = try CivilDate("2024-07-01"), list = [try activity(km:2000)]
+        // Put the synthetic activity in the goal year.
+        let data = [try list[0].replacing(["data":.string("2024-06-30")])]
+        let goal = Statistics.goal(data,today:date,target:3660)
+        XCTAssertEqual(goal.expected,1830); XCTAssertEqual(goal.projection,4000)
+        XCTAssertEqual(goal.weeklyRequired,64); XCTAssertEqual(goal.pace,.ahead)
+        XCTAssertEqual(goal.progress,2000/3660.0); XCTAssertEqual(goal.arrivalDays!,151.89,accuracy:1e-8)
+        XCTAssertEqual(Statistics.goal(data,today:date,target:1500).pace,.achieved)
+        XCTAssertEqual(Statistics.goal([],today:date,target:3660).pace,.empty)
+        let warning = [try data[0].replacing(["distanza":.number(1700)])]
+        XCTAssertEqual(Statistics.goal(warning,today:date,target:3660).pace,.warning)
+        let behind = [try data[0].replacing(["distanza":.number(100)])]
+        XCTAssertEqual(Statistics.goal(behind,today:date,target:3660).pace,.behind)
+        XCTAssertEqual(Display.time(1e100),"—"); XCTAssertEqual(Display.hours(1e100),"—")
+        XCTAssertThrowsError(try Activity.manual(id:"2",day:"2026-01-01",distance:"1",duration:"١:٢٠"))
     }
     func testLargeArchiveAndRecordsPerformance() throws {
         let list = try (0..<12000).map { i in try activity(i+1,date:CivilDate.fromDay(16000+i/3).isoDay,km:Double(i%180)) }

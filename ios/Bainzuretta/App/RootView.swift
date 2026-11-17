@@ -42,8 +42,8 @@ struct RootView: View {
                             }.buttonStyle(.plain).accessibilityIdentifier("tab-"+section.rawValue)
                                 .accessibilityAddTraits(store.section == section ? .isSelected : [])
                         }
-                    }.padding(.horizontal,6).containerRelativeFrame(.horizontal)
-                }.background(.bar).overlay(alignment:.top) { Divider() }
+                    }.padding(.horizontal,6).containerRelativeFrame(.horizontal) { width, _ in max(width, typeSize.isAccessibilitySize ? 672 : 0) }
+                }.accessibilityIdentifier("main-navigation").background(.bar).overlay(alignment:.top) { Divider() }
             }
             .alert("Bainzuretta",isPresented:Binding(get:{store.notice != nil},set:{if !$0 {store.notice = nil}}),presenting:store.notice) { _ in Button("OK",role:.cancel) {} } message: { Text($0.text) }
             .sheet(item:$store.editActivity) { activity in ManualActivityView(existing:activity).environment(store) }

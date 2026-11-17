@@ -3,6 +3,6 @@
   "name": "bainzuretta-strava",
   "main": "worker.mjs",
   "compatibility_date": "2026-11-01",
-  "vars": { "STRAVA_CLIENT_ID": "210700" },
+  "vars": { "STRAVA_CLIENT_ID": "INSERISCI_CLIENT_ID_NATIVO" },
   "observability": { "enabled": false }
 }

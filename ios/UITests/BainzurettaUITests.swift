@@ -1,8 +1,8 @@
 import XCTest
 
 @MainActor final class BainzurettaUITests: XCTestCase {
-    func app() -> XCUIApplication {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-testing","-AppleLanguages","(it)","-AppleLocale","it_IT"]; app.launch(); return app
+    func app(extra: [String] = []) -> XCUIApplication {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-testing","-AppleLanguages","(it)","-AppleLocale","it_IT"] + extra; app.launch(); return app
     }
     func capture(_ name: String, app: XCUIApplication) {
         let attachment = XCTAttachment(screenshot:app.screenshot()); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
@@ -22,11 +22,21 @@ import XCTest
         app.terminate(); app.launchArguments = ["-AppleLanguages","(it)","-AppleLocale","it_IT"]; app.launch()
         app.buttons["tab-DIARIO"].tap(); XCTAssertTrue(app.staticTexts["42,5 km"].firstMatch.waitForExistence(timeout:5))
     }
+    func testLargeTextNavigation() {
+        let app = app(extra:["--large-text"])
+        capture("large-text-home",app:app)
+        let nav = app.buttons["tab-HOME"].firstMatch
+        XCTAssertTrue(nav.exists)
+        app.scrollViews["main-navigation"].swipeLeft()
+        if !app.buttons["tab-RECORD"].isHittable { app.scrollViews["main-navigation"].swipeLeft() }
+        app.buttons["tab-RECORD"].firstMatch.tap()
+        capture("large-text-records",app:app)
+    }
     func testCancelManualEditAndDarkMode() {
-        let app = app()
+        let app = app(extra:["--dark-mode"])
         app.buttons["add-manual"].tap(); app.buttons["Annulla"].tap()
         app.buttons["tab-DIARIO"].tap(); XCTAssertTrue(app.staticTexts["Nessuna attività"].waitForExistence(timeout:5))
         app.buttons["tab-RECORD"].tap(); XCTAssertTrue(app.buttons["record-category"].exists || app.otherElements["record-category"].exists)
-        capture("empty-records",app:app)
+        capture("dark-records",app:app)
     }
 }

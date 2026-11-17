@@ -8,7 +8,7 @@ public struct CivilDate: Equatable, Comparable, Sendable {
         var c = Calendar(identifier: .gregorian); c.timeZone = TimeZone(secondsFromGMT: 0)!; c.locale = Locale(identifier: "en_US_POSIX"); return c
     }
     public init(_ text: String) throws {
-        let regex = try NSRegularExpression(pattern: #"^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(?:Z|[+-]\d{2}:\d{2})?)?$"#)
+        let regex = try NSRegularExpression(pattern: #"^([0-9]{4})-([0-9]{2})-([0-9]{2})(?:T([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:\.([0-9]{1,9}))?)?(?:Z|[+-][0-9]{2}:[0-9]{2})?)?$"#)
         let ns = text as NSString
         guard let m = regex.firstMatch(in: text, range: NSRange(location: 0, length: ns.length)), m.range.length == ns.length else { throw ArchiveError.invalid("data ISO") }
         func part(_ i: Int) -> String { m.range(at: i).location == NSNotFound ? "" : ns.substring(with: m.range(at: i)) }
@@ -19,7 +19,7 @@ public struct CivilDate: Equatable, Comparable, Sendable {
               let date = Self.calendar.date(from: DateComponents(year: year, month: month, day: day)),
               Self.calendar.component(.month, from: date) == month, Self.calendar.component(.day, from: date) == day else { throw ArchiveError.invalid("data impossibile") }
         // Validate timezone offsets too; their values do not alter civil grouping.
-        if let range = text.range(of: #"[+-]\d{2}:\d{2}$"#, options: .regularExpression) {
+        if let range = text.range(of: #"[+-][0-9]{2}:[0-9]{2}$"#, options: .regularExpression) {
             let offset = text[range].dropFirst().split(separator: ":").compactMap { Int($0) }
             guard offset[0] <= 23 && offset[1] <= 59 else { throw ArchiveError.invalid("fuso orario") }
         }
@@ -70,6 +70,7 @@ public enum Display {
         return String(format: "%lld:%02lld:%02lld", s / 3600, s % 3600 / 60, s % 60)
     }
     public static func hours(_ hours: Double) -> String {
+        guard hours.isFinite, hours >= 0, hours * 60 < Double(Int.max) else { return "—" }
         let m = floor(hours * 60 + 0.5)
         return "\(Int(m / 60)) h \(String(format: "%02d", Int(m.truncatingRemainder(dividingBy: 60)))) m"
     }

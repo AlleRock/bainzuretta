@@ -26,3 +26,11 @@ test('pairing, no open redirect, scope, refresh errors and malformed upstream',a
  assert.equal((await handle(post('/refresh',{refresh_token:'r'}),env,async()=>{throw Error('offline');})).status,502);
  assert.equal((await handle(post('/start',{appState,challenge}),{})).status,503);
 });
+test('revocation stays on server and preserves HTTP failures',async()=>{
+ const result=await handle(post('/revoke',{token:'refresh-test'}),env,async(url,request)=>{
+   assert.equal(url,'https://www.strava.com/oauth/revoke'); assert.equal(request.headers.Authorization,'Basic '+btoa(env.STRAVA_CLIENT_ID+':'+env.STRAVA_CLIENT_SECRET));
+   assert.equal(new URLSearchParams(request.body).get('token'),'refresh-test'); return new Response(null,{status:200});
+ });
+ assert.deepEqual(await result.json(),{revoked:true});
+ assert.equal((await handle(post('/revoke',{token:'r'}),env,async()=>new Response(null,{status:503}))).status,502);
+});

@@ -39,7 +39,7 @@ struct HomeView: View {
                     Button("Connetti con Strava",systemImage:"link") {
                         if store.strava.configured { Task { await store.connect() } } else { configuration = true }
                     }.disabled(store.busy)
-                    Button("Configura collegamento sicuro",systemImage:"gearshape") { configuration = true }.font(.footnote)
+                    Button("Configura collegamento sicuro",systemImage:"gearshape") { configuration = true }.font(.footnote).disabled(store.busy)
                 }
                 if store.busy { ProgressView("Operazione in corso…") }
                 if !store.syncMessage.isEmpty { Text(store.syncMessage).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("operation-status") }
@@ -122,7 +122,10 @@ struct GoalCard: View {
                     Text(Display.number(goal.remaining,goal.remaining.rounded() == goal.remaining ? 0 : 1)).font(.system(.largeTitle,design:.rounded,weight:.heavy)).monospacedDigit()
                     Text("KM AL TRAGUARDO").font(.caption.weight(.semibold))
                 }
-                ProgressView(value:min(1,max(0,goal.progress))).tint(goal.pace == .achieved ? .brown : .white)
+                HStack {
+                    ProgressView(value:min(1,max(0,goal.progress))).tint(goal.pace == .achieved ? .brown : .white)
+                    Text(Display.number(goal.progress * 100) + "%").font(.caption.bold()).monospacedDigit()
+                }
                 HStack(alignment:.top) {
                     column("Target",Display.number(goal.target,0)); Spacer(); column("Proiezione",Display.number(goal.projection,0)); Spacer(); column("Km/sett",Display.number(goal.weeklyRequired,0))
                 }
@@ -137,7 +140,11 @@ struct GoalCard: View {
                 .background(LinearGradient(colors:[color,color.opacity(goal.pace == .achieved && glow ? 0.6 : 0.9)],startPoint:.topLeading,endPoint:.bottomTrailing),in:RoundedRectangle(cornerRadius:24))
                 .shadow(color:color.opacity(goal.pace == .achieved && glow ? 0.4 : 0.08),radius:glow ? 18 : 4,y:4)
         }.buttonStyle(.plain).accessibilityIdentifier("annual-goal")
-            .sensoryFeedback(.success,trigger:goal.pace == .achieved)
+            .sensoryFeedback(.success,trigger:goal.pace) { _, new in new == .achieved }
+            .onChange(of:goal.pace) { _, new in
+                if new == .achieved && !reduceMotion { withAnimation(.easeInOut(duration:2).repeatForever(autoreverses:true)) { glow = true } }
+                else { glow = false }
+            }
             .onAppear { if goal.pace == .achieved && !reduceMotion { withAnimation(.easeInOut(duration:2).repeatForever(autoreverses:true)) { glow = true } } }
     }
     private func column(_ title: String,_ value: String) -> some View { VStack(alignment:.leading,spacing:4) { Text(title).font(.caption2); Text(value).font(.system(.subheadline,design:.rounded,weight:.bold)).monospacedDigit() } }
