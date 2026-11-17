@@ -68,14 +68,17 @@ import XCTest
     func testLargeTextNavigation() {
         let app = app(extra:["--large-text"])
         capture("large-text-home",app:app)
-        let nav = app.buttons["tab-HOME"].firstMatch
+        let nav = app.scrollViews["main-navigation"], records = app.buttons["tab-RECORD"].firstMatch
         XCTAssertTrue(nav.exists)
-        for _ in 0..<5 {
-            if app.buttons["tab-RECORD"].isHittable { break }
-            app.scrollViews["main-navigation"].swipeLeft()
+        for _ in 0..<8 {
+            // XCTest on iOS 27 throws when asking isHittable for a fully
+            // off-screen SwiftUI button. Scroll using its actual frame first.
+            if nav.frame.contains(records.frame) { break }
+            nav.swipeLeft()
         }
-        XCTAssertTrue(app.buttons["tab-RECORD"].isHittable)
-        app.buttons["tab-RECORD"].firstMatch.tap()
+        XCTAssertTrue(nav.frame.contains(records.frame),"RECORD deve essere interamente visibile dopo lo scorrimento")
+        records.tap()
+        XCTAssertTrue(app.buttons["record-category"].waitForExistence(timeout:5))
         capture("large-text-records",app:app)
     }
     func testCancelManualEditAndDarkMode() {
