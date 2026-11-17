@@ -75,6 +75,7 @@ final class ArchiveTests: XCTestCase {
         XCTAssertEqual(Statistics.goal(warning,today:date,target:3660).pace,.warning)
         let behind = [try data[0].replacing(["distanza":.number(100)])]
         XCTAssertEqual(Statistics.goal(behind,today:date,target:3660).pace,.behind)
+        XCTAssertEqual(Display.fixed(1.125,2),"1.13"); XCTAssertEqual(Display.fixed(2.675,2),"2.67"); XCTAssertEqual(Display.fixed(2.625,2),"2.63")
         XCTAssertEqual(Display.time(1e100),"—"); XCTAssertEqual(Display.hours(1e100),"—")
         XCTAssertThrowsError(try Activity.manual(id:"2",day:"2026-01-01",distance:"1",duration:"١:٢٠"))
     }

@@ -63,7 +63,33 @@ public enum Display {
         let fraction = parts.count > 1 ? String(parts[1]) : ""
         return (negative ? "-" : "") + grouped + (decimals > 0 ? "," + String((fraction + String(repeating: "0", count: decimals)).prefix(decimals)) : "")
     }
-    public static func fixed(_ value: Double, _ decimals: Int) -> String { String(format: "%.*f", locale: Locale(identifier: "en_US_POSIX"), decimals, value) }
+    /// ECMAScript toFixed rounds the exact binary value, with halfway cases away from zero.
+    /// printf's tie-to-even and `(value * scale).rounded()` both disagree for valid Strava distances.
+    public static func fixed(_ value: Double, _ decimals: Int) -> String {
+        guard value.isFinite, (0...4).contains(decimals) else { return String(format:"%.*f",locale:Locale(identifier:"en_US_POSIX"),decimals,value) }
+        let bits = abs(value).bitPattern, exponent = Int((bits >> 52) & 0x7ff)
+        let significand = (bits & 0x000fffffffffffff) | (exponent == 0 ? 0 : (1 << 52))
+        let powers: [UInt64] = [1,5,25,125,625]
+        let product = significand * powers[decimals]
+        let shift = (exponent == 0 ? -1074 : exponent - 1023 - 52) + decimals
+        let integer: UInt64
+        if shift >= 0 {
+            guard shift < 64, product <= UInt64.max >> shift else { return String(format:"%.*f",locale:Locale(identifier:"en_US_POSIX"),decimals,value) }
+            integer = product << shift
+        } else {
+            let places = -shift
+            if places > 64 { integer = 0 }
+            else if places == 64 { integer = product >= (UInt64(1) << 63) ? 1 : 0 }
+            else {
+                let remainder = product & ((UInt64(1) << places) - 1)
+                integer = (product >> places) + (remainder >= (UInt64(1) << (places - 1)) ? 1 : 0)
+            }
+        }
+        let digits = String(integer), padded = String(repeating:"0",count:max(0,decimals + 1 - digits.count)) + digits
+        let sign = value < 0 ? "-" : ""
+        if decimals == 0 { return sign + padded }
+        return sign + padded.dropLast(decimals) + "." + padded.suffix(decimals)
+    }
     public static func time(_ hours: Double) -> String {
         guard hours.isFinite, hours >= 0, hours * 3600 < Double(Int64.max) else { return "—" }
         let s = Int64(floor(hours * 3600 + 0.5))

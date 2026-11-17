@@ -9,7 +9,7 @@ for runtime, devices in payload['devices'].items():
     version = tuple(map(int, match.group(1).split('-')))
     for device in devices:
         if device.get('isAvailable') and device['name'].startswith('iPhone'):
-            candidates.append((version, '18 Pro' in device['name'], device['name'], device['udid']))
+            candidates.append((version, device['name'] == 'iPhone 18 Pro', device['name'], device['udid']))
 if not candidates: raise SystemExit('No available iPhone Simulator. Install an iOS runtime on the runner.')
 version, preferred, name, udid = max(candidates)
 print('SIMULATOR_ID='+udid)

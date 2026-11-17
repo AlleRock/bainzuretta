@@ -5,7 +5,9 @@ struct ManualActivityView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     var existing: Activity?
-    @State private var date = Date(), distance = "", duration = ""
+    @State private var date = Date()
+    @State private var distance = ""
+    @State private var duration = ""
     @State private var error: String?
     private func dateText() -> String {
         let f = DateFormatter(); f.calendar = Calendar(identifier:.gregorian); f.locale = Locale(identifier:"en_US_POSIX"); f.dateFormat = "yyyy-MM-dd"; return f.string(from:date)

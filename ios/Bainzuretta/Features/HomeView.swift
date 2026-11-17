@@ -3,8 +3,15 @@ import BainzurettaCore
 
 struct HomeView: View {
     @Environment(AppStore.self) private var store
-    @State private var manual = false, goal = false, configuration = false, importing = false, pasting = false
-    @State private var exporting = false, reset = false, restoring = false, disconnecting = false
+    @State private var manual = false
+    @State private var goal = false
+    @State private var configuration = false
+    @State private var importing = false
+    @State private var pasting = false
+    @State private var exporting = false
+    @State private var reset = false
+    @State private var restoring = false
+    @State private var disconnecting = false
     @State private var candidate: Archive?
     @State private var confirmImport = false
     @State private var document: JSONDocument?
@@ -48,10 +55,10 @@ struct HomeView: View {
                 Button("Backup JSON",systemImage:"square.and.arrow.up") { export(full:false) }.disabled(!store.readable)
                 Button("Importa JSON",systemImage:"square.and.arrow.down") { importing = true }.disabled(store.busy)
                 DisclosureGroup("Altre opzioni di backup") {
-                    Button("Incolla backup JSON",systemImage:"doc.on.clipboard") { pasting = true }.disabled(store.busy)
+                    Button("Incolla backup JSON",systemImage:"doc.on.clipboard") { pasting = true }.disabled(store.busy).accessibilityIdentifier("paste-backup")
                     Button("Backup completo con obiettivi e preferenze") { export(full:true) }.disabled(!store.readable)
                     if store.hasRecovery { Button("Ripristina archivio precedente") { restoring = true }.disabled(store.busy) }
-                }
+                }.accessibilityIdentifier("backup-options")
                 Button("PDF riepilogo anno",systemImage:"doc.richtext") {
                     do { shared = SharedFile(url:try AnnualReport.generate(store.activities,year:store.today.year)) } catch { store.report(error) }
                 }.disabled(!store.readable)
@@ -152,7 +159,8 @@ struct GoalCard: View {
 struct GoalSettings: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @State private var value = "", error: String?
+    @State private var value = ""
+    @State private var error: String?
     var body: some View {
         NavigationStack {
             Form {
@@ -178,7 +186,9 @@ struct GoalSettings: View {
 struct StravaSettings: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @State private var endpoint = "", pairing = "", error: String?
+    @State private var endpoint = ""
+    @State private var pairing = ""
+    @State private var error: String?
     var body: some View {
         NavigationStack {
             Form {

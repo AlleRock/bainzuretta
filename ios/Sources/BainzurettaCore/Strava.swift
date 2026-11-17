@@ -55,8 +55,8 @@ public struct StravaRemote: Sendable {
         if let utc = act["start_date"], utc != .null && utc != .string("") && utc != .bool(false) && utc != .number(0) { f["data_utc"] = utc }
         return try Activity(fields: f)
     }
-    public func download(token: String, window: SyncWindow) async throws -> [Activity] {
-        var result = [Activity](), seen = Set<String>(), page = 1
+    public func download(token: String, window: SyncWindow, resync: Bool = false) async throws -> [Activity] {
+        var result = [Activity](), seen = [String: Int](), page = 1
         while true {
             try Task.checkCancellation()
             var c = URLComponents(string: "https://www.strava.com/api/v3/athlete/activities")!
@@ -70,7 +70,8 @@ public struct StravaRemote: Sendable {
             for act in acts where Self.cyclingTypes.contains(act["type"]?.text ?? "") {
                 let a = try Self.activity(act)
                 guard let sid = a.stravaID else { throw StravaError.response }
-                if seen.insert(sid).inserted { result.append(a) }
+                if let index = seen[sid] { if resync { result[index] = a } }
+                else { seen[sid] = result.count; result.append(a) }
             }
             if acts.count < 100 { break }; page += 1
         }

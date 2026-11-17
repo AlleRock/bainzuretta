@@ -95,16 +95,24 @@ struct RecordsView: View {
     var body: some View {
         let category = store.archive.preferences.recordCategory
         let records = RecordEngine(store.activities,today:store.today).records(category)
-        List {
-            Section {
-                Picker("Categoria",selection:Binding(get:{category},set:store.setCategory)) { ForEach(RecordCategory.allCases) { Text($0.title).tag($0) } }
-                    .accessibilityIdentifier("record-category")
-            } header: { Text("RECORD STORICI") } footer: { if !category.note.isEmpty { Text(category.note) } }
-            if records.isEmpty { EmptyState() }
-            ForEach(records) { record in
-                if record.entries.isEmpty { RecordRow(record:record) }
-                else { NavigationLink { RecordStandings(record:record) } label: { RecordRow(record:record) } }
-            }
+        VStack(spacing:0) {
+            VStack(alignment:.leading,spacing:8) {
+                Text("RECORD STORICI").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Picker("Categoria",selection:Binding(get:{category},set:store.setCategory)) {
+                    ForEach(RecordCategory.allCases) { Text($0.title).tag($0) }
+                }.pickerStyle(.menu).disabled(store.busy).accessibilityIdentifier("record-category")
+                if !category.note.isEmpty { Text(category.note).font(.caption).foregroundStyle(.secondary) }
+            }.frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,20).padding(.vertical,12).background(.bar)
+            List {
+                if records.isEmpty { EmptyState() }
+                ForEach(records) { record in
+                    if record.entries.isEmpty { RecordRow(record:record) }
+                    else {
+                        NavigationLink { RecordStandings(record:record) } label: { RecordRow(record:record) }
+                            .accessibilityIdentifier("record-"+record.title)
+                    }
+                }
+            }.id(category)
         }
     }
 }

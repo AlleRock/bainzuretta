@@ -28,7 +28,10 @@ function oracle(input) {
   const ranking={};
   for(const m of ['distanza','ponderata','media','dislivello']) { el('metrica').value=m; vm.runInContext('disegnaClassifica()',context); ranking[m]=context.window._ranking; }
   const groups = vm.runInContext(`[gruppaMesi(rawData),gruppaSett(rawData)].map(list=>list.map(g=>({key:g.key,km:g.km,hours:g.ore,elevation:g.dislivello,count:g.count,ids:g.items.map(a=>String(a.id))})))`,context);
-  return {name:input.name,now:input.now,target:input.target,activities:vm.runInContext('rawData',context),sourceSHA256:sha,home:context.window._home,challenge:context.window._challenge,records,ranking,groups};
+  context.stravaRaw = [1125,2675,2625,42501].map((distance,i)=>({id:90000+i,type:'Ride',distance,moving_time:900,start_date_local:'2026-01-01T00:01:00Z',start_date:'2025-12-31T23:01:00Z',name:'Arrotondamento '+i,average_cadence:null,total_elevation_gain:null}));
+  const mapped = vm.runInContext('stravaRaw.map(attivitaDaStrava)',context);
+  const stravaMappings = context.stravaRaw.map((raw,i)=>({raw,expected:mapped[i]}));
+  return {stravaMappings,name:input.name,now:input.now,target:input.target,activities:vm.runInContext('rawData',context),sourceSHA256:sha,home:context.window._home,challenge:context.window._challenge,records,ranking,groups};
 }
 function act(id,date,km,hours,speed,extra={}) { return {id,data:date,distanza:km,tempo:hours,media:speed,...extra}; }
 const boundary = [

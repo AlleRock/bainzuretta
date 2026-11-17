@@ -82,7 +82,9 @@ struct StravaToken: Codable {
         if let error = value("error") { throw error == "scope" ? StravaError.scope : StravaError.cancelled }
         guard let code = value("code"), let scope = value("scope"), scope.components(separatedBy:CharacterSet(charactersIn:", ")).contains("activity:read_all") else { throw StravaError.scope }
         var next = try await broker("exchange",body:["code":code,"state":start.state,"verifier":verifier],as:StravaToken.self)
-        next.scope = scope; try save(next)
+        let granted = next.scope ?? scope
+        guard granted.components(separatedBy:CharacterSet(charactersIn:", ")).contains("activity:read_all") else { throw StravaError.scope }
+        next.scope = granted; try save(next)
     }
     private func save(_ next: StravaToken) throws {
         guard !next.access_token.isEmpty, !next.refresh_token.isEmpty, next.expires_at.isFinite, next.expires_at > 0 else { throw StravaError.response }

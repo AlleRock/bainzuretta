@@ -1,5 +1,107 @@
 [
   {
+    "stravaMappings": [
+      {
+        "raw": {
+          "id": 90000,
+          "type": "Ride",
+          "distance": 1125,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 0",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90000,
+          "strava_id": 90000,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 1.13,
+          "tempo": 0.25,
+          "media": 4.5,
+          "nome": "Arrotondamento 0",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90001,
+          "type": "Ride",
+          "distance": 2675,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 1",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90001,
+          "strava_id": 90001,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.67,
+          "tempo": 0.25,
+          "media": 10.7,
+          "nome": "Arrotondamento 1",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90002,
+          "type": "Ride",
+          "distance": 2625,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 2",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90002,
+          "strava_id": 90002,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.63,
+          "tempo": 0.25,
+          "media": 10.5,
+          "nome": "Arrotondamento 2",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90003,
+          "type": "Ride",
+          "distance": 42501,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 3",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90003,
+          "strava_id": 90003,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 42.5,
+          "tempo": 0.25,
+          "media": 170,
+          "nome": "Arrotondamento 3",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      }
+    ],
     "name": "empty",
     "now": "2026-11-17T12:30:00Z",
     "target": 5000,
@@ -413,6 +515,108 @@
     ]
   },
   {
+    "stravaMappings": [
+      {
+        "raw": {
+          "id": 90000,
+          "type": "Ride",
+          "distance": 1125,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 0",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90000,
+          "strava_id": 90000,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 1.13,
+          "tempo": 0.25,
+          "media": 4.5,
+          "nome": "Arrotondamento 0",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90001,
+          "type": "Ride",
+          "distance": 2675,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 1",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90001,
+          "strava_id": 90001,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.67,
+          "tempo": 0.25,
+          "media": 10.7,
+          "nome": "Arrotondamento 1",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90002,
+          "type": "Ride",
+          "distance": 2625,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 2",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90002,
+          "strava_id": 90002,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.63,
+          "tempo": 0.25,
+          "media": 10.5,
+          "nome": "Arrotondamento 2",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90003,
+          "type": "Ride",
+          "distance": 42501,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 3",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90003,
+          "strava_id": 90003,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 42.5,
+          "tempo": 0.25,
+          "media": 170,
+          "nome": "Arrotondamento 3",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      }
+    ],
     "name": "boundaries",
     "now": "2026-11-17T12:30:00Z",
     "target": 5000,
@@ -2641,6 +2845,108 @@
     ]
   },
   {
+    "stravaMappings": [
+      {
+        "raw": {
+          "id": 90000,
+          "type": "Ride",
+          "distance": 1125,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 0",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90000,
+          "strava_id": 90000,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 1.13,
+          "tempo": 0.25,
+          "media": 4.5,
+          "nome": "Arrotondamento 0",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90001,
+          "type": "Ride",
+          "distance": 2675,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 1",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90001,
+          "strava_id": 90001,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.67,
+          "tempo": 0.25,
+          "media": 10.7,
+          "nome": "Arrotondamento 1",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90002,
+          "type": "Ride",
+          "distance": 2625,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 2",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90002,
+          "strava_id": 90002,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.63,
+          "tempo": 0.25,
+          "media": 10.5,
+          "nome": "Arrotondamento 2",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90003,
+          "type": "Ride",
+          "distance": 42501,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 3",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90003,
+          "strava_id": 90003,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 42.5,
+          "tempo": 0.25,
+          "media": 170,
+          "nome": "Arrotondamento 3",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      }
+    ],
     "name": "leap-year",
     "now": "2024-02-29T12:30:00Z",
     "target": 3000,
@@ -4565,6 +4871,108 @@
     ]
   },
   {
+    "stravaMappings": [
+      {
+        "raw": {
+          "id": 90000,
+          "type": "Ride",
+          "distance": 1125,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 0",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90000,
+          "strava_id": 90000,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 1.13,
+          "tempo": 0.25,
+          "media": 4.5,
+          "nome": "Arrotondamento 0",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90001,
+          "type": "Ride",
+          "distance": 2675,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 1",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90001,
+          "strava_id": 90001,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.67,
+          "tempo": 0.25,
+          "media": 10.7,
+          "nome": "Arrotondamento 1",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90002,
+          "type": "Ride",
+          "distance": 2625,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 2",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90002,
+          "strava_id": 90002,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.63,
+          "tempo": 0.25,
+          "media": 10.5,
+          "nome": "Arrotondamento 2",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90003,
+          "type": "Ride",
+          "distance": 42501,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 3",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90003,
+          "strava_id": 90003,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 42.5,
+          "tempo": 0.25,
+          "media": 170,
+          "nome": "Arrotondamento 3",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      }
+    ],
     "name": "january",
     "now": "2026-01-01T12:30:00Z",
     "target": 5000,
@@ -6425,6 +6833,108 @@
     ]
   },
   {
+    "stravaMappings": [
+      {
+        "raw": {
+          "id": 90000,
+          "type": "Ride",
+          "distance": 1125,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 0",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90000,
+          "strava_id": 90000,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 1.13,
+          "tempo": 0.25,
+          "media": 4.5,
+          "nome": "Arrotondamento 0",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90001,
+          "type": "Ride",
+          "distance": 2675,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 1",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90001,
+          "strava_id": 90001,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.67,
+          "tempo": 0.25,
+          "media": 10.7,
+          "nome": "Arrotondamento 1",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90002,
+          "type": "Ride",
+          "distance": 2625,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 2",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90002,
+          "strava_id": 90002,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.63,
+          "tempo": 0.25,
+          "media": 10.5,
+          "nome": "Arrotondamento 2",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90003,
+          "type": "Ride",
+          "distance": 42501,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 3",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90003,
+          "strava_id": 90003,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 42.5,
+          "tempo": 0.25,
+          "media": 170,
+          "nome": "Arrotondamento 3",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      }
+    ],
     "name": "december-achieved",
     "now": "2026-12-31T12:30:00Z",
     "target": 100,
@@ -8701,6 +9211,108 @@
     ]
   },
   {
+    "stravaMappings": [
+      {
+        "raw": {
+          "id": 90000,
+          "type": "Ride",
+          "distance": 1125,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 0",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90000,
+          "strava_id": 90000,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 1.13,
+          "tempo": 0.25,
+          "media": 4.5,
+          "nome": "Arrotondamento 0",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90001,
+          "type": "Ride",
+          "distance": 2675,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 1",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90001,
+          "strava_id": 90001,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.67,
+          "tempo": 0.25,
+          "media": 10.7,
+          "nome": "Arrotondamento 1",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90002,
+          "type": "Ride",
+          "distance": 2625,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 2",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90002,
+          "strava_id": 90002,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 2.63,
+          "tempo": 0.25,
+          "media": 10.5,
+          "nome": "Arrotondamento 2",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      },
+      {
+        "raw": {
+          "id": 90003,
+          "type": "Ride",
+          "distance": 42501,
+          "moving_time": 900,
+          "start_date_local": "2026-01-01T00:01:00Z",
+          "start_date": "2025-12-31T23:01:00Z",
+          "name": "Arrotondamento 3",
+          "average_cadence": null,
+          "total_elevation_gain": null
+        },
+        "expected": {
+          "id": 90003,
+          "strava_id": 90003,
+          "data": "2026-01-01T00:01:00Z",
+          "distanza": 42.5,
+          "tempo": 0.25,
+          "media": 170,
+          "nome": "Arrotondamento 3",
+          "dislivello": 0,
+          "cadenza": 0,
+          "data_utc": "2025-12-31T23:01:00Z"
+        }
+      }
+    ],
     "name": "ten-years",
     "now": "2026-07-01T12:30:00Z",
     "target": 7500,

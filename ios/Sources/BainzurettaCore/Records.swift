@@ -53,10 +53,12 @@ public struct RecordEngine: Sendable {
         var sums = [Int: Double]()
         for a in data { sums[a.civil.dayNumber, default: 0] += a.distance }
         let daysSorted = sums.keys.sorted()
-        var windows = [(from: Int, to: Int, km: Double)](), end = 0, sum = 0.0
+        var windows = [(from: Int, to: Int, km: Double)]()
+        // At most N unique civil days per window. Match the original summation order exactly.
         for (i, start) in daysSorted.enumerated() {
-            while end < daysSorted.count && daysSorted[end] < start + days { sum += sums[daysSorted[end]]!; end += 1 }
-            windows.append((start, start + days - 1, sum)); sum -= sums[daysSorted[i]]!
+            var total = 0.0, j = i
+            while j < daysSorted.count && daysSorted[j] < start + days { total += sums[daysSorted[j]]!; j += 1 }
+            windows.append((start, start + days - 1, total))
         }
         var top = [(from: Int, to: Int, km: Double)]()
         for w in stable(windows, key: { $0.km }) {

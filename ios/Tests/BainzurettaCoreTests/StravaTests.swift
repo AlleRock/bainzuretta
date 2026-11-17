@@ -48,6 +48,14 @@ final class StravaTests: XCTestCase {
         let empty = try StravaSync.merge(existing:[a,b],downloaded:[],window:window,resync:true)
         XCTAssertTrue(empty.missing.isEmpty); XCTAssertEqual(empty.activities.count,2)
     }
+    func testRecentDuplicateUsesLastResponseAndNullMetadataMatchesWeb() async throws {
+        var changed = raw(1); changed["distance"] = .number(100000); changed["average_cadence"] = .null; changed["total_elevation_gain"] = .null; changed["start_date"] = .null
+        let response = try response([raw(1),changed]), window = SyncWindow(after:0,before:1_800_000_000,athlete:"1")
+        let incremental = try await StravaRemote(transport:MockTransport([response])).download(token:"test",window:window)
+        let recent = try await StravaRemote(transport:MockTransport([response])).download(token:"test",window:window,resync:true)
+        XCTAssertEqual(incremental[0].distance,42.5); XCTAssertEqual(recent[0].distance,100)
+        XCTAssertEqual(recent[0].fields["cadenza"],.number(0)); XCTAssertEqual(recent[0].fields["dislivello"],.number(0)); XCTAssertNil(recent[0].utc)
+    }
     func testIncrementalAndCollisionSafety() throws {
         let remote = try StravaRemote.activity(raw(1)), manual = try remote.replacing(["strava_id":.null])
         let window = SyncWindow(after:0,before:1_800_000_000,athlete:"1")

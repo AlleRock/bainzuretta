@@ -3,6 +3,8 @@ import XCTest
 
 final class EquivalenceTests: XCTestCase {
     struct Fixture: Decodable {
+        let stravaMappings: [Mapping]
+        struct Mapping: Decodable { let raw: [String:JSONValue], expected: Activity }
         let name: String, now: String, target: Double, activities: [Activity], home: Home
         let challenge: [Week], records: [String: [Record]], ranking: [String: [Rank]], groups: [[Group]]
         struct Home: Decodable { let total: Double, km: Double, bestYear: Int?, bestSpeed: Double, remaining: Double, projection: Double, weekly: Double }
@@ -21,6 +23,7 @@ final class EquivalenceTests: XCTestCase {
     func testStatisticsAgainstActualJavaScript() throws {
         for f in try fixtures() {
             let today = CivilDate.today(Date(timeIntervalSince1970: StravaSync.instant(f.now)!), zone: TimeZone(identifier: "Europe/Rome")!)
+            for mapping in f.stravaMappings { XCTAssertEqual(try StravaRemote.activity(mapping.raw),mapping.expected) }
             let goal = Statistics.goal(f.activities, today: today, target: f.target)
             XCTAssertEqual(Summary(f.activities).km, f.home.total, accuracy: 1e-7, f.name)
             XCTAssertEqual(goal.km, f.home.km, accuracy: 1e-7, f.name)

@@ -103,10 +103,10 @@ struct Notice: Identifiable { var id = UUID(); var text: String }
             var token = try await strava.accessToken()
             let remote = StravaRemote()
             let downloaded: [Activity]
-            do { downloaded = try await remote.download(token:token,window:window) }
+            do { downloaded = try await remote.download(token:token,window:window,resync:resync) }
             catch let e as StravaError where e == .auth {
                 token = try await strava.accessToken(forceRefresh:true)
-                downloaded = try await remote.download(token:token,window:window)
+                downloaded = try await remote.download(token:token,window:window,resync:resync)
             }
             let result = try StravaSync.merge(existing:activities,downloaded:downloaded,window:window,resync:resync)
             var next = archive; next.activities = result.activities; next.pendingSync = nil

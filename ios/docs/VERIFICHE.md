@@ -4,7 +4,7 @@ Aggiornato durante lo sviluppo del 17 novembre 2026. Questo registro distingue e
 
 ## Eseguito nell'ambiente Linux
 
-- Swift 6.1.2: **13 test, zero fallimenti** dopo le correzioni, circa 6 secondi nell'ultima esecuzione.
+- Swift 6.1.2: **14 test, zero fallimenti** dopo le correzioni, circa 6 secondi nell'ultima esecuzione.
 - Oracolo: eseguito il JavaScript originale su sei dataset; confronto di tutte le 39 voci di record e di ogni entry disponibile, oltre a HOME, quattro ranking, gruppi e SFIDA.
 - Persistenza: scrittura/riapertura, backup precedente, import ripetuto, envelope completo, archivio corrotto, reset e validazione duplicati; 12.000 attività.
 - Strava simulato: paginazione, selezione tipi, doppioni, collisioni ID, update recenti, attività mancanti, errori HTTP, rete interrotta e risposta malformata.
@@ -19,6 +19,9 @@ Le differenze trovate nella prima conversione (formattazione decimale e raggrupp
 - Seconda esecuzione: controllo Xcode/runtime, rigenerazione fixture, test broker e test Swift del nucleo **riusciti**. Build fermata prima dei test UI per differenza architetture: il target app tentava anche x86_64 mentre il pacchetto locale era ARM64. Impostazioni allineate ad ARM64; nuova esecuzione necessaria.
 
 Gli esiti finali e il link all'esecuzione valida verranno aggiunti dopo il completamento dei controlli. La sola presenza del workflow non equivale a build riuscita.
+
+- Terza esecuzione: architettura ARM allineata; la compilazione ha rilevato dichiarazioni multiple `@State` non accettate dalla macro SwiftUI di Xcode 27. Le proprietà sono state separate, mantenendo gli stessi valori iniziali. Test non saltati: nuova esecuzione prevista.
+- Aggiunti confronti anche della conversione API Strava nei casi di arrotondamento binario a metà (`1.125`, `2.675`), oltre ai valori null. Implementato l'arrotondamento esatto `toFixed` del JavaScript, evitando la regola tie-to-even di printf.
 
 ## Non verificato con servizi reali
 
