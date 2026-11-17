@@ -3,6 +3,9 @@ import BainzurettaCore
 
 enum Brand {
     static let orange = Color(red:0.984,green:0.549,blue:0)
+    static let textOrange = Color(uiColor:UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(red:0.984,green:0.549,blue:0,alpha:1) : UIColor(red:0.72,green:0.36,blue:0,alpha:1)
+    })
     static let background = Color(uiColor:.systemGroupedBackground)
 }
 struct Metric: View {
@@ -45,7 +48,7 @@ struct ActivityRow: View {
                 }
                 if !activity.name.isEmpty { Text(activity.name).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
                 HStack(spacing:12) {
-                    Text(Display.number(activity.distance) + " km").foregroundStyle(Brand.orange).bold()
+                    Text(Display.number(activity.distance) + " km").foregroundStyle(Brand.textOrange).bold()
                     Text(Display.time(activity.hours))
                     Text(Display.number(activity.speed) + " km/h")
                 }.font(.footnote).monospacedDigit().fixedSize(horizontal:false,vertical:true)

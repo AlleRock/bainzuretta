@@ -36,7 +36,7 @@ struct ShareFileView: UIViewControllerRepresentable {
                 UIColor.white.setFill(); context.cgContext.fill(bounds)
                 let header = "Bainzuretta · Riepilogo \(year)"
                 header.draw(at:CGPoint(x:36,y:26),withAttributes:[.font:UIFont.boldSystemFont(ofSize:18),.foregroundColor:orange])
-                "Pagina \(page) · \(Date().formatted(date:.numeric,time:.omitted))".draw(at:CGPoint(x:36,y:815),withAttributes:[.font:UIFont.systemFont(ofSize:9),.foregroundColor:UIColor.gray])
+                "Pagina \(page) · \(CivilDate.today().display)".draw(at:CGPoint(x:36,y:815),withAttributes:[.font:UIFont.systemFont(ofSize:9),.foregroundColor:UIColor.gray])
                 y = 62
             }
             func write(_ text: String, size: CGFloat = 10, bold: Bool = false, color: UIColor = .black) {

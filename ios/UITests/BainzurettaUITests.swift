@@ -28,7 +28,7 @@ import XCTest
         let text = try XCTUnwrap(String(data:bytes,encoding:.utf8))
         for _ in 0..<2 {
             app.buttons["tab-HOME"].tap()
-            let options = app.descendants(matching:.any)["backup-options"].firstMatch
+            let options = app.buttons["Altre opzioni di backup"].firstMatch
             for _ in 0..<6 { if options.isHittable { break }; app.swipeUp() }
             XCTAssertTrue(options.isHittable); options.tap()
             let paste = app.buttons["paste-backup"]
@@ -58,7 +58,10 @@ import XCTest
                 let row = app.buttons["record-"+title]
                 XCTAssertTrue(row.waitForExistence(timeout:5)); row.tap()
                 XCTAssertTrue(app.navigationBars["TOP 5"].waitForExistence(timeout:5))
-                app.navigationBars.buttons.element(boundBy:0).tap()
+                let back = app.descendants(matching:.any)["BackButton"].firstMatch
+                if back.waitForExistence(timeout:2) { back.tap() }
+                else { app.navigationBars.buttons.element(boundBy:0).tap() }
+                XCTAssertTrue(app.buttons["record-category"].waitForExistence(timeout:5))
             }
         }
     }
@@ -67,8 +70,11 @@ import XCTest
         capture("large-text-home",app:app)
         let nav = app.buttons["tab-HOME"].firstMatch
         XCTAssertTrue(nav.exists)
-        app.scrollViews["main-navigation"].swipeLeft()
-        if !app.buttons["tab-RECORD"].isHittable { app.scrollViews["main-navigation"].swipeLeft() }
+        for _ in 0..<5 {
+            if app.buttons["tab-RECORD"].isHittable { break }
+            app.scrollViews["main-navigation"].swipeLeft()
+        }
+        XCTAssertTrue(app.buttons["tab-RECORD"].isHittable)
         app.buttons["tab-RECORD"].firstMatch.tap()
         capture("large-text-records",app:app)
     }

@@ -4,6 +4,8 @@ import BainzurettaCore
 struct RootView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo:.caption2) private var scaledNavigationWidth: CGFloat = 88
+    private var navigationItemWidth: CGFloat { typeSize.isAccessibilitySize ? max(176,scaledNavigationWidth) : 58 }
     var body: some View {
         @Bindable var store = store
         NavigationStack {
@@ -19,7 +21,7 @@ struct RootView: View {
             }
             .toolbar {
                 ToolbarItem(placement:.principal) {
-                    Text("Bainzuretta").font(.system(.title2,design:.serif,weight:.bold).italic()).foregroundStyle(Brand.orange).accessibilityAddTraits(.isHeader)
+                    Text("Bainzuretta").font(.system(.title2,design:.serif,weight:.bold).italic()).foregroundStyle(Brand.textOrange).accessibilityAddTraits(.isHeader)
                 }
                 if store.busy { ToolbarItem(placement:.topBarTrailing) { ProgressView().accessibilityLabel("Operazione in corso") } }
             }
@@ -34,15 +36,15 @@ struct RootView: View {
                             } label: {
                                 VStack(spacing:5) {
                                     Image(systemName:section.icon).font(.system(size:19,weight:.semibold)).frame(height:22)
-                                    Text(section.rawValue).font(.system(.caption2,design:.rounded,weight:.bold))
+                                    Text(section.rawValue).font(.system(.caption2,design:.rounded,weight:.bold)).fixedSize(horizontal:true,vertical:false)
                                 }.foregroundStyle(store.section == section ? Brand.orange : .secondary)
-                                    .frame(minWidth:typeSize.isAccessibilitySize ? 110 : 58,minHeight:52)
+                                    .frame(minWidth:navigationItemWidth,minHeight:52)
                                     .frame(maxWidth:.infinity)
                                     .contentShape(Rectangle())
                             }.buttonStyle(.plain).accessibilityIdentifier("tab-"+section.rawValue)
                                 .accessibilityAddTraits(store.section == section ? .isSelected : [])
                         }
-                    }.padding(.horizontal,6).containerRelativeFrame(.horizontal) { width, _ in max(width, typeSize.isAccessibilitySize ? 672 : 0) }
+                    }.padding(.horizontal,6).containerRelativeFrame(.horizontal) { width, _ in max(width, typeSize.isAccessibilitySize ? navigationItemWidth * 6 + 12 : 0) }
                 }.accessibilityIdentifier("main-navigation").background(.bar).overlay(alignment:.top) { Divider() }
             }
             .alert("Bainzuretta",isPresented:Binding(get:{store.notice != nil},set:{if !$0 {store.notice = nil}}),presenting:store.notice) { _ in Button("OK",role:.cancel) {} } message: { Text($0.text) }

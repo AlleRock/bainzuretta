@@ -19,7 +19,7 @@ import SwiftUI
     }
     var body: some Scene {
         WindowGroup {
-            RootView().environment(store).tint(Brand.orange)
+            RootView().environment(store).tint(Brand.textOrange)
                 .preferredColorScheme(testDarkMode ? .dark : nil)
                 .modifier(TestTextSize(enabled:testLargeText))
                 .onChange(of:phase) { _, value in if value == .active { store.refreshClock() } }

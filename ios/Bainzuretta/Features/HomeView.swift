@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var disconnecting = false
     @State private var candidate: Archive?
     @State private var confirmImport = false
+    @State private var restorePreferences = false
     @State private var pastedData: Data?
     @State private var document: JSONDocument?
     @State private var filename = "bainzuretta"
@@ -22,7 +23,7 @@ struct HomeView: View {
         let best = Statistics.bestSpeedYear(store.activities)
         List {
             Section {
-                GoalCard(goal:Statistics.goal(store.activities,today:store.today,target:store.target),year:store.today.year) { goal = true }
+                GoalCard(goal:Statistics.goal(store.activities,today:store.today,target:store.target),year:store.today.year,referenceDate:store.now) { goal = true }
             }.listRowBackground(Color.clear).listRowInsets(EdgeInsets()).listRowSeparator(.hidden)
             Section {
                 LazyVGrid(columns:[GridItem(.adaptive(minimum:130))],spacing:8) {
@@ -59,7 +60,7 @@ struct HomeView: View {
                     Button("Incolla backup JSON",systemImage:"doc.on.clipboard") { pasting = true }.disabled(store.busy).accessibilityIdentifier("paste-backup")
                     Button("Backup completo con obiettivi e preferenze") { export(full:true) }.disabled(!store.readable)
                     if store.hasRecovery { Button("Ripristina archivio precedente") { restoring = true }.disabled(store.busy) }
-                }.accessibilityIdentifier("backup-options")
+                }
                 Button("PDF riepilogo anno",systemImage:"doc.richtext") {
                     do { shared = SharedFile(url:try AnnualReport.generate(store.activities,year:store.today.year)) } catch { store.report(error) }
                 }.disabled(!store.readable)
@@ -82,9 +83,9 @@ struct HomeView: View {
                 } catch { store.report(error) }
             }
             .alert("Sostituire l’archivio?",isPresented:$confirmImport,presenting:candidate) { archive in
-                Button("Sostituisci",role:.destructive) { do { try store.importArchive(archive); candidate = nil } catch { store.report(error) } }
+                Button("Sostituisci",role:.destructive) { do { try store.importArchive(archive,restorePreferences:restorePreferences); candidate = nil } catch { store.report(error) } }
                 Button("Annulla",role:.cancel) { candidate = nil }
-            } message: { archive in Text("Attuale: \(store.activities.count) attività. File selezionato: \(archive.activities.count). La copia precedente sarà conservata per il ripristino.") }
+            } message: { archive in Text("Attuale: \(store.activities.count) attività. File selezionato: \(archive.activities.count). La copia precedente sarà conservata per il ripristino." + (restorePreferences ? " Il backup completo ripristina anche obiettivi e preferenze." : "")) }
             .confirmationDialog("Ripristinare la copia precedente?",isPresented:$restoring,titleVisibility:.visible) {
                 Button("Ripristina",role:.destructive) { do { try store.restore() } catch { store.report(error) } }
             } message: { Text("L’archivio attuale leggibile sarà conservato come copia di recupero.") }
@@ -101,6 +102,8 @@ struct HomeView: View {
         Task {
             do {
                 let next = try await Task.detached(priority:.userInitiated) { try Archive.importing(data,current:current) }.value
+                let whitespace = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn:"\u{FEFF}"))
+                restorePreferences = String(data:data,encoding:.utf8)?.trimmingCharacters(in:whitespace).hasPrefix("{") == true
                 candidate = next; confirmImport = true
             } catch { store.report(error) }
         }
@@ -115,8 +118,12 @@ struct HomeView: View {
 }
 
 struct GoalCard: View {
-    let goal: Goal, year: Int, action: () -> Void
+    let goal: Goal
+    let year: Int
+    let referenceDate: Date
+    let action: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var glow = false
     var color: Color {
         switch goal.pace { case .achieved: return .yellow; case .ahead: return Color(red:0.14,green:0.48,blue:0.22); case .warning: return Color(red:0.69,green:0.43,blue:0); case .behind: return Color(red:0.72,green:0.13,blue:0.14); case .empty: return Brand.orange }
@@ -124,7 +131,7 @@ struct GoalCard: View {
     var body: some View {
         Button(action:action) {
             VStack(alignment:.leading,spacing:12) {
-                HStack { Label("OBIETTIVO \(year)",systemImage:goal.pace == .achieved ? "trophy.fill" : "flag.checkered").font(.caption.bold()); Spacer(); Image(systemName:"info.circle").accessibilityLabel("Modifica e informazioni sull’obiettivo") }
+                HStack { Label("OBIETTIVO \(String(year))",systemImage:goal.pace == .achieved ? "trophy.fill" : "flag.checkered").font(.caption.bold()); Spacer(); Image(systemName:"info.circle").accessibilityLabel("Modifica e informazioni sull’obiettivo") }
                 if goal.pace == .achieved {
                     Text("Obiettivo raggiunto!").font(.system(.title,design:.rounded,weight:.bold))
                     Text("⭐️ ⭐️ ⭐️  \(Display.number(goal.km,0)) km · +\(Display.number(goal.km-goal.target,0)) km").font(.subheadline.bold())
@@ -133,20 +140,28 @@ struct GoalCard: View {
                     Text("KM AL TRAGUARDO").font(.caption.weight(.semibold))
                 }
                 HStack {
-                    ProgressView(value:min(1,max(0,goal.progress))).tint(goal.pace == .achieved ? .brown : .white)
+                    ProgressView(value:min(1,max(0,goal.progress))).tint(goal.pace == .achieved || goal.pace == .empty ? .brown : .white)
                     Text(Display.number(goal.progress * 100) + "%").font(.caption.bold()).monospacedDigit()
                 }
-                HStack(alignment:.top) {
-                    column("Target",Display.number(goal.target,0)); Spacer(); column("Proiezione",Display.number(goal.projection,0)); Spacer(); column("Km/sett",Display.number(goal.weeklyRequired,0))
+                if typeSize.isAccessibilitySize {
+                    VStack(alignment:.leading,spacing:14) {
+                        column("Target",Display.number(goal.target,0))
+                        column("Proiezione",Display.number(goal.projection,0))
+                        column("Km/sett",Display.number(goal.weeklyRequired,0))
+                    }
+                } else {
+                    HStack(alignment:.top) {
+                        column("Target",Display.number(goal.target,0)); Spacer(); column("Proiezione",Display.number(goal.projection,0)); Spacer(); column("Km/sett",Display.number(goal.weeklyRequired,0))
+                    }
                 }
                 if goal.pace != .empty && goal.pace != .achieved {
                     Divider().overlay(.white.opacity(0.4))
                     Text(goal.delta >= 0 ? "✓ In anticipo di \(Display.number(abs(goal.delta),0)) km" : "In ritardo di \(Display.number(abs(goal.delta),0)) km").font(.subheadline.bold())
                     if let days = goal.arrivalDays, days.isFinite, days < 3_000_000 {
-                        Text("Arrivo previsto: \(Date().addingTimeInterval(days*86400).formatted(.dateTime.day().month(.wide).year()))").font(.caption)
+                        Text("Arrivo previsto: \(referenceDate.addingTimeInterval(days*86400).formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier:"it_IT"))))").font(.caption)
                     }
                 }
-            }.padding(20).foregroundStyle(goal.pace == .achieved ? Color(red:0.34,green:0.22,blue:0) : .white)
+            }.padding(20).foregroundStyle(goal.pace == .achieved || goal.pace == .empty ? Color(red:0.34,green:0.22,blue:0) : .white)
                 .background(LinearGradient(colors:[color,color.opacity(goal.pace == .achieved && glow ? 0.6 : 0.9)],startPoint:.topLeading,endPoint:.bottomTrailing),in:RoundedRectangle(cornerRadius:24))
                 .shadow(color:color.opacity(goal.pace == .achieved && glow ? 0.4 : 0.08),radius:glow ? 18 : 4,y:4)
         }.buttonStyle(.plain).accessibilityIdentifier("annual-goal")
@@ -180,7 +195,7 @@ struct GoalSettings: View {
                     Text("Km/sett = km mancanti ÷ settimane rimanenti (almeno un giorno).")
                     Text("Arrivo previsto = data attuale + giorni necessari al passo medio attuale.")
                 }.font(.footnote)
-            }.navigationTitle("Obiettivo \(store.today.year)").navigationBarTitleDisplayMode(.inline)
+            }.navigationTitle("Obiettivo \(String(store.today.year))").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Annulla") { dismiss() } }; ToolbarItem(placement:.confirmationAction) { Button("Salva") { do { try store.setTarget(value); dismiss() } catch { self.error = error.localizedDescription } }.disabled(store.busy) } }
                 .onAppear { value = String(format:"%.0f",store.target) }
         }

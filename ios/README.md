@@ -28,7 +28,7 @@ ios/
 
 ## Compilazione
 
-Aprire `ios/Bainzuretta.xcodeproj`, scegliere schema **Bainzuretta**, un iPhone Simulator e avviare. Minimo iOS 18.0; workflow su Xcode 27 e runtime iOS disponibile più recente, preferendo iPhone 18 Pro a parità di runtime. Non cambiare il target per installare su Windows: il simulatore gira in remoto.
+Aprire `ios/Bainzuretta.xcodeproj`, scegliere schema **Bainzuretta**, un iPhone Simulator e avviare. Minimo iOS 18.0; workflow su Xcode 27 e runtime iOS compatibile più recente (non successivo all’SDK), preferendo iPhone 18 Pro quando disponibile. Non cambiare il target per installare su Windows: il simulatore gira in remoto.
 
 Test del nucleo anche su Linux, con Swift 6.0 o successivo:
 

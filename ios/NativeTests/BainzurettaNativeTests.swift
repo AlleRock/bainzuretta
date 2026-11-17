@@ -25,6 +25,19 @@ import BainzurettaCore
         XCTAssertEqual(reopened.activities[0].id,original.id); XCTAssertEqual(reopened.activities[0].speed,30)
         try reopened.delete(reopened.activities[0]); XCTAssertTrue(reopened.activities.isEmpty)
     }
+    func testWebImportPreservesLatestSettingsAndFullBackupRestoresThem() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        let store = AppStore(directory:directory)
+        try store.setTarget("7000")
+        let full = try JSONEncoder().encode(store.archive)
+        let preview = try store.candidate(Data("[]".utf8))
+        try store.setTarget("8500"); store.setCategory(.cadence)
+        try store.importArchive(preview,restorePreferences:false)
+        XCTAssertEqual(store.target,8500); XCTAssertEqual(store.archive.preferences.recordCategory,.cadence)
+        try store.importArchive(store.candidate(full),restorePreferences:true)
+        XCTAssertEqual(store.target,7000); XCTAssertEqual(store.archive.preferences.recordCategory,.distance)
+    }
     func testKeychainRoundTripWithoutCredentialsInArchive() throws {
         let key = "unit-test-"+UUID().uuidString, secure = SecureStore()
         defer { try? secure.delete(key) }
@@ -45,7 +58,7 @@ import BainzurettaCore
         for title in ["Top 5 Uscite per Distanza","Top 5 Uscite per Velocità","Statistiche Mensili","Record Cadenza","Tutte le Attività"] { XCTAssertTrue(text.contains(title),title) }
         XCTAssertThrowsError(try AnnualReport.generate([],year:2026))
     }
-    func testInvalidBrokerURLAndEditingStravaAreRejected() throws {
+    func testInvalidBrokerURLsAreRejected() throws {
         for endpoint in ["http://broker.example","https://user:password@broker.example","not a URL","https://broker.example/?key=test"] { XCTAssertThrowsError(try BrokerConfiguration(endpoint:endpoint,pairingKey:"test-only")) }
         XCTAssertNoThrow(try BrokerConfiguration(endpoint:"https://broker.example",pairingKey:"test-only"))
     }

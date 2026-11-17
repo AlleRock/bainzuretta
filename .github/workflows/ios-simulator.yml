@@ -58,10 +58,14 @@ jobs:
           import os, subprocess
           subprocess.run(['xcrun', 'simctl', 'bootstatus', os.environ['SIMULATOR_ID'], '-b'], check=True, timeout=600)
           PYTHON
-      - name: Run native unit and UI tests
+      - name: Run native unit tests including Keychain and PDF
         run: |
           set -euo pipefail
-          xcodebuild test-without-building -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Build -resultBundlePath ios/build/UITests.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- 2>&1 | tee ui-tests.log
+          xcodebuild test-without-building -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Build -resultBundlePath ios/build/NativeTests.xcresult -only-testing:BainzurettaNativeTests -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- 2>&1 | tee native-tests.log
+      - name: Run UI tests including repeated JSON import
+        run: |
+          set -euo pipefail
+          xcodebuild test-without-building -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Build -resultBundlePath ios/build/UITests.xcresult -only-testing:BainzurettaUITests -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 300 CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- 2>&1 | tee ui-tests.log
       - name: Export UI screenshots for Windows
         if: always()
         continue-on-error: true
@@ -117,6 +121,7 @@ jobs:
             simulator-sdk-version.txt
             Bainzuretta-simulator.png
             ios/build/UITests.xcresult
+            ios/build/NativeTests.xcresult
             ios/build/screenshots
           retention-days: 14
       - name: Summary

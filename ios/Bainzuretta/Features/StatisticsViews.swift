@@ -17,9 +17,9 @@ struct JournalView: View {
                     else { Picker("Anno",selection:$store.selectedYear) { ForEach(store.years,id:\.self) { Text(String($0)).tag(Optional($0)) } } }
                 }
                 Picker("Vista",selection:groupBinding) { ForEach(Grouping.allCases) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
-            } header: { Text(isArchive ? "ARCHIVIO STORICO YTD" : "DIARIO \(store.today.year)") }
+            } header: { Text(isArchive ? "ARCHIVIO STORICO YTD" : "DIARIO \(String(store.today.year))") }
             if let year {
-                Section { SummaryView(summary:Summary(items)) } header: { Text("\(year) · al giorno \(store.today.dayOfYear)") }
+                Section { SummaryView(summary:Summary(items)) } header: { Text("\(String(year)) · al giorno \(store.today.dayOfYear)") }
                 if isArchive { Section { Text("YTD: confronto fino allo stesso numero di giorno dell’anno, come nella versione web.").font(.caption).foregroundStyle(.secondary) } }
             }
             if items.isEmpty { EmptyState() }
@@ -32,7 +32,7 @@ struct JournalView: View {
                         NavigationLink { ActivityGroupView(group:group) } label: {
                             VStack(alignment:.leading,spacing:8) {
                                 HStack { Text(group.label).font(.subheadline.bold()); Spacer(); if let place = top.firstIndex(of:group.id) { Text(["🥇","🥈","🥉"][place]) } }
-                                Text(Display.number(group.summary.km)+" km").font(.title3.bold()).foregroundStyle(Brand.orange).monospacedDigit()
+                                Text(Display.number(group.summary.km)+" km").font(.title3.bold()).foregroundStyle(Brand.textOrange).monospacedDigit()
                                 Text("\(group.summary.count) uscite · \(Display.number(group.speed)) km/h" + (group.summary.elevation > 0 ? " · \(Display.number(group.summary.elevation,0)) m" : "")).font(.caption).foregroundStyle(.secondary)
                             }.padding(.vertical,5)
                         }
@@ -50,11 +50,11 @@ struct ChallengeView: View {
             Section {
                 LabeledContent("Obiettivo",value:Display.number(store.target,0)+" km")
                 LabeledContent("Quota settimanale",value:Display.number(store.target/Double(CivilDate.daysInYear(store.today.year))*7)+" km")
-            } header: { Text("LA SFIDA \(store.today.year)") } footer: { Text("Settimane da lunedì a domenica. Quota proporzionale ai giorni compresi nell’anno.") }
+            } header: { Text("LA SFIDA \(String(store.today.year))") } footer: { Text("Settimane da lunedì a domenica. Quota proporzionale ai giorni compresi nell’anno.") }
             Section {
                 ForEach(weeks) { week in
                     VStack(alignment:.leading,spacing:7) {
-                        HStack { Text("#\(week.number)").bold().foregroundStyle(Brand.orange); Text(week.label); Spacer(); if week.current { Text("ORA").font(.caption2.bold()).foregroundStyle(Brand.orange) } }.font(.subheadline)
+                        HStack { Text("#\(week.number)").bold().foregroundStyle(Brand.textOrange); Text(week.label); Spacer(); if week.current { Text("ORA").font(.caption2.bold()).foregroundStyle(Brand.textOrange) } }.font(.subheadline)
                         HStack {
                             Text("Quota \(Display.number(week.quota)) km").foregroundStyle(.secondary)
                             Spacer()
@@ -83,9 +83,9 @@ struct RankingView: View {
                         HStack {
                             Text("\(i+1). \(String(entry.year))").font(.headline).foregroundStyle(.primary)
                             if entry.year != store.today.year { Image(systemName:"arrow.up.right").font(.caption).foregroundStyle(.secondary) }
-                            Spacer(); Text(Display.number(entry.value,metric == .elevation ? 0 : 2)+" "+metric.unit).font(.subheadline.bold()).foregroundStyle(Brand.orange)
+                            Spacer(); Text(Display.number(entry.value,metric == .elevation ? 0 : 2)+" "+metric.unit).font(.subheadline.bold()).foregroundStyle(Brand.textOrange)
                         }
-                        ProgressView(value:max > 0 ? entry.value/max : 0).tint(Brand.orange)
+                        ProgressView(value:max > 0 ? entry.value/max : 0).tint(Brand.textOrange)
                         if metric == .distance && entry.year != store.today.year { Text("Totale anno: \(Display.number(entry.total,0)) km").font(.caption).foregroundStyle(.secondary) }
                     }.padding(.vertical,4)
                 }.buttonStyle(.plain)
@@ -121,13 +121,28 @@ struct RecordsView: View {
 }
 struct RecordRow: View {
     let record: CyclingRecord
+    @Environment(\.dynamicTypeSize) private var typeSize
     var body: some View {
         VStack(alignment:.leading,spacing:8) {
-            HStack(alignment:.top,spacing:8) { Text(record.emoji); Text(record.title).font(.subheadline.weight(.semibold)).fixedSize(horizontal:false,vertical:true) }
-            Text(record.value).font(.system(.title3,design:.rounded,weight:.bold)).foregroundStyle(Brand.orange).monospacedDigit()
+            if typeSize.isAccessibilitySize {
+                title
+                value
+            } else {
+                HStack(alignment:.top,spacing:12) {
+                    title
+                    Spacer(minLength:2)
+                    value.multilineTextAlignment(.trailing).layoutPriority(1)
+                }
+            }
             if !record.subtitle.isEmpty { Text(record.subtitle).font(.caption).foregroundStyle(.secondary) }
             else if record.override == nil, let best = record.entries.first { Text(best.title + (best.subtitle.isEmpty ? "" : " — " + best.subtitle)).font(.caption).foregroundStyle(.secondary) }
         }.padding(.vertical,5).accessibilityElement(children:.combine)
+    }
+    private var title: some View {
+        HStack(alignment:.top,spacing:8) { Text(record.emoji); Text(record.title).font(.subheadline.weight(.semibold)).fixedSize(horizontal:false,vertical:true) }
+    }
+    private var value: some View {
+        Text(record.value).font(.system(.headline,design:.rounded,weight:.bold)).foregroundStyle(Brand.textOrange).monospacedDigit().fixedSize(horizontal:false,vertical:true)
     }
 }
 struct RecordStandings: View {
@@ -137,7 +152,7 @@ struct RecordStandings: View {
             Section { Text(record.title).font(.headline) }
             ForEach(Array(record.entries.enumerated()),id:\.offset) { index, entry in
                 VStack(alignment:.leading,spacing:8) {
-                    HStack(alignment:.top) { Text(index < 3 ? ["🥇","🥈","🥉"][index] : "\(index+1)."); Text(entry.title).bold(); Spacer(); Text(entry.value).foregroundStyle(Brand.orange).bold().monospacedDigit() }.font(.subheadline)
+                    HStack(alignment:.top) { Text(index < 3 ? ["🥇","🥈","🥉"][index] : "\(index+1)."); Text(entry.title).bold(); Spacer(); Text(entry.value).foregroundStyle(Brand.textOrange).bold().monospacedDigit() }.font(.subheadline)
                     if !entry.subtitle.isEmpty { Text(entry.subtitle).font(.caption).foregroundStyle(.secondary) }
                     if let sid = entry.activity?.stravaID { Button("STRAVA",systemImage:"arrow.up.right.square") { StravaLink.open(sid) }.font(.caption.bold()).buttonStyle(.bordered).tint(.orange) }
                 }.padding(.vertical,6)

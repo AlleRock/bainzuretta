@@ -12,8 +12,8 @@ for runtime, devices in payload['devices'].items():
     if sdk is not None and version[:2] > sdk[:2]: continue
     for device in devices:
         if device.get('isAvailable') and device['name'].startswith('iPhone'):
-            candidates.append((version, device['name'] == 'iPhone 18 Pro', device['name'], device['udid']))
+            candidates.append((device['name'] == 'iPhone 18 Pro', version, device['name'], device['udid']))
 if not candidates: raise SystemExit('No iPhone Simulator runtime compatible with the selected Xcode SDK. Install a compatible iOS runtime.')
-version, preferred, name, udid = max(candidates)
+preferred, version, name, udid = max(candidates)
 print('SIMULATOR_ID='+udid)
 print('SIMULATOR_NAME='+name+' / iOS '+'.'.join(map(str,version)))

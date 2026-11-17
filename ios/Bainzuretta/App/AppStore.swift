@@ -74,7 +74,12 @@ struct Notice: Identifiable { var id = UUID(); var text: String }
         var next = archive; next.activities.removeAll { $0.id == activity.id }; try commit(next)
     }
     func candidate(_ data: Data) throws -> Archive { try Archive.importing(data,current:archive) }
-    func importArchive(_ next: Archive) throws { try commit(next,backup:true,recovery:!readable); syncMessage = "Importate \(next.activities.count) attività" }
+    func importArchive(_ candidate: Archive, restorePreferences: Bool) throws {
+        var next = candidate
+        // A web array replaces activities only, including when settings changed during background decoding.
+        if !restorePreferences { next.preferences = archive.preferences }
+        try commit(next,backup:true,recovery:!readable); syncMessage = "Importate \(next.activities.count) attività"
+    }
     func restore() throws { var next = try disk.recovery(); next.pendingSync = nil; try commit(next,backup:readable,recovery:!readable) }
     func reset() throws {
         guard !busy else { throw ArchiveError.invalid("attendi il termine della sincronizzazione") }
