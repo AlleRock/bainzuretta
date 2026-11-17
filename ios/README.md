@@ -1,6 +1,6 @@
 # Bainzuretta nativa per iOS
 
-Progetto Swift + SwiftUI, separato dalla PWA. Tutto il lavoro è nel ramo **ios-native**, dentro `ios/`; i file web e il workflow Pages restano intatti. Nessuna WebView, nessuna dipendenza runtime esterna, nessuna firma Apple richiesta per il simulatore.
+Progetto Swift + SwiftUI, separato dalla PWA. Tutto il lavoro è nel ramo **ios-native**, dentro `ios/`; i file web e il workflow Pages restano intatti. Nessuna WebView, nessuna dipendenza runtime esterna, firma locale ad-hoc per il simulatore senza certificati o account Apple Developer.
 
 - [Guida semplice Windows → GitHub Actions → Appetize](docs/COLLAUDO-WINDOWS.md)
 - [Inventario verificato nel codice originale](docs/INVENTARIO.md)

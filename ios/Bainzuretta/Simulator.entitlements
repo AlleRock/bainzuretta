@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<!-- Local ad-hoc Simulator identity. This file is excluded from physical-device SDK builds. -->
+<key>application-identifier</key><string>LOCALTEST1.it.allerock.Bainzuretta</string>
+<key>com.apple.developer.team-identifier</key><string>LOCALTEST1</string>
+<key>keychain-access-groups</key><array><string>LOCALTEST1.it.allerock.Bainzuretta</string></array>
+<key>get-task-allow</key><true/>
+</dict></plist>

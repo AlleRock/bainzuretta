@@ -49,7 +49,7 @@ jobs:
       - name: Compile app and native test targets
         run: |
           set -euo pipefail
-          xcodebuild build-for-testing -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO 2>&1 | tee native-compile.log
+          xcodebuild build-for-testing -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- 2>&1 | tee native-compile.log
       - name: Boot iPhone Simulator
         run: |
           set -euo pipefail
@@ -61,7 +61,7 @@ jobs:
       - name: Run native unit and UI tests
         run: |
           set -euo pipefail
-          xcodebuild test-without-building -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Build -resultBundlePath ios/build/UITests.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
+          xcodebuild test-without-building -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Build -resultBundlePath ios/build/UITests.xcresult -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- 2>&1 | tee ui-tests.log
       - name: Export UI screenshots for Windows
         if: always()
         continue-on-error: true
@@ -72,7 +72,7 @@ jobs:
       - name: Build Appetize simulator bundle
         run: |
           set -euo pipefail
-          xcodebuild build -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Build ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO 2>&1 | tee simulator-build.log
+          xcodebuild build -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Build ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- 2>&1 | tee simulator-build.log
           app=ios/build/Build/Build/Products/Release-iphonesimulator/Bainzuretta.app
           test -d "$app"
           xcrun vtool -show-build "$app/Bainzuretta" | tee simulator-platform.txt
@@ -93,8 +93,17 @@ jobs:
           path: |
             Bainzuretta-iOS-Simulator.zip
             Bainzuretta-iOS-Simulator.zip.sha256
+            Bainzuretta-simulator.png
           if-no-files-found: error
           retention-days: 30
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bainzuretta-screenshots
+          path: ios/build/screenshots
+          if-no-files-found: warn
+          retention-days: 14
       - name: Upload verification evidence
         if: always()
         uses: actions/upload-artifact@v4

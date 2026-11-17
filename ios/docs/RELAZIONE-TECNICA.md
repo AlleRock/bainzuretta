@@ -42,7 +42,7 @@ PDF vero generato da UIGraphicsPDFRenderer, paginato A4, testo ricercabile, senz
 
 ## Build e protezione produzione
 
-Workflow aggiuntivo soltanto su `ios-native`, senza deployment, certificati o segreti Apple. Verifica Xcode ≥27, SDK, runtime; esegue test del nucleo, broker e test nativi/UI; build Release per Simulator ARM64, controlli Mach-O/platform, installazione e avvio con simctl, ZIP creato con ditto e upload artifact. Il package non è un IPA e non installa su iPhone fisico.
+Workflow aggiuntivo soltanto su `ios-native`, senza deployment, certificati o segreti Apple. Il simulatore usa firma locale ad-hoc e un entitlement Keychain dedicato (`Simulator.entitlements`): il prefisso `LOCALTEST1` è un identificatore locale di test, non un account/team Apple. L’impostazione è limitata a `sdk=iphonesimulator*`; le build per dispositivo mantengono firma automatica e useranno in futuro il profilo reale. Il test Keychain deve riuscire: non viene sostituito con storage non protetto. Verifica Xcode ≥27, SDK e runtime compatibile (non successivo all’SDK); esegue test del nucleo, broker e test nativi/UI; compilazione separata dall’avvio del simulatore e dai test, build Release per Simulator ARM64, controlli Mach-O/platform, installazione e avvio con simctl, ZIP creato con ditto e upload artifact. Il package non è un IPA e non installa su iPhone fisico.
 
 Il progetto Xcode e lo schema sono già versionati e rigenerabili con Python standard. Non è stato modificato `pages.yml`, non è stato creato alcun deployment Pages, non è stato effettuato alcun merge.
 

@@ -8,7 +8,7 @@ struct SecureStore {
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess, let data = result as? Data else { throw SecureError.failure }
+        guard status == errSecSuccess, let data = result as? Data else { throw SecureError.failure(status) }
         return try JSONDecoder().decode(type,from:data)
     }
     func write<T: Encodable>(_ value: T, key: String) throws {
@@ -18,15 +18,19 @@ struct SecureStore {
         if update == errSecItemNotFound {
             var insert = query; insert[kSecValueData as String] = data
             insert[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            guard SecItemAdd(insert as CFDictionary,nil) == errSecSuccess else { throw SecureError.failure }
-        } else if update != errSecSuccess { throw SecureError.failure }
+            let added = SecItemAdd(insert as CFDictionary,nil)
+            guard added == errSecSuccess else { throw SecureError.failure(added) }
+        } else if update != errSecSuccess { throw SecureError.failure(update) }
     }
     func delete(_ key: String) throws {
         let status = SecItemDelete([kSecClass as String:kSecClassGenericPassword,kSecAttrService as String:service,kSecAttrAccount as String:key] as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else { throw SecureError.failure }
+        guard status == errSecSuccess || status == errSecItemNotFound else { throw SecureError.failure(status) }
     }
     enum SecureError: Error, LocalizedError {
-        case failure
-        var errorDescription: String? { "Impossibile accedere alle credenziali protette nel portachiavi. Riprova." }
+        case failure(OSStatus)
+        var errorDescription: String? {
+            if case .failure(let status) = self { return "Portachiavi non disponibile (codice \(status)). Riapri l’app; se il problema persiste, segnala questo codice." }
+            return nil
+        }
     }
 }

@@ -18,7 +18,7 @@ for file in app_sources + test_sources + native_sources:
     refs.append(ref)
     build = obj(name+'-build', f'isa = PBXBuildFile; fileRef = {ref};')
     (app_builds if file in app_sources else test_builds if file in test_sources else native_builds).append(build)
-for name, filetype in [('Bainzuretta/Assets.xcassets','folder.assetcatalog'),('Bainzuretta/PrivacyInfo.xcprivacy','text.xml')]:
+for name, filetype in [('Bainzuretta/Assets.xcassets','folder.assetcatalog'),('Bainzuretta/PrivacyInfo.xcprivacy','text.xml'),('Bainzuretta/Info.plist','text.plist.xml'),('Bainzuretta/Simulator.entitlements','text.plist.entitlements')]:
     ref = obj(name,f'isa = PBXFileReference; lastKnownFileType = {filetype}; path = {q(name)}; sourceTree = "<group>";'); refs.append(ref)
 resource_builds = [obj(name+'-build',f'isa = PBXBuildFile; fileRef = {ident(name)};') for name in ['Bainzuretta/Assets.xcassets','Bainzuretta/PrivacyInfo.xcprivacy']]
 app_product = obj('app-product','isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bainzuretta.app; sourceTree = BUILT_PRODUCTS_DIR;')
@@ -42,10 +42,10 @@ def configs(prefix, settings):
     for mode in ['Debug','Release']:
         opts = dict(settings)
         if prefix == 'project': opts.update({'SWIFT_OPTIMIZATION_LEVEL':'-Onone' if mode=='Debug' else '-O','ONLY_ACTIVE_ARCH':'YES' if mode=='Debug' else 'NO','ENABLE_TESTABILITY':'YES' if mode=='Debug' else 'NO','DEBUG_INFORMATION_FORMAT':'dwarf' if mode=='Debug' else 'dwarf-with-dsym','SWIFT_ACTIVE_COMPILATION_CONDITIONS':'DEBUG $(inherited)' if mode=='Debug' else '$(inherited)'})
-        ids.append(obj(prefix+mode,'isa = XCBuildConfiguration; buildSettings = {' + ''.join(f'{k} = {q(v)};' for k,v in opts.items()) + f'}}; name = {mode};'))
+        ids.append(obj(prefix+mode,'isa = XCBuildConfiguration; buildSettings = {' + ''.join(f'{q(k)} = {q(v)};' for k,v in opts.items()) + f'}}; name = {mode};'))
     return obj(prefix+'configs',f'isa = XCConfigurationList; buildConfigurations = {arr(ids)}; defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;')
 project_configs = configs('project',{'SDKROOT':'iphoneos','IPHONEOS_DEPLOYMENT_TARGET':'18.0','SWIFT_VERSION':'5.0','CLANG_ENABLE_MODULES':'YES','CLANG_ENABLE_OBJC_ARC':'YES','ENABLE_USER_SCRIPT_SANDBOXING':'YES','GCC_C_LANGUAGE_STANDARD':'gnu17'})
-app_configs = configs('app',{'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'it.allerock.Bainzuretta','INFOPLIST_FILE':'Bainzuretta/Info.plist','GENERATE_INFOPLIST_FILE':'NO','ASSETCATALOG_COMPILER_APPICON_NAME':'AppIcon','TARGETED_DEVICE_FAMILY':'1,2','SUPPORTED_PLATFORMS':'iphoneos iphonesimulator','CODE_SIGN_STYLE':'Automatic','CURRENT_PROJECT_VERSION':'1','MARKETING_VERSION':'1.0','LD_RUNPATH_SEARCH_PATHS':'$(inherited) @executable_path/Frameworks'})
+app_configs = configs('app',{'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'it.allerock.Bainzuretta','INFOPLIST_FILE':'Bainzuretta/Info.plist','GENERATE_INFOPLIST_FILE':'NO','ASSETCATALOG_COMPILER_APPICON_NAME':'AppIcon','TARGETED_DEVICE_FAMILY':'1,2','SUPPORTED_PLATFORMS':'iphoneos iphonesimulator','CODE_SIGN_STYLE':'Automatic','CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]':'Bainzuretta/Simulator.entitlements','CODE_SIGN_IDENTITY[sdk=iphonesimulator*]':'-','CODE_SIGN_STYLE[sdk=iphonesimulator*]':'Manual','CURRENT_PROJECT_VERSION':'1','MARKETING_VERSION':'1.0','LD_RUNPATH_SEARCH_PATHS':'$(inherited) @executable_path/Frameworks'})
 test_configs = configs('test',{'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'it.allerock.BainzurettaUITests','GENERATE_INFOPLIST_FILE':'YES','TARGETED_DEVICE_FAMILY':'1,2','TEST_TARGET_NAME':'Bainzuretta','CODE_SIGN_STYLE':'Automatic'})
 native_configs = configs('native',{'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'it.allerock.BainzurettaNativeTests','GENERATE_INFOPLIST_FILE':'YES','TEST_HOST':'$(BUILT_PRODUCTS_DIR)/Bainzuretta.app/Bainzuretta','BUNDLE_LOADER':'$(TEST_HOST)','CODE_SIGN_STYLE':'Automatic'})
 native_id = ident('native-target')

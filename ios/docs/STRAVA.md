@@ -45,6 +45,8 @@ La chiave di abbinamento protegge l'uso del broker personale. Non sostituisce un
 
 ## Prova in simulatore/Appetize
 
+La build simulatore include firma locale ad-hoc e un entitlement Keychain limitato al solo SDK Simulator. Non richiede un certificato Apple a pagamento; il prefisso locale di test non deve essere usato per firmare un’app per iPhone fisico.
+
 - Safari e ASWebAuthenticationSession del simulatore devono poter raggiungere Strava e il broker.
 - Lo schema di ritorno è registrato in Info.plist. Non richiede Universal Links, dominio Apple associato o account Apple Developer per il simulatore.
 - Non serve l'app Strava installata. I link delle attività provano ad aprirla e usano il browser se non è disponibile.
