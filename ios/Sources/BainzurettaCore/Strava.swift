@@ -65,6 +65,7 @@ public struct StravaRemote: Sendable {
             var request = URLRequest(url: c.url!); request.timeoutInterval = 45
             request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
             let response = try await transport.send(request)
+            if response.status == 400 { throw StravaError.response }
             let raw = try response.checked()
             guard let acts = try? JSONDecoder().decode([[String: JSONValue]].self, from: raw) else { throw StravaError.response }
             for act in acts where Self.cyclingTypes.contains(act["type"]?.text ?? "") {

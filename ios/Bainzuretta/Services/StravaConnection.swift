@@ -50,7 +50,9 @@ struct StravaToken: Codable {
         var request = URLRequest(url:config.endpoint.appendingPathComponent(route)); request.httpMethod = "POST"; request.timeoutInterval = 45
         request.setValue("application/json",forHTTPHeaderField:"Content-Type"); request.setValue("Bearer "+config.pairingKey,forHTTPHeaderField:"Authorization")
         request.httpBody = try JSONEncoder().encode(body)
-        let response = try await URLSessionTransport().send(request), data = try response.checked()
+        let response = try await URLSessionTransport().send(request)
+        if let error = try? JSONDecoder().decode([String:String].self,from:response.data)["error"], error == "configuration" || error == "unauthorized" { throw StravaError.configuration }
+        let data = try response.checked()
         guard let result = try? JSONDecoder().decode(type,from:data) else { throw StravaError.response }
         return result
     }

@@ -41,7 +41,7 @@ struct ShareFileView: UIViewControllerRepresentable {
             }
             func write(_ text: String, size: CGFloat = 10, bold: Bool = false, color: UIColor = .black) {
                 let attributes: [NSAttributedString.Key:Any] = [.font:bold ? UIFont.boldSystemFont(ofSize:size) : UIFont.systemFont(ofSize:size),.foregroundColor:color]
-                let height = ceil((text as NSString).boundingRect(with:CGSize(width:523,height:.greatestFiniteMagnitude),options:[.usesLineFragmentOrigin,.usesFontLeading],attributes:attributes,context:nil).height) + 8
+                let height = ceil((text as NSString).boundingRect(with:CGSize(width:523,height:CGFloat.greatestFiniteMagnitude),options:[.usesLineFragmentOrigin,.usesFontLeading],attributes:attributes,context:nil).height) + 8
                 if y + height > 800 { newPage() }
                 (text as NSString).draw(in:CGRect(x:36,y:y,width:523,height:height),withAttributes:attributes); y += height
             }

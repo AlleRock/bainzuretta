@@ -2,7 +2,7 @@ name: Bainzuretta iOS Simulator
 on:
   push:
     branches: [ios-native]
-    paths: ['ios/**', '.github/workflows/ios-simulator.yml']
+    paths: ['ios/Bainzuretta/**', 'ios/Bainzuretta.xcodeproj/**', 'ios/Sources/**', 'ios/Tests/**', 'ios/NativeTests/**', 'ios/UITests/**', 'ios/scripts/**', 'ios/backend/**', 'ios/Package.swift', '.github/workflows/ios-simulator.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,6 +51,13 @@ jobs:
           xcrun simctl boot "$SIMULATOR_ID" || true
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcodebuild test -project ios/Bainzuretta.xcodeproj -scheme Bainzuretta -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ios/build/Test -resultBundlePath ios/build/UITests.xcresult ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-tests.log
+      - name: Export UI screenshots for Windows
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -d ios/build/UITests.xcresult ]; then
+            xcrun xcresulttool export attachments --path ios/build/UITests.xcresult --output-path ios/build/screenshots
+          fi
       - name: Build Appetize simulator bundle
         run: |
           set -euo pipefail
@@ -87,6 +94,7 @@ jobs:
             simulator-devices.json
             Bainzuretta-simulator.png
             ios/build/UITests.xcresult
+            ios/build/screenshots
           retention-days: 14
       - name: Summary
         if: success()

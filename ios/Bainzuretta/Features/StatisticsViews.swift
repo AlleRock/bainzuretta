@@ -4,17 +4,19 @@ import BainzurettaCore
 struct JournalView: View {
     @Environment(AppStore.self) private var store
     var isArchive: Bool
-    @State private var grouping: Grouping = .activities
     var body: some View {
         @Bindable var store = store
+        let grouping = isArchive ? store.archiveGrouping : store.diaryGrouping
+        let groupBinding = Binding(get:{isArchive ? store.archiveGrouping : store.diaryGrouping},set:{if isArchive {store.archiveGrouping = $0} else {store.diaryGrouping = $0}})
         let year = isArchive ? store.selectedYear ?? store.years.first : store.today.year
         let items = year.map { Statistics.year(store.activities,$0,ytd:isArchive ? store.today.dayOfYear : nil) } ?? []
         List {
             Section {
                 if isArchive {
-                    Picker("Anno",selection:$store.selectedYear) { ForEach(store.years,id:\.self) { Text(String($0)).tag(Optional($0)) } }
+                    if store.years.isEmpty { LabeledContent("Anno",value:"Nessun dato") }
+                    else { Picker("Anno",selection:$store.selectedYear) { ForEach(store.years,id:\.self) { Text(String($0)).tag(Optional($0)) } } }
                 }
-                Picker("Vista",selection:$grouping) { ForEach(Grouping.allCases) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
+                Picker("Vista",selection:groupBinding) { ForEach(Grouping.allCases) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
             } header: { Text(isArchive ? "ARCHIVIO STORICO YTD" : "DIARIO \(store.today.year)") }
             if let year {
                 Section { SummaryView(summary:Summary(items)) } header: { Text("\(year) · al giorno \(store.today.dayOfYear)") }
@@ -67,12 +69,13 @@ struct ChallengeView: View {
 }
 struct RankingView: View {
     @Environment(AppStore.self) private var store
-    @State private var metric: RankingMetric = .distance
     var body: some View {
+        @Bindable var store = store
+        let metric = store.rankingMetric
         let ranking = Statistics.ranking(store.activities,today:store.today,metric:metric)
         let max = ranking.map(\.value).max() ?? 0
         List {
-            Section { Picker("Metrica",selection:$metric) { ForEach(RankingMetric.allCases) { Text($0.title).tag($0) } }.pickerStyle(.menu) } header: { Text("RANKING YTD · GIORNO \(store.today.dayOfYear)") }
+            Section { Picker("Metrica",selection:$store.rankingMetric) { ForEach(RankingMetric.allCases) { Text($0.title).tag($0) } }.pickerStyle(.menu) } header: { Text("RANKING YTD · GIORNO \(store.today.dayOfYear)") }
             if ranking.isEmpty { EmptyState() }
             ForEach(Array(ranking.enumerated()),id:\.element.id) { i, entry in
                 Button { if entry.year != store.today.year { store.openYear(entry.year) } } label: {

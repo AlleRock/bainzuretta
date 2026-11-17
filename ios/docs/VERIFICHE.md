@@ -23,6 +23,8 @@ Gli esiti finali e il link all'esecuzione valida verranno aggiunti dopo il compl
 - Terza esecuzione: architettura ARM allineata; la compilazione ha rilevato dichiarazioni multiple `@State` non accettate dalla macro SwiftUI di Xcode 27. Le proprietà sono state separate, mantenendo gli stessi valori iniziali. Test non saltati: nuova esecuzione prevista.
 - Aggiunti confronti anche della conversione API Strava nei casi di arrotondamento binario a metà (`1.125`, `2.675`), oltre ai valori null. Implementato l'arrotondamento esatto `toFixed` del JavaScript, evitando la regola tie-to-even di printf.
 
+- Quarta esecuzione: le viste SwiftUI passano la fase che segnalava le macro; il compilatore ha rilevato `greatestFiniteMagnitude` ambiguo nel layout PDF. Specificato esplicitamente `CGFloat` e mantenuti tutti i test.
+
 ## Non verificato con servizi reali
 
 - OAuth Strava reale: manca broker configurato; l'utente ha richiesto codice e guida, senza collegamento esistente.

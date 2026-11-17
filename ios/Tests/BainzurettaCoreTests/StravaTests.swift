@@ -28,10 +28,10 @@ final class StravaTests: XCTestCase {
         XCTAssertTrue(requests[1].url!.absoluteString.contains("page=2")); XCTAssertTrue(requests[1].url!.absoluteString.contains("before=99"))
     }
     func testNetworkErrorsMalformedResponsesAndNoPartialCommit() async throws {
-        for status in [401,403,429,500] {
+        for status in [400,401,403,429,500] {
             let transport = MockTransport([HTTPResponse(data:Data(),status:status)])
             do { _ = try await StravaRemote(transport:transport).download(token:"test",window:SyncWindow(after:0,before:100,athlete:"1")); XCTFail("expected error") }
-            catch { XCTAssertEqual(error as? StravaError,status == 429 ? .rateLimit : status == 500 ? .response : .auth) }
+            catch { XCTAssertEqual(error as? StravaError,status == 429 ? .rateLimit : (status == 500 || status == 400) ? .response : .auth) }
         }
         for responses in [[HTTPResponse(data:Data("{}".utf8),status:200)], [try response((1...100).map{raw($0)})]] {
             do { _ = try await StravaRemote(transport:MockTransport(responses)).download(token:"test",window:SyncWindow(after:0,before:100,athlete:"1")); XCTFail("expected error") } catch {}

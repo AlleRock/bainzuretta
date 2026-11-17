@@ -9,8 +9,12 @@ import BainzurettaCore
         defer { try? FileManager.default.removeItem(at:directory) }
         let store = AppStore(directory:directory)
         try store.setTarget("7000"); store.setCategory(.curiosity)
+        store.diaryGrouping = .month; store.archiveGrouping = .week; store.rankingMetric = .simple
+        store.section = .diary; store.section = .home; store.section = .diary
+        XCTAssertEqual(store.diaryGrouping,.month); XCTAssertEqual(store.archiveGrouping,.week); XCTAssertEqual(store.rankingMetric,.simple)
         try store.saveManual(day:store.today.isoDay,distance:"42,5",duration:"2:00:00",existing:nil)
         let reopened = AppStore(directory:directory)
+        XCTAssertEqual(reopened.diaryGrouping,.activities); XCTAssertEqual(reopened.rankingMetric,.distance)
         XCTAssertEqual(reopened.activities.count,1); XCTAssertEqual(reopened.activities[0].distance,42.5)
         XCTAssertEqual(reopened.target,7000); XCTAssertEqual(reopened.archive.preferences.recordCategory,.curiosity)
         XCTAssertThrowsError(try reopened.setTarget("-1")); XCTAssertEqual(reopened.target,7000)

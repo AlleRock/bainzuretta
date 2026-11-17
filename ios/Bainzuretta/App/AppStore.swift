@@ -15,6 +15,9 @@ struct Notice: Identifiable { var id = UUID(); var text: String }
     private(set) var busy = false
     var section: AppSection = .home
     var selectedYear: Int?
+    var diaryGrouping: Grouping = .activities
+    var archiveGrouping: Grouping = .activities
+    var rankingMetric: RankingMetric = .distance
     var editActivity: Activity?
     var notice: Notice?
     var pendingRemoval: SyncResult?
@@ -76,7 +79,8 @@ struct Notice: Identifiable { var id = UUID(); var text: String }
     func reset() throws {
         guard !busy else { throw ArchiveError.invalid("attendi il termine della sincronizzazione") }
         // Preserve the file if credential deletion fails.
-        try strava.reset(); try disk.reset(); archive = Archive(); readable = true; selectedYear = nil; editActivity = nil; pendingRemoval = nil; syncMessage = "Dati azzerati"
+        try strava.reset(); try disk.reset(); archive = Archive(); readable = true; selectedYear = nil; editActivity = nil; pendingRemoval = nil
+        diaryGrouping = .activities; archiveGrouping = .activities; rankingMetric = .distance; syncMessage = "Dati azzerati"
     }
     func openYear(_ year: Int) { selectedYear = year; section = .archive }
     func connect() async {
